@@ -1,0 +1,389 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// TODO: 
+// 1. Campos de la ficha técnica
+// 2. Las tablas de los diferentes métodos de pago
+
+model User {
+  id String @id @default(cuid())
+
+  email String @unique
+  isSuspended Boolean @default(false) @map("is_suspended")
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  password Password?
+  profile Profile?
+  codes Code[]
+  incomeOrders IncomeOrder[]
+
+  role Role @relation(fields: [roleId], references: [id])
+  roleId String @map("role_id")
+
+  @@index([email], map: "email")
+  @@map("users")
+}
+
+model Password {
+  id String @id @default(cuid())
+
+  password String 
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  user User @relation(fields: [userId], references: [id])
+  userId String @unique @map("user_id")
+
+  @@map("passwords")
+}
+
+model Profile {
+  id String @id @default(cuid())
+
+  firstname String 
+  lastname String 
+  document Int
+  phone String
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  user User @relation(fields: [userId], references: [id])
+  userId String @unique @map("user_id")
+
+  @@map("profiles")
+}
+
+model Code {
+  id String @id @default(cuid())
+
+  code Int 
+  used Boolean @default(false) 
+  expiresAt DateTime @map("expires_at") 
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  user User @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  @@map("recovery_codes")
+}
+
+model Role {
+  id String @id @default(cuid())
+
+  role AppRole @default(USER) 
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  users User[]
+  permissions Permission[] @relation("roles_permissions")
+
+  @@map("roles")
+}
+
+model Permission {
+  id String @id @default(cuid())
+
+  name String 
+  description String 
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  roles Role[] @relation("roles_permissions")
+
+  @@map("permissions")
+}
+
+model IncomeOrder {
+  id String @id @default(cuid())
+
+  status IncomeOrderStatus @default(EN_PROGRESO)
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  user User @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+  items IncomeOrderItem[]
+
+  @@map("income_orders")
+}
+
+model IncomeOrderItem {
+  id String @id @default(cuid())
+
+  entered Int
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  order IncomeOrder @relation(fields: [orderId], references: [id])
+  orderId String @map("order_id")
+  product Product @relation(fields: [productId], references: [id])
+  productId String @map("product_id")
+
+  @@map("income_order_items")
+}
+
+model Product {
+  id String @id @default(cuid())
+
+  code String @unique
+  type ProductType
+  description String?
+  brand String
+  model String
+  price Int
+  isGnc Boolean @map("is_gnc")
+  amountOfSales Int @default(0) @map("amount_of_sales")
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  sales SaleOrderItem[]
+  incomes IncomeOrderItem[]
+  lossesByWarranties WarrantyOrderItem[]
+
+  spring Spring @relation(fields: [springId], references: [id])
+  springId String @map("spring_id")
+
+  @@index([code], map: "product_codes")
+  @@map("products")
+}
+
+model Spring {
+  id String @id @default(cuid())
+
+  code String @unique
+  isAssociated Boolean @map("is_associated")
+  minQuantity Int @map("min_quantity")
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  stock Stock?
+  technicalSheet TechnicalSheet? 
+  products Product[]
+  movements Movement[]
+
+  @@index([code], map: "spring_codes")
+  @@map("springs")
+}
+
+model Stock {
+  id String @id @default(cuid())
+
+  quantity Int
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  spring Spring @relation(fields: [springId], references: [id])
+  springId String @unique @map("spring_id")
+
+  @@map("stocks")
+}
+
+model Movement {
+  id String @id @default(cuid())
+
+  type MovementType
+  reason String
+  quantity Int
+  updatedStock Int @map("updated_stock")
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  spring Spring @relation(fields: [springId], references: [id])
+  springId String @map("spring_id")
+
+  @@map("movements")
+}
+
+model TechnicalSheet {
+  id String @id @default(cuid())
+
+  type TechnicalSheetType
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  spring Spring @relation(fields: [springId], references: [id])
+  springId String @unique @map("spring_id")
+
+  @@map("technical_sheets")
+}
+
+model Customer {
+  id String @id @default(cuid())
+
+  code String @unique
+  email String @unique
+  name String 
+  phone Int 
+  discount Int?
+  owe Int @default(0) 
+  cuil String
+  paymentDeadline Int @map("payment_deadline")
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  address Address?
+  buys SaleOrder[]
+  warranties WarrantyOrder[]
+
+  @@index([code], map: "customer_codes")
+  @@map("customers")
+}
+
+model Address {
+  id String @id @default(cuid())
+
+  country String @default("Argentina")
+  city String 
+  locality String 
+  street String 
+  number Int
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  customerId String @unique @map("customer_id")
+
+  @@map("addresses")
+}
+
+model WarrantyOrder {
+  id String @id @default(cuid())
+
+  observation String?
+  createdBy String @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  items WarrantyOrderItem[]
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  customerId String @map("customer_id")
+
+  @@map("warranty_orders")
+}
+
+model WarrantyOrderItem {
+  id String @id @default(cuid())
+
+  requested Int
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  order WarrantyOrder @relation(fields: [orderId], references: [id])
+  orderId String @map("order_id")
+  product Product @relation(fields: [productId], references: [id])
+  productId String @map("product_id")
+
+  @@map("warranty_order_items")
+}
+
+model SaleOrder {
+  id String @id @default(cuid())
+
+  createdBy String @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  items SaleOrderItem[]
+  invoice Invoice?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  customerId String @map("customer_id")
+
+  @@map("sale_orders")
+}
+
+model SaleOrderItem {
+  id String @id @default(cuid())
+
+  requested Int
+  price Int
+  discount Int?
+  totalPrice Int @map("total_price")
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  order SaleOrder @relation(fields: [orderId], references: [id])
+  orderId String @map("order_id")
+  product Product @relation(fields: [productId], references: [id])
+  productId String @map("product_id")
+
+  @@map("sale_order_items")
+}
+
+model Invoice {
+  id String @id @default(cuid())
+
+  amount Int 
+  dueDate DateTime @db.Date
+  status InvoiceStatus @default(POR_PAGAR)
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  payments Payment[]
+
+  order SaleOrder @relation(fields: [orderId], references: [id])
+  orderId String @unique @map("order_id")
+
+  @@map("invoices")
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  method PaymentMethod
+  amount Int
+  createdBy String @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  invoiceId String @unique @map("invoice_id")
+
+  @@map("payments")
+}
+
+
+enum AppRole {
+  ADMIN
+  USER
+}
+
+enum IncomeOrderStatus {
+  EN_PROGRESO
+  ANULADA
+  CONCRETADA
+}
+
+enum InvoiceStatus {
+  POR_PAGAR
+  PAGADA
+  DEUDA
+}
+
+enum ProductType {
+  STANDARD
+  REFORZADO
+  RALLY
+  PROGRESIVO
+  COMPETICION
+  ESPECIAL
+  REGULABLE
+  CONFORT
+}
+
+enum MovementType {
+  INGRESO
+  EGRESO
+}
+
+enum TechnicalSheetType {
+  TRABA_TRABA
+  TRABA_OJAL
+  OJAL_OJAL
+}
+
+enum PaymentMethod {
+  MERCADO_PAGO
+  TRANSFERENCIA
+  EFECTIVO
+  CHEQUE
+}
