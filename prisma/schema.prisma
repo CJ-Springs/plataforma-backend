@@ -79,7 +79,7 @@ model Code {
 model Role {
   id String @id @default(cuid())
 
-  role AppRole @default(USER) 
+  role AppRole @default(USER) @unique 
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
