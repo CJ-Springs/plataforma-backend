@@ -1,36 +1,50 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
-
-import { BadRequestException, HttpException } from '@nestjs/common'
+import { BadRequestException, ConflictException } from '@nestjs/common'
 
 import { CreateRoleCommand } from '../impl/create-role.command'
 import { Role } from '../../aggregate/role.model'
 import { RoleRepository } from '../../repository/role.repository'
+import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 
 @CommandHandler(CreateRoleCommand)
 export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
-  constructor(private readonly repository: RoleRepository) {}
+  constructor(
+    private readonly repository: RoleRepository,
+    private readonly logger: LoggerService,
+  ) {}
 
   async execute(command: CreateRoleCommand) {
+    this.logger.log('Ejecutando el CreateRole command handler')
+
     const { data } = command
-    const roleOrError = Role.create({ ...data })
 
-    if (roleOrError.isFailure) {
-      throw new BadRequestException(roleOrError.getErrorValue())
-    }
+    const existRole = await this.repository.findOneByUniqueInput({
+      role: data.role,
+    })
 
-    const role = roleOrError.getValue()
+    if (existRole.isFailure) {
+      const roleOrError = Role.create(data)
 
-    const createdRole = await this.repository.save(role.props)
+      if (roleOrError.isFailure) {
+        throw new BadRequestException(roleOrError.getErrorValue())
+      }
 
-    if (createdRole.isFailure && createdRole.error instanceof HttpException) {
-      throw createdRole.getErrorValue()
-    }
+      const role = roleOrError.getValue()
 
-    return {
-      success: true,
-      status: 201,
-      message: 'Rol creado correctamente',
-      data: createdRole.getValue().toDTO(),
+      const createdRole = await this.repository.save(role.props)
+
+      if (createdRole.isFailure) {
+        throw new ConflictException(createdRole.getErrorValue())
+      }
+
+      return {
+        success: true,
+        status: 201,
+        message: 'Rol creado correctamente',
+        data: createdRole.getValue().toDTO(),
+      }
+    } else {
+      throw new ConflictException(`El rol ${data.role} ya ha sido creado`)
     }
   }
 }
