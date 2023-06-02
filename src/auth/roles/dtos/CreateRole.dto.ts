@@ -1,5 +1,11 @@
 import { AppRole } from '@prisma/client'
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator'
 
 export class CreateRoleDto {
   @IsNotEmpty({ message: "Debe enviar el campo 'role' para crear un rol" })
@@ -9,6 +15,7 @@ export class CreateRoleDto {
   role: AppRole
 
   @IsOptional()
+  @IsArray({ message: "El campo 'permissions' debe ser un array" })
   @IsString({
     each: true,
     message: "El campo 'permissions' debe ser un array de strings",
