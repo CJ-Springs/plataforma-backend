@@ -18,7 +18,8 @@ export class CreateRoleDto {
   @IsArray({ message: "El campo 'permissions' debe ser un array" })
   @IsString({
     each: true,
-    message: "El campo 'permissions' debe ser un array de strings",
+    message:
+      "El campo 'permissions' debe ser un array que contenga los nombres de los permisos que se quieren agregar al rol",
   })
   permissions?: string[]
 }

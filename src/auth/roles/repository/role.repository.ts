@@ -1,17 +1,11 @@
-import {
-  ConflictException,
-  Injectable,
-  MethodNotAllowedException,
-} from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { IFindByUniqueInput, IRepository } from '@/.shared/types'
-import { UniqueEntityID } from '@/.shared/domain'
 import { Result } from '@/.shared/helpers'
-import { Role, RoleProps } from '../aggregate/role.model'
-import { Prisma } from '@prisma/client'
-import { Permission } from '../permissions/aggregate/permission.model'
+import { Role, RoleProps } from '../aggregate/role.aggregate'
 
 @Injectable()
 export class RoleRepository
@@ -41,20 +35,13 @@ export class RoleRepository
         return null
       }
 
-      const role = new Role({
-        id: new UniqueEntityID(_role.id),
+      const role = Role.create({
+        id: _role.id,
         role: _role.role,
-        permissions: _role.permissions.map(
-          (permission) =>
-            new Permission(
-              new UniqueEntityID(permission.id),
-              permission.name,
-              permission.description,
-            ),
-        ),
+        permissions: _role.permissions,
       })
 
-      return Result.ok<Role>(role)
+      return Result.ok<Role>(role.getValue())
     } catch (error) {
       this.logger.error(
         error,
@@ -78,20 +65,13 @@ export class RoleRepository
         return null
       }
 
-      const role = new Role({
-        id: new UniqueEntityID(_role.id),
+      const role = Role.create({
+        id: _role.id,
         role: _role.role,
-        permissions: _role.permissions.map(
-          (permission) =>
-            new Permission(
-              new UniqueEntityID(permission.id),
-              permission.name,
-              permission.description,
-            ),
-        ),
+        permissions: _role.permissions,
       })
 
-      return Result.ok<Role>(role)
+      return Result.ok<Role>(role.getValue())
     } catch (error) {
       this.logger.error(error, `Error al intentar encontrar el rol en la db`)
 
@@ -104,7 +84,7 @@ export class RoleRepository
       const roleId = data.id.toString()
 
       const permissions = data.permissions.map((permission) => ({
-        id: permission.id.toString(),
+        id: permission.props.id.toString(),
       }))
 
       await this.prisma.role.create({
@@ -117,14 +97,14 @@ export class RoleRepository
         },
       })
     } catch (error) {
-      this.logger.error(error, `Error al intentar crear  el rol en la db`)
+      this.logger.error(error, `Error al intentar crear el rol en la db`)
     }
   }
 
   async update(data: Partial<RoleProps>): Promise<void> {
     try {
       const permissions = data.permissions.map((permission) => ({
-        id: permission.id.toString(),
+        id: permission.props.id.toString(),
       }))
 
       await this.prisma.role.update({
