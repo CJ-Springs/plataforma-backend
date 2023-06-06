@@ -1,9 +1,9 @@
 import { AggregateRoot } from '@nestjs/cqrs'
 import { AppRole } from '@prisma/client'
 
+import { Permission, PermissionPropsDTO } from './entities/permission.entity'
 import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { Permission, PermissionPropsDTO } from './entities/permission.entity'
 
 export type RoleProps = {
   id: UniqueEntityID
@@ -46,12 +46,14 @@ export class Role extends AggregateRoot {
   }
 
   addPermission({ id, name, description }: PermissionPropsDTO): Result<Role> {
-    const existPermission = this.props.permissions.find(
+    const permissionIsAlreadyAdded = this.props.permissions.find(
       (permission) => permission.props.name === name,
     )
 
-    if (existPermission) {
-      return Result.fail<Role>(`El permiso ${name} ya forma parte del rol`)
+    if (permissionIsAlreadyAdded) {
+      return Result.fail<Role>(
+        `El permiso ${name} ya forma parte del rol ${this.props.role}`,
+      )
     }
 
     const permissionOrError = Permission.create({

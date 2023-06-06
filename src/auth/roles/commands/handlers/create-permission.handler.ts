@@ -1,15 +1,16 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs'
 import {
   BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common'
 
-import { RoleRepository } from '../../repository/role.repository'
+import { CreatePermissionCommand } from '../impl/create-permission.command'
+import { PermissionCreatedEvent } from '../../events/impl/PermissionCreated.event'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { Result, Validate } from '@/.shared/helpers'
-import { CreatePermissionCommand } from '../impl/create-permission.command'
+import { getUniqueValues } from '@/.shared/utils/getUniqueValues'
 
 @CommandHandler(CreatePermissionCommand)
 export class CreatePermissionHandler
@@ -17,8 +18,8 @@ export class CreatePermissionHandler
 {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly roleRepository: RoleRepository,
     private readonly logger: LoggerService,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: CreatePermissionCommand) {
@@ -34,9 +35,26 @@ export class CreatePermissionHandler
 
     const existPermission = await this.prisma.permission.findUnique({
       where: { name: data.name },
+      select: { id: true },
     })
 
     if (!existPermission) {
+      if (data.roles) {
+        const { roles } = data
+        const uniqueRoles = getUniqueValues<typeof roles>(roles)
+
+        for await (let _role of uniqueRoles) {
+          const existRole = await this.prisma.role.findUnique({
+            where: { role: _role },
+            select: { id: true },
+          })
+
+          if (!existRole) {
+            throw new NotFoundException(`El rol ${_role} no se ha encontrado`)
+          }
+        }
+      }
+
       const newPermission = await this.prisma.permission
         .create({
           data: {
@@ -59,31 +77,14 @@ export class CreatePermissionHandler
           )
         })
 
-      if (data.roles) {
-        for await (let _role of data.roles) {
-          const roleOrNull = await this.roleRepository.findOneByUniqueInput({
-            role: _role,
-          })
-
-          if (!roleOrNull) {
-            throw new NotFoundException(`El rol ${_role} no se ha encontrado`)
-          }
-
-          const role = roleOrNull.getValue()
-
-          const permissionIsAdded = role.addPermission({
-            id: newPermission.id,
-            name: newPermission.name,
-            description: newPermission.description,
-          })
-
-          if (permissionIsAdded.isFailure) {
-            throw new BadRequestException(permissionIsAdded.getErrorValue())
-          }
-
-          await this.roleRepository.update(role.props)
-        }
-      }
+      this.eventBus.publish(
+        new PermissionCreatedEvent({
+          id: newPermission.id,
+          name: newPermission.name,
+          description: newPermission.description,
+          roles: data.roles,
+        }),
+      )
 
       return {
         success: true,

@@ -8,10 +8,11 @@ import {
 import { CreateRoleCommand } from '../impl/create-role.command'
 import { Role } from '../../aggregate/role.aggregate'
 import { RoleRepository } from '../../repository/role.repository'
-import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PermissionPropsDTO } from '../../aggregate/entities/permission.entity'
+import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { Result, Validate } from '@/.shared/helpers'
+import { getUniqueValues } from '@/.shared/utils/getUniqueValues'
 
 @CommandHandler(CreateRoleCommand)
 export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
@@ -40,7 +41,11 @@ export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
       let permissions: PermissionPropsDTO[] = []
 
       if (data.permissions) {
-        for await (let permission_name of data.permissions) {
+        const { permissions: _permissions } = data
+        const uniquePermissions =
+          getUniqueValues<typeof _permissions>(_permissions)
+
+        for await (let permission_name of uniquePermissions) {
           const _permission = await this.prisma.permission.findUnique({
             where: { name: permission_name },
             select: { id: true, name: true, description: true },
