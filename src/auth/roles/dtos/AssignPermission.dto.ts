@@ -8,7 +8,9 @@ export class AssignPermissionDto {
   @IsString({ message: "El campo 'permission' debe ser un string" })
   permission: string
 
-  @IsNotEmpty()
+  @IsNotEmpty({
+    message: "Debe enviar el campo 'roles'",
+  })
   @IsArray({ message: "El campo 'roles' debe ser un array" })
   @IsIn([AppRole.ADMIN, AppRole.USER], {
     message: `El rol debe ser uno de los siguientes: ${AppRole.ADMIN} | ${AppRole.USER}`,
