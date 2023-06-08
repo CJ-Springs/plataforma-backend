@@ -19,7 +19,7 @@ export type RolePropsDTO = {
 }
 
 export class Role extends AggregateRoot {
-  constructor(public props: RoleProps) {
+  private constructor(public props: RoleProps) {
     super()
   }
 
