@@ -6,8 +6,9 @@ import { LoggerModule } from './.shared/helpers/logger/logger.module'
 import { PrismaModule } from './.shared/infra/prisma.module'
 import { AppController } from './app.controller'
 import { AuthenticationModule } from './auth/authentication/authentication.module'
-import { RolesModule } from './auth/roles/roles.module'
+import { RolesModule } from './auth/authorization/roles/roles.module'
 import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
+import { PermissionsModule } from './auth/authorization/permissions/permissions.module'
 
 @Module({
   imports: [
@@ -19,13 +20,14 @@ import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
       envFilePath: '.env',
       isGlobal: true,
     }),
+    PermissionsModule,
   ],
   controllers: [AppController],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-  ],
+  // providers: [
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: JwtAuthGuard,
+  //   },
+  // ],
 })
 export class AppModule {}

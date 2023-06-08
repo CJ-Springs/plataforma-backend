@@ -2,10 +2,9 @@ import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Result } from './../helpers/Result'
 
-export interface IRepository<T extends AggregateRoot, P> {
+export interface IRepository<T extends AggregateRoot> {
   findOneById(id: string): Promise<Result<T> | null>
-  add(data: P): Promise<void>
-  update(data: Partial<P>): Promise<void>
+  save(data: T): Promise<void>
 }
 
 export interface IFindByUniqueInput<T extends AggregateRoot> {
