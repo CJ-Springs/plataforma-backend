@@ -45,7 +45,7 @@ export class CreatePermissionHandler
         const { roles } = data
         const uniqueRoles = getUniqueValues<typeof roles>(roles)
 
-        for await (let _role of uniqueRoles) {
+        for await (const _role of uniqueRoles) {
           const existRole = await this.prisma.role.findUnique({
             where: { role: _role },
             select: { id: true },

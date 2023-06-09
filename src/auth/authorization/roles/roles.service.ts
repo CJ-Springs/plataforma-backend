@@ -11,7 +11,7 @@ export class RolesService {
         where: { id },
         include: { permissions: true },
       })
-      .catch((_err) => {
+      .catch(() => {
         throw new NotFoundException(`Rol con id ${id} no encontrado`)
       })
   }

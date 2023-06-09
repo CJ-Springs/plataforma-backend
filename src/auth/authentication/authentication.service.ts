@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { compare } from 'bcrypt'
 
 import { LoginDto } from './dtos'
@@ -20,7 +24,9 @@ export class AuthenticationService {
         include: { password: true, profile: true },
       })
       .catch(() => {
-        throw new BadRequestException('Las credenciales son inválidas')
+        throw new NotFoundException(
+          `No se ha encontrado al usuario con email ${email}`,
+        )
       })
 
     if (existUser) {
@@ -30,6 +36,7 @@ export class AuthenticationService {
         throw new BadRequestException('Las credenciales son inválidas')
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _password, ...user } = existUser
 
       const token = this.jwtService.sign({

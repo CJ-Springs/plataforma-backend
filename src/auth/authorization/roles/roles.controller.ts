@@ -34,7 +34,7 @@ export class RolesController {
 
     const uniqueRoles = getUniqueValues(roles)
 
-    for await (let role of uniqueRoles) {
+    for await (const role of uniqueRoles) {
       await this.commandBus.execute(
         new AssignPermissionCommand({ permission, role }),
       )

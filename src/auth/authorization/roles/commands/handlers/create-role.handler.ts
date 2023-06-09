@@ -43,7 +43,7 @@ export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
         const uniquePermissions =
           getUniqueValues<typeof _permissions>(_permissions)
 
-        for await (let permission_name of uniquePermissions) {
+        for await (const permission_name of uniquePermissions) {
           const _permission = await this.prisma.permission.findUnique({
             where: { name: permission_name },
             select: { name: true },

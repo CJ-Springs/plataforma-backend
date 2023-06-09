@@ -21,7 +21,7 @@ export class PermissionCreatedHandler
     if (data.roles.length) {
       const { roles } = data
 
-      for await (let role of roles) {
+      for await (const role of roles) {
         await this.commandBus.execute(
           new AssignPermissionCommand({
             permission: data.name,
