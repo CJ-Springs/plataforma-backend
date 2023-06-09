@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prepare:husky": "husky install"
+    "prepare:husky": "husky install",
+    "pre:commit": "npx pretty-quick --staged && pnpm run lint"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
