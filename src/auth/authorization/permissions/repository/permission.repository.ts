@@ -53,11 +53,11 @@ export class PermissionRepository implements IRepository<Permission> {
     const events = permission.getUncommittedEvents()
 
     await Promise.all(
-      events.map(async (event) => {
+      events.map((event) => {
         if (event instanceof PermissionCreatedEvent) {
           const { data } = event
 
-          return await this.createPermission({
+          return this.createPermission({
             id: data.id,
             name: data.name,
             description: data.description,

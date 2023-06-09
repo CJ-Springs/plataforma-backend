@@ -83,11 +83,11 @@ export class RoleRepository
     const events = role.getUncommittedEvents()
 
     await Promise.all(
-      events.map(async (event) => {
+      events.map((event) => {
         if (event instanceof RoleCreatedEvent) {
           const { data } = event
 
-          return await this.createRole({
+          return this.createRole({
             id: data.id,
             role: data.role,
             permissions: data.permissions,
@@ -97,7 +97,7 @@ export class RoleRepository
         if (event instanceof PermissionAssigned) {
           const { data } = event
 
-          return await this.assignPermission({
+          return this.assignPermission({
             permission: data.permission,
             role: data.role,
           })
