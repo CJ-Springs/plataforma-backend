@@ -45,12 +45,7 @@ export class Permission extends AggregateRoot {
     })
 
     if (!props.id) {
-      const event = new PermissionCreatedEvent({
-        ...permission.props,
-        id: permission.props.id.toString(),
-        name: permission.props.name.toString(),
-        roles: permission.rolesToDto(),
-      })
+      const event = new PermissionCreatedEvent(permission.toDTO())
 
       permission.apply(event)
     }
@@ -58,16 +53,16 @@ export class Permission extends AggregateRoot {
     return Result.ok<Permission>(permission)
   }
 
-  toDto(): PermissionPropsDTO {
+  toDTO(): PermissionPropsDTO {
     return {
       ...this.props,
       id: this.props.id.toString(),
       name: this.props.name.toString(),
-      roles: this.rolesToDto(),
+      roles: this.rolesToDTO(),
     }
   }
 
-  private rolesToDto(): AppRole[] {
+  private rolesToDTO(): AppRole[] {
     return this.props.roles.map((role) => role.toString() as AppRole)
   }
 }

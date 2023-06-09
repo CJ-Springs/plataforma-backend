@@ -44,11 +44,7 @@ export class Role extends AggregateRoot {
     })
 
     if (!props.id) {
-      const event = new RoleCreatedEvent({
-        id: roleId.toString(),
-        role: props.role,
-        permissions: props.permissions,
-      })
+      const event = new RoleCreatedEvent(role.toDTO())
 
       role.apply(event)
     }

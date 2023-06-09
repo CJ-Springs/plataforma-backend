@@ -42,7 +42,7 @@ export class PermissionRepository implements IRepository<Permission> {
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar encontrar el permiso ${id} en la db`,
+        `Error al intentar buscar el permiso ${id} en la db`,
       )
 
       return null

@@ -7,6 +7,7 @@ import { AppController } from './app.controller'
 import { AuthenticationModule } from './auth/authentication/authentication.module'
 import { RolesModule } from './auth/authorization/roles/roles.module'
 import { PermissionsModule } from './auth/authorization/permissions/permissions.module'
+import { UsersModule } from './users/users.module'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PermissionsModule } from './auth/authorization/permissions/permissions.
       isGlobal: true,
     }),
     PermissionsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   // providers: [

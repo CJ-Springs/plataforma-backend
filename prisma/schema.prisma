@@ -35,20 +35,16 @@ model User {
 }
 
 model Password {
-  id String @id @default(cuid())
-
-  passwordHash String 
+  passwordHash String  @map("password_hash")
   createdAt DateTime @default(now()) @map("created_at") 
 
-  user User @relation(fields: [userId], references: [id])
-  userId String @unique @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique @id @map("user_id") 
 
   @@map("passwords")
 }
 
 model Profile {
-  id String @id @default(cuid())
-
   firstname String 
   lastname String 
   document Int
@@ -56,8 +52,8 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
-  user User @relation(fields: [userId], references: [id])
-  userId String @unique @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique @id @map("user_id")
 
   @@map("profiles")
 }

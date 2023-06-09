@@ -1,3 +1,4 @@
 export * from './Identifier'
-export * from './UniqueField'
 export * from './UniqueEntityID'
+export * from './UniqueField'
+export * from './ValueObject'
