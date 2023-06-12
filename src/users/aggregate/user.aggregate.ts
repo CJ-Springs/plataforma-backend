@@ -12,6 +12,7 @@ export type UserProps = {
   email: Email
   password: Password
   isSuspended: boolean
+  deleted: boolean
   profile: Profile
   role: UniqueField
 }
@@ -21,6 +22,7 @@ export type UserPropsDTO = {
   email: string
   password: string
   isSuspended: boolean
+  deleted: boolean
   profile: {
     firstname: string
     lastname: string
@@ -38,6 +40,7 @@ export class User extends AggregateRoot {
   static create(props: Partial<UserPropsDTO>): Result<User> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.isSuspended, argumentName: 'isSuspended' },
+      { argument: props.deleted, argumentName: 'deleted' },
       { argument: props.role, argumentName: 'role' },
       { argument: props.profile, argumentName: 'profile' },
     ])
@@ -69,6 +72,7 @@ export class User extends AggregateRoot {
     const user = new User({
       id: new UniqueEntityID(props?.id),
       isSuspended: props.isSuspended,
+      deleted: props.deleted,
       role: new UniqueField(props.role),
       email: emailResult.getValue(),
       password: passwordResult.getValue(),

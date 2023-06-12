@@ -5,6 +5,7 @@ type UserCreatedEventProps = {
   email: string
   password: string
   isSuspended: boolean
+  deleted: boolean
   profile: {
     firstname: string
     lastname: string

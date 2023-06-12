@@ -29,18 +29,29 @@ export class UserRepository implements IRepository<User> {
         return null
       }
 
+      const {
+        id: userId,
+        email,
+        isSuspended,
+        deleted,
+        password,
+        profile,
+        role,
+      } = user
+
       return User.create({
-        id: user.id,
-        email: user.email,
-        isSuspended: user.isSuspended,
-        password: user.password.passwordHash,
+        id: userId,
+        email,
+        isSuspended,
+        deleted,
+        password: password.passwordHash,
         profile: {
-          firstname: user.profile.firstname,
-          lastname: user.profile.lastname,
-          phone: user.profile.phone,
-          document: user.profile.document,
+          firstname: profile.firstname,
+          lastname: profile.lastname,
+          phone: profile.phone,
+          document: profile.document,
         },
-        role: user.role.role,
+        role: role.role,
       })
     } catch (error) {
       this.logger.error(

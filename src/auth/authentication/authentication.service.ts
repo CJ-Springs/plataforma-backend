@@ -30,6 +30,10 @@ export class AuthenticationService {
       })
 
     if (existUser) {
+      if (existUser.deleted) {
+        throw new BadRequestException(`El usuario ${email} ha sido eliminado`)
+      }
+
       const match = await compare(password, existUser.password.passwordHash)
 
       if (!match) {

@@ -54,6 +54,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const userOrError = User.create({
       email,
       isSuspended: false,
+      deleted: false,
       role: data?.role ?? 'USER',
       password,
       profile: {
@@ -63,11 +64,9 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         document,
       },
     })
-
     if (userOrError.isFailure) {
       throw new BadRequestException(userOrError.getErrorValue())
     }
-
     const user = userOrError.getValue()
 
     await this.userRepository.save(user)

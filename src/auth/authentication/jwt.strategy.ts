@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
@@ -25,9 +29,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.prisma.user.findUnique({
       where: { id },
     })
-
     if (!user) {
       throw new NotFoundException(`Usuario con id ${id} no encontrado`)
+    }
+    if (user.deleted) {
+      throw new UnauthorizedException(
+        `El usuario con id ${id} ha sido eliminado`,
+      )
     }
 
     return user

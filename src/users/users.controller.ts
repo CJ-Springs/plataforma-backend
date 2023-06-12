@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
 import { CreateUserDto } from './dtos'
@@ -7,10 +14,14 @@ import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
+import { UsersService } from './users.service'
 
 @Controller('usuarios')
 export class UsersController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly userService: UsersService,
+  ) {}
 
   @RequiredPermissions('backoffice::crear-usuario')
   @UseGuards(PermissionGuard)
@@ -28,5 +39,12 @@ export class UsersController {
         role: data?.role,
       }),
     )
+  }
+
+  @RequiredPermissions('backoffice::eliminar-usuario')
+  @UseGuards(PermissionGuard)
+  @Delete(':ID')
+  async deleteUser(@Param('ID') id: string) {
+    return await this.userService.deleteUser(id)
   }
 }
