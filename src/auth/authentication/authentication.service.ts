@@ -21,7 +21,7 @@ export class AuthenticationService {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
-        include: { password: true, profile: true },
+        include: { password: true, profile: true, role: true },
       })
       .catch(() => {
         throw new NotFoundException(

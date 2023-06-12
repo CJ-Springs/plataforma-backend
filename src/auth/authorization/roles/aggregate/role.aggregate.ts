@@ -53,28 +53,33 @@ export class Role extends AggregateRoot {
   }
 
   addPermission({ name }: { name: string }): Result<Role> {
-    const nameAsIdentifier = new UniqueField(name)
-
-    const permissionIsAlreadyAdded = this.props.permissions.some((permission) =>
-      permission.equals(nameAsIdentifier),
-    )
-
+    const permissionIsAlreadyAdded = this.hasPermission(name)
     if (permissionIsAlreadyAdded) {
       return Result.fail<Role>(
         `El permiso ${name} ya forma parte del rol ${this.props.role}`,
       )
     }
 
+    const nameAsIdentifier = new UniqueField(name)
     this.props.permissions.push(nameAsIdentifier)
 
     const event = new PermissionAssigned({
       permission: name,
       role: this.props.role,
     })
-
     this.apply(event)
 
     return Result.ok<Role>(this)
+  }
+
+  hasPermission(permissionName: string): boolean {
+    const permissionNameAsIdentifier = new UniqueField(permissionName)
+
+    const hasPermission = this.props.permissions.some((permission) =>
+      permission.equals(permissionNameAsIdentifier),
+    )
+
+    return hasPermission
   }
 
   toDTO(): RolePropsDTO {
