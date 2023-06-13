@@ -4,6 +4,7 @@ import { genSalt, hash } from 'bcrypt'
 import { User } from '../aggregate/user.aggregate'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
 import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
+import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -78,6 +79,11 @@ export class UserRepository implements IRepository<User> {
 
           return this.changeUserStatus(data)
         }
+        if (event instanceof UserPasswordChangedEvent) {
+          const { data } = event
+
+          return this.changeUserPassword(data)
+        }
       }),
     )
   }
@@ -136,6 +142,31 @@ export class UserRepository implements IRepository<User> {
       this.logger.error(
         error,
         `Error al intentar cambiar el estado del usuario con id ${id} en la db`,
+      )
+    }
+  }
+
+  private async changeUserPassword(data: UserPasswordChangedEvent['data']) {
+    const { id, password } = data
+
+    const salt = await genSalt(10)
+    const passwordHash = await hash(password, salt)
+
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          password: {
+            update: {
+              passwordHash,
+            },
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar cambiar la contraseña del usuario con id ${id} en la db`,
       )
     }
   }

@@ -70,7 +70,6 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const user = userOrError.getValue()
 
     await this.userRepository.save(user)
-
     this.publisher.mergeObjectContext(user).commit()
 
     return {
