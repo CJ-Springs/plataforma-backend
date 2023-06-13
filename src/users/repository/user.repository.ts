@@ -3,6 +3,7 @@ import { genSalt, hash } from 'bcrypt'
 
 import { User } from '../aggregate/user.aggregate'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
+import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -72,6 +73,11 @@ export class UserRepository implements IRepository<User> {
 
           return this.createUser(data)
         }
+        if (event instanceof UserStatusChangedEvent) {
+          const { data } = event
+
+          return this.changeUserStatus(data)
+        }
       }),
     )
   }
@@ -112,6 +118,24 @@ export class UserRepository implements IRepository<User> {
       this.logger.error(
         error,
         `Error al intentar crear el usuario ${newUser.email} en la db`,
+      )
+    }
+  }
+
+  private async changeUserStatus(data: UserStatusChangedEvent['data']) {
+    const { id, isSuspended } = data
+
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          isSuspended,
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar cambiar el estado del usuario con id ${id} en la db`,
       )
     }
   }

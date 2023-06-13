@@ -6,6 +6,7 @@ import { Password } from './ValueObjects/password.value-object'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
+import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 
 export type UserProps = {
   id: UniqueEntityID
@@ -88,6 +89,16 @@ export class User extends AggregateRoot {
     }
 
     return Result.ok<User>(user)
+  }
+
+  changeStatus(): void {
+    this.props.isSuspended = !this.props.isSuspended
+
+    const event = new UserStatusChangedEvent({
+      id: this.props.id.toString(),
+      isSuspended: this.props.isSuspended,
+    })
+    this.apply(event)
   }
 
   toDTO(): Omit<UserPropsDTO, 'password'> {

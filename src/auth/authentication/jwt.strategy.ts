@@ -37,6 +37,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         `El usuario con id ${id} ha sido eliminado`,
       )
     }
+    if (user.isSuspended) {
+      throw new UnauthorizedException(`El usuario con id ${id} está suspendido`)
+    }
 
     return user
   }
