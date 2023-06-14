@@ -1,2 +1,5 @@
+export * from './Email'
 export * from './Result'
 export * from './Validate'
+export * from './logger/logger.module'
+export * from './logger/logger.service'

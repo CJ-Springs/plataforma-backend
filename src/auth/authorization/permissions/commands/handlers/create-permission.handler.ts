@@ -77,7 +77,7 @@ export class CreatePermissionHandler
         success: true,
         status: 201,
         message: 'Permiso creado correctamente',
-        data: permission.toDto(),
+        data: permission.toDTO(),
       }
     } else {
       throw new ConflictException(`El permiso ${data.name} ya fue creado`)

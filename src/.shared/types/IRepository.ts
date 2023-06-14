@@ -4,7 +4,7 @@ import { Result } from './../helpers/Result'
 
 export interface IRepository<T extends AggregateRoot> {
   findOneById(id: string): Promise<Result<T> | null>
-  save(data: T): Promise<void>
+  save(aggregate: T): Promise<void>
 }
 
 export interface IFindByUniqueInput<T extends AggregateRoot> {

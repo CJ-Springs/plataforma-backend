@@ -2,7 +2,7 @@ import { IsNotEmpty, Matches } from 'class-validator'
 
 // Minimum eight characters, at least one uppercase letter, one lowercase letter and one number:
 
-const passwordRegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*?[0-9]).{8,}$/
+export const passwordRegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*?[0-9]).{8,}$/
 
 export class PasswordValidation {
   @IsNotEmpty({

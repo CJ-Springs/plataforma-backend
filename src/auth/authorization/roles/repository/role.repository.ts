@@ -87,20 +87,13 @@ export class RoleRepository
         if (event instanceof RoleCreatedEvent) {
           const { data } = event
 
-          return this.createRole({
-            id: data.id,
-            role: data.role,
-            permissions: data.permissions,
-          })
+          return this.createRole(data)
         }
 
         if (event instanceof PermissionAssigned) {
           const { data } = event
 
-          return this.assignPermission({
-            permission: data.permission,
-            role: data.role,
-          })
+          return this.assignPermission(data)
         }
       }),
     )

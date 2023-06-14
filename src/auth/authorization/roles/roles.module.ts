@@ -9,6 +9,7 @@ import { EventHandlers } from './events/handlers'
 
 @Module({
   imports: [CqrsModule],
+  exports: [RoleRepository],
   controllers: [RolesController],
   providers: [
     RoleRepository,
