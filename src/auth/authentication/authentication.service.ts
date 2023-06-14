@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { CommandBus } from '@nestjs/cqrs'
+import { CommandBus, EventBus } from '@nestjs/cqrs'
 import { compare } from 'bcrypt'
 
 import { LoginDto, StepOneDto, StepThreeDto, StepTwoDto } from './dtos'
@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from '@/.shared/types'
 import { ONE_MINUTE, getNumericCode } from '@/.shared/utils'
 import { ChangeUserPasswordCommand } from '@/users/commands/impl/change-user-password.command'
+import { RecoveryCodeGeneratedEvent } from './events/impl/recovery-code-generated.event'
 
 @Injectable()
 export class AuthenticationService {
@@ -19,6 +20,7 @@ export class AuthenticationService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly commandBus: CommandBus,
+    private readonly eventBus: EventBus,
   ) {}
 
   async login({ email, password }: LoginDto) {
@@ -96,13 +98,18 @@ export class AuthenticationService {
       },
     })
 
-    //TODO: no enviar el código en la response, por email
+    this.eventBus.publish(
+      new RecoveryCodeGeneratedEvent({
+        userId: existUser.id,
+        email,
+        code: code.code,
+      }),
+    )
 
     return {
       success: true,
       statusCode: 200,
       message: `Código enviado al email ${email}`,
-      data: code,
     }
   }
 
