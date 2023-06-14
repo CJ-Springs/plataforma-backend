@@ -10,6 +10,7 @@ import { RolesModule } from './auth/authorization/roles/roles.module'
 import { PermissionsModule } from './auth/authorization/permissions/permissions.module'
 import { UsersModule } from './users/users.module'
 import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
+import { NotificationsModule } from './notifications/notifications.module'
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
     }),
     PermissionsModule,
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
