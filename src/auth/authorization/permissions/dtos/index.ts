@@ -1,1 +1,1 @@
-export * from './CreatePermission.dto'
+export * from './create-permission.dto'

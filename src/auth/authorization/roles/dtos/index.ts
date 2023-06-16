@@ -1,2 +1,2 @@
-export * from './AssignPermission.dto'
-export * from './CreateRole.dto'
+export * from './assign-permission.dto'
+export * from './create-role.dto'

@@ -1,8 +1,8 @@
 import { AggregateRoot } from '@nestjs/cqrs'
 import { AppRole } from '@prisma/client'
 
-import { Profile } from './ValueObjects/profile.value-object'
-import { Password } from './ValueObjects/password.value-object'
+import { Profile } from './value-objects/profile.value-object'
+import { Password } from './value-objects/password.value-object'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
@@ -25,12 +25,7 @@ export type UserPropsDTO = {
   password: string
   isSuspended: boolean
   deleted: boolean
-  profile: {
-    firstname: string
-    lastname: string
-    phone: string
-    document: number
-  }
+  profile: Profile['props']
   role: AppRole
 }
 
