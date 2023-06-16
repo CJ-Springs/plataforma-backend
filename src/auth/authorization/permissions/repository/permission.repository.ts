@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common'
 
+import { Permission } from '../aggregate/permission.aggregate'
+import { PermissionCreatedEvent } from '../events/impl/permission-created.event'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { IRepository } from '@/.shared/types'
 import { Result } from '@/.shared/helpers'
-import { Permission } from '../aggregate/permission.aggregate'
-import { PermissionCreatedEvent } from '../events/impl/permission-created.event'
 
 @Injectable()
 export class PermissionRepository implements IRepository<Permission> {
@@ -31,14 +31,10 @@ export class PermissionRepository implements IRepository<Permission> {
         return null
       }
 
-      const role = Permission.create({
-        id: _permission.id,
-        name: _permission.name,
-        description: _permission.description,
+      return Permission.create({
+        ..._permission,
         roles: _permission.roles.map((role) => role.role),
       })
-
-      return Result.ok<Permission>(role.getValue())
     } catch (error) {
       this.logger.error(
         error,
@@ -55,13 +51,7 @@ export class PermissionRepository implements IRepository<Permission> {
     await Promise.all(
       events.map((event) => {
         if (event instanceof PermissionCreatedEvent) {
-          const { data } = event
-
-          return this.createPermission({
-            id: data.id,
-            name: data.name,
-            description: data.description,
-          })
+          return this.createPermission(event.data)
         }
       }),
     )

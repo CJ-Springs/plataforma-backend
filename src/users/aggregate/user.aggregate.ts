@@ -3,11 +3,12 @@ import { AppRole } from '@prisma/client'
 
 import { Profile } from './value-objects/profile.value-object'
 import { Password } from './value-objects/password.value-object'
-import { UniqueEntityID, UniqueField } from '@/.shared/domain'
-import { Email, Result, Validate } from '@/.shared/helpers'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
 import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
+import { UniqueEntityID, UniqueField } from '@/.shared/domain'
+import { Email, Result, Validate } from '@/.shared/helpers'
+import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
 
 export type UserProps = {
   id: UniqueEntityID
@@ -16,7 +17,7 @@ export type UserProps = {
   isSuspended: boolean
   deleted: boolean
   profile: Profile
-  role: UniqueField
+  role: UniqueField<AppRole>
 }
 
 export type UserPropsDTO = {
@@ -29,12 +30,17 @@ export type UserPropsDTO = {
   role: AppRole
 }
 
-export class User extends AggregateRoot {
+export type UserPropsDTOWithoutPassword = Omit<UserPropsDTO, 'password'>
+
+export class User
+  extends AggregateRoot
+  implements IAggregateToDTO<UserPropsDTOWithoutPassword>
+{
   private constructor(public props: UserProps) {
     super()
   }
 
-  static create(props: Partial<UserPropsDTO>): Result<User> {
+  static create(props: DeepPartial<UserPropsDTO>): Result<User> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.isSuspended, argumentName: 'isSuspended' },
       { argument: props.deleted, argumentName: 'deleted' },
@@ -55,13 +61,7 @@ export class User extends AggregateRoot {
       return Result.fail(passwordResult.getErrorValue())
     }
 
-    const { profile } = props
-    const profileResult = Profile.create({
-      firstname: profile.firstname,
-      lastname: profile.lastname,
-      phone: profile.phone,
-      document: profile.document,
-    })
+    const profileResult = Profile.create(props.profile)
     if (profileResult.isFailure) {
       return Result.fail(profileResult.getErrorValue())
     }
@@ -87,7 +87,7 @@ export class User extends AggregateRoot {
     return Result.ok<User>(user)
   }
 
-  changeStatus(): void {
+  changeStatus(): Result<User> {
     this.props.isSuspended = !this.props.isSuspended
 
     const event = new UserStatusChangedEvent({
@@ -95,6 +95,8 @@ export class User extends AggregateRoot {
       isSuspended: this.props.isSuspended,
     })
     this.apply(event)
+
+    return Result.ok(this)
   }
 
   changePassword(newPassword: string): Result<User> {
@@ -114,7 +116,7 @@ export class User extends AggregateRoot {
     return Result.ok(this)
   }
 
-  toDTO(): Omit<UserPropsDTO, 'password'> {
+  toDTO(): UserPropsDTOWithoutPassword {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...props } = this.props
 
@@ -123,7 +125,7 @@ export class User extends AggregateRoot {
       id: props.id.toString(),
       email: props.email.getValue(),
       profile: props.profile.getValue(),
-      role: props.role.toString() as AppRole,
+      role: props.role.toValue(),
     }
   }
 }

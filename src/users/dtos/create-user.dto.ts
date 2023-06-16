@@ -4,6 +4,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   Validate,
 } from 'class-validator'
@@ -32,8 +33,9 @@ export class CreateUserDto {
   @IsNotEmpty({
     message: "Debe enviar el campo 'phone'",
   })
-  @IsString({
-    message: "El campo 'phone' debe ser un string",
+  @IsPhoneNumber('AR', {
+    message:
+      "El campo 'phone' debe cumplir con el formato de un celular argentino (10 números mínimo)",
   })
   phone: string
 

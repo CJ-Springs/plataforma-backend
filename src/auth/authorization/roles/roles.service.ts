@@ -5,7 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getRoleById({ id }: { id: string }) {
+  async getRoleById(id: string) {
     return await this.prisma.role
       .findFirstOrThrow({
         where: { id },

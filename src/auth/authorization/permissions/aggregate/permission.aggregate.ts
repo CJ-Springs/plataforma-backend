@@ -1,9 +1,10 @@
 import { AggregateRoot } from '@nestjs/cqrs'
 import { AppRole } from '@prisma/client'
 
+import { PermissionCreatedEvent } from '../events/impl/permission-created.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { PermissionCreatedEvent } from '../events/impl/permission-created.event'
+import { IAggregateToDTO } from '@/.shared/types'
 
 export type PermissionProps = {
   id: UniqueEntityID
@@ -19,7 +20,10 @@ export type PermissionPropsDTO = {
   roles: AppRole[]
 }
 
-export class Permission extends AggregateRoot {
+export class Permission
+  extends AggregateRoot
+  implements IAggregateToDTO<PermissionPropsDTO>
+{
   private constructor(public props: PermissionProps) {
     super()
   }
@@ -28,25 +32,21 @@ export class Permission extends AggregateRoot {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.name, argumentName: 'name' },
       { argument: props.description, argumentName: 'description' },
+      { argument: props.roles, argumentName: 'roles' },
     ])
-
     if (guardResult.isFailure) {
-      return Result.fail<Permission>(guardResult.getErrorValue())
+      return Result.fail(guardResult.getErrorValue())
     }
 
-    const id = new UniqueEntityID(props?.id)
-    const name = new UniqueField(props.name)
-
     const permission = new Permission({
-      id,
-      name,
+      id: new UniqueEntityID(props?.id),
+      name: new UniqueField(props.name),
       description: props.description,
       roles: props.roles.map((role) => new UniqueField(role)),
     })
 
-    if (!props.id) {
+    if (!props?.id) {
       const event = new PermissionCreatedEvent(permission.toDTO())
-
       permission.apply(event)
     }
 

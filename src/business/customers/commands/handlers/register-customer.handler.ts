@@ -7,6 +7,7 @@ import { CustomerRepository } from '../../repository/customer.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
+import { StandardResponse } from '@/.shared/types'
 
 @CommandHandler(RegisterCustomerCommand)
 export class RegisterCustomerHandler
@@ -19,7 +20,7 @@ export class RegisterCustomerHandler
     private readonly customerRepository: CustomerRepository,
   ) {}
 
-  async execute(command: RegisterCustomerCommand) {
+  async execute(command: RegisterCustomerCommand): Promise<StandardResponse> {
     this.logger.log('Ejecutando el RegisterCustomer command handler')
 
     const validateCommand = this.validate(command)
@@ -56,7 +57,7 @@ export class RegisterCustomerHandler
 
     return {
       success: true,
-      statusCode: 201,
+      status: 201,
       message: 'Nuevo cliente registrado correctamente',
       data: customer.toDTO(),
     }

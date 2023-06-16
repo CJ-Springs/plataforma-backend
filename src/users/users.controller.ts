@@ -9,11 +9,11 @@ import {
 } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
-import { CreateUserDto } from './dtos'
 import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
+import { CreateUserDto } from './dtos'
 import { UsersService } from './users.service'
 import { CreateUserCommand } from './commands/impl/create-user.command'
 import { ChangeUserStatusCommand } from './commands/impl/change-user-status.command'
@@ -28,18 +28,10 @@ export class UsersController {
   @RequiredPermissions('backoffice::crear-usuario')
   @UseGuards(PermissionGuard)
   @Post()
-  async createUser(@Body() data: CreateUserDto) {
-    const { email, document, firstname, phone, lastname } = data
-
+  async createUser(@Body() newUser: CreateUserDto) {
+    const { email, role, ...profile } = newUser
     return await this.commandBus.execute(
-      new CreateUserCommand({
-        email,
-        document,
-        firstname,
-        lastname,
-        phone,
-        role: data?.role,
-      }),
+      new CreateUserCommand({ email, role, profile }),
     )
   }
 
