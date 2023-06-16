@@ -4,15 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { CommandBus, EventBus } from '@nestjs/cqrs'
+import { JwtService } from '@nestjs/jwt'
 import { compare } from 'bcrypt'
 
 import { LoginDto, StepOneDto, StepThreeDto, StepTwoDto } from './dtos'
+import { RecoveryCodeGeneratedEvent } from './events/impl/recovery-code-generated.event'
 import { PrismaService } from '@/.shared/infra/prisma.service'
-import { JwtService } from '@nestjs/jwt'
-import { JwtPayload } from '@/.shared/types'
+import { JwtPayload, StandardResponse } from '@/.shared/types'
 import { ONE_MINUTE, getNumericCode } from '@/.shared/utils'
 import { ChangeUserPasswordCommand } from '@/users/commands/impl/change-user-password.command'
-import { RecoveryCodeGeneratedEvent } from './events/impl/recovery-code-generated.event'
 
 @Injectable()
 export class AuthenticationService {
@@ -23,7 +23,7 @@ export class AuthenticationService {
     private readonly eventBus: EventBus,
   ) {}
 
-  async login({ email, password }: LoginDto) {
+  async login({ email, password }: LoginDto): Promise<StandardResponse> {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -57,7 +57,7 @@ export class AuthenticationService {
 
       return {
         success: true,
-        statusCode: 200,
+        status: 200,
         message: 'Usuario logeado correctamente',
         data: {
           ...user,
@@ -67,7 +67,7 @@ export class AuthenticationService {
     }
   }
 
-  async generateRecoveryCode({ email }: StepOneDto) {
+  async generateRecoveryCode({ email }: StepOneDto): Promise<StandardResponse> {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -108,12 +108,12 @@ export class AuthenticationService {
 
     return {
       success: true,
-      statusCode: 200,
+      status: 200,
       message: `Código enviado al email ${email}`,
     }
   }
 
-  async validateCode({ email, code }: StepTwoDto) {
+  async validateCode({ email, code }: StepTwoDto): Promise<StandardResponse> {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -144,12 +144,16 @@ export class AuthenticationService {
 
     return {
       success: true,
-      statusCode: 200,
+      status: 200,
       message: `Código válido`,
     }
   }
 
-  async useRecoveryCode({ code, email, password }: StepThreeDto) {
+  async useRecoveryCode({
+    code,
+    email,
+    password,
+  }: StepThreeDto): Promise<StandardResponse> {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },

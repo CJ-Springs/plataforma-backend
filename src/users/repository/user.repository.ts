@@ -31,27 +31,13 @@ export class UserRepository implements IRepository<User> {
         return null
       }
 
-      const {
-        id: userId,
-        email,
-        isSuspended,
-        deleted,
-        password,
-        profile,
-        role,
-      } = user
+      const { password, role } = user
 
       return User.create({
-        id: userId,
-        email,
-        isSuspended,
-        deleted,
+        ...user,
         password: password.passwordHash,
         profile: {
-          firstname: profile.firstname,
-          lastname: profile.lastname,
-          phone: profile.phone,
-          document: profile.document,
+          ...user.profile,
         },
         role: role.role,
       })
@@ -83,17 +69,13 @@ export class UserRepository implements IRepository<User> {
   }
 
   private async createUser(newUser: UserCreatedEvent['data']) {
-    const { id, email, password, isSuspended, profile, role } = newUser
-
-    const salt = await genSalt(10)
-    const passwordHash = await hash(password, salt)
+    const { password, profile, role, ...user } = newUser
+    const passwordHash = await this.useHash(password)
 
     try {
       await this.prisma.user.create({
         data: {
-          id,
-          email,
-          isSuspended,
+          ...user,
           password: {
             create: {
               passwordHash,
@@ -101,10 +83,7 @@ export class UserRepository implements IRepository<User> {
           },
           profile: {
             create: {
-              firstname: profile.firstname,
-              lastname: profile.lastname,
-              phone: profile.phone,
-              document: profile.document,
+              ...profile,
             },
           },
           role: {
@@ -142,9 +121,7 @@ export class UserRepository implements IRepository<User> {
 
   private async changeUserPassword(data: UserPasswordChangedEvent['data']) {
     const { id, password } = data
-
-    const salt = await genSalt(10)
-    const passwordHash = await hash(password, salt)
+    const passwordHash = await this.useHash(password)
 
     try {
       await this.prisma.user.update({
@@ -163,5 +140,12 @@ export class UserRepository implements IRepository<User> {
         `Error al intentar cambiar la contraseña del usuario con id ${id} en la db`,
       )
     }
+  }
+
+  private async useHash(value: string, rounds = 10): Promise<string> {
+    const salt = await genSalt(rounds)
+    const hashedValue = await hash(value, salt)
+
+    return hashedValue
   }
 }

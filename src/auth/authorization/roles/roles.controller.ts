@@ -27,18 +27,14 @@ export class RolesController {
   @UseGuards(PermissionGuard)
   @Get(':ID')
   async getRole(@Param('ID') ID: string) {
-    return await this.rolesService.getRoleById({ id: ID })
+    return await this.rolesService.getRoleById(ID)
   }
 
   @RequiredPermissions('backoffice::crear-rol')
   @UseGuards(PermissionGuard)
   @Post()
-  async createRole(@Body() data: CreateRoleDto) {
-    const { role, permissions } = data
-
-    return await this.commandBus.execute(
-      new CreateRoleCommand({ role, permissions }),
-    )
+  async createRole(@Body() newRole: CreateRoleDto) {
+    return await this.commandBus.execute(new CreateRoleCommand(newRole))
   }
 
   @RequiredPermissions('backoffice::asignar-permiso')
@@ -46,7 +42,6 @@ export class RolesController {
   @Patch('asignar-permiso')
   async assignPermission(@Body() data: AssignPermissionDto) {
     const { permission, roles } = data
-
     const uniqueRoles = getUniqueValues(roles)
 
     for await (const role of uniqueRoles) {

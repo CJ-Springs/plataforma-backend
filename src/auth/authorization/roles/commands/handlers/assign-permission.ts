@@ -6,6 +6,7 @@ import { RoleRepository } from '../../repository/role.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { Result, Validate } from '@/.shared/helpers'
+import { StandardResponse } from '@/.shared/types'
 
 @CommandHandler(AssignPermissionCommand)
 export class AssignPermissionHandler
@@ -18,11 +19,10 @@ export class AssignPermissionHandler
     private readonly roleRepository: RoleRepository,
   ) {}
 
-  async execute(command: AssignPermissionCommand) {
+  async execute(command: AssignPermissionCommand): Promise<StandardResponse> {
     this.logger.log('Ejecutando el AssignPermission command handler')
 
     const validateCommand = this.validate(command)
-
     if (validateCommand.isFailure) {
       throw new BadRequestException(validateCommand.getErrorValue())
     }
@@ -33,39 +33,34 @@ export class AssignPermissionHandler
       where: { name: data.permission },
       select: { id: true, name: true, description: true },
     })
-
-    if (existPermission) {
-      const roleOrNull = await this.roleRepository.findOneByUniqueInput({
-        role: data.role,
-      })
-
-      if (!roleOrNull) {
-        throw new NotFoundException(`El rol ${data.role} no se ha encontrado`)
-      }
-
-      const role = roleOrNull.getValue()
-
-      const permissionAddedResult = role.addPermission({
-        name: data.permission,
-      })
-
-      if (permissionAddedResult.isFailure) {
-        throw new BadRequestException(permissionAddedResult.getErrorValue())
-      }
-
-      await this.roleRepository.save(permissionAddedResult.getValue())
-
-      this.publisher.mergeObjectContext(role).commit()
-
-      return {
-        success: true,
-        statusCode: 200,
-        message: `Permiso asignado al rol ${data.role}`,
-      }
-    } else {
+    if (!existPermission) {
       throw new NotFoundException(
         `El permiso ${data.permission} no se ha encontrado`,
       )
+    }
+
+    const roleOrNull = await this.roleRepository.findOneByUniqueInput({
+      role: data.role,
+    })
+    if (!roleOrNull) {
+      throw new NotFoundException(`El rol ${data.role} no se ha encontrado`)
+    }
+    const role = roleOrNull.getValue()
+
+    const permissionAddedResult = role.addPermission({
+      permission: data.permission,
+    })
+    if (permissionAddedResult.isFailure) {
+      throw new BadRequestException(permissionAddedResult.getErrorValue())
+    }
+
+    await this.roleRepository.save(permissionAddedResult.getValue())
+    this.publisher.mergeObjectContext(role).commit()
+
+    return {
+      success: true,
+      status: 200,
+      message: `Permiso asignado al rol ${data.role}`,
     }
   }
 

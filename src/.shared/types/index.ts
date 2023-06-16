@@ -11,3 +11,16 @@ export type JwtPayload = {
   firstname: string
   lastname: string
 }
+
+type SuccessStatusCode = 200 | 201
+
+export type StandardResponse<T = any> = {
+  success: true
+  status: SuccessStatusCode
+  message: string
+  data?: T
+}
+
+export interface IAggregateToDTO<T extends Record<string, any>> {
+  toDTO(): T
+}

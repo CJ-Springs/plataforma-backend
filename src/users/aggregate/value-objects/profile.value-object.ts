@@ -14,7 +14,7 @@ export class Profile extends ValueObject<ProfileProps> {
     super(props)
   }
 
-  static create(props: ProfileProps): Result<Profile> {
+  static create(props: Partial<ProfileProps>): Result<Profile> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.firstname, argumentName: 'firstname' },
       { argument: props.lastname, argumentName: 'lastname' },
@@ -28,7 +28,14 @@ export class Profile extends ValueObject<ProfileProps> {
 
     // TODO: validar el phone
 
-    return Result.ok<Profile>(new Profile(props))
+    const profile = new Profile({
+      firstname: props.firstname,
+      lastname: props.lastname,
+      document: props.document,
+      phone: props.phone,
+    })
+
+    return Result.ok<Profile>(profile)
   }
 
   getValue(): ProfileProps {

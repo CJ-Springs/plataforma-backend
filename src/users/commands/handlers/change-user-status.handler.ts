@@ -3,8 +3,8 @@ import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { UserRepository } from '../../repository/user.repository'
 import { ChangeUserStatusCommand } from '../impl/change-user-status.command'
-import { LoggerService } from '@/.shared/helpers/logger/logger.service'
-import { Result, Validate } from '@/.shared/helpers'
+import { Result, Validate, LoggerService } from '@/.shared/helpers'
+import { StandardResponse } from '@/.shared/types'
 
 @CommandHandler(ChangeUserStatusCommand)
 export class ChangeUserStatusHandler
@@ -16,7 +16,7 @@ export class ChangeUserStatusHandler
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(command: ChangeUserStatusCommand) {
+  async execute(command: ChangeUserStatusCommand): Promise<StandardResponse> {
     this.logger.log('Ejecutando el ChangeUserStatus command handler')
 
     const validateCommand = this.validate(command)
@@ -40,7 +40,7 @@ export class ChangeUserStatusHandler
 
     return {
       success: true,
-      statusCode: 200,
+      status: 200,
       message: `Usuario ${
         user.props.isSuspended ? 'suspendido' : 'activado'
       } correctamente`,

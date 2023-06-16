@@ -3,8 +3,8 @@ import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { UserRepository } from '../../repository/user.repository'
 import { ChangeUserPasswordCommand } from '../impl/change-user-password.command'
-import { LoggerService } from '@/.shared/helpers/logger/logger.service'
-import { Result, Validate } from '@/.shared/helpers'
+import { Result, Validate, LoggerService } from '@/.shared/helpers'
+import { StandardResponse } from '@/.shared/types'
 
 @CommandHandler(ChangeUserPasswordCommand)
 export class ChangeUserPasswordHandler
@@ -16,7 +16,7 @@ export class ChangeUserPasswordHandler
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(command: ChangeUserPasswordCommand) {
+  async execute(command: ChangeUserPasswordCommand): Promise<StandardResponse> {
     this.logger.log('Ejecutando el ChangeUserPassword command handler')
 
     const validateCommand = this.validate(command)
@@ -33,6 +33,7 @@ export class ChangeUserPasswordHandler
       )
     }
     const user = userOrNull.getValue()
+
     const passwordChangedResult = user.changePassword(data.password)
     if (passwordChangedResult.isFailure) {
       throw new BadRequestException(passwordChangedResult.getErrorValue())
@@ -43,7 +44,7 @@ export class ChangeUserPasswordHandler
 
     return {
       success: true,
-      statusCode: 200,
+      status: 200,
       message: `Contraseña cambiada correctamente`,
     }
   }

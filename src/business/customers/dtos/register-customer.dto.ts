@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
+  IsPositive,
   IsString,
   Validate,
 } from 'class-validator'
@@ -37,6 +38,7 @@ export class RegisterCustomerDto extends AddressDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'code'" })
   @IsInt({ message: "El campo 'code' debe ser un número entero" })
+  @IsPositive({ message: "El campo 'code' no puede ser un número negativo" })
   code: number
 
   @Validate(RequireEmail)
@@ -55,9 +57,15 @@ export class RegisterCustomerDto extends AddressDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'paymentDeadline'" })
   @IsInt({ message: "El campo 'paymentDeadline' debe ser un número entero" })
+  @IsPositive({
+    message: "El campo 'paymentDeadline' no puede ser un número negativo",
+  })
   paymentDeadline: number
 
   @IsOptional()
   @IsInt({ message: "El campo 'discount' debe ser un número entero" })
+  @IsPositive({
+    message: "El campo 'discount' no puede ser un número negativo",
+  })
   discount?: number
 }

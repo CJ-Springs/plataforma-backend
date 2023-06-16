@@ -1,8 +1,8 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
+import { AssignPermissionCommand } from '../../commands/impl/assign-permission'
 import { PermissionCreatedEvent } from '@/auth/authorization/permissions/events/impl/permission-created.event'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
-import { AssignPermissionCommand } from '../../commands/impl/assign-permission'
 
 @EventsHandler(PermissionCreatedEvent)
 export class PermissionCreatedHandler
@@ -20,7 +20,6 @@ export class PermissionCreatedHandler
 
     if (data.roles.length) {
       const { roles } = data
-
       for await (const role of roles) {
         await this.commandBus.execute(
           new AssignPermissionCommand({

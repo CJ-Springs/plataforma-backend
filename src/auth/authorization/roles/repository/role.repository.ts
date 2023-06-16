@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 
-import { PrismaService } from '@/.shared/infra/prisma.service'
-import { LoggerService } from '@/.shared/helpers/logger/logger.service'
-import { IFindByUniqueInput, IRepository } from '@/.shared/types'
-import { Result } from '@/.shared/helpers'
 import { Role } from '../aggregate/role.aggregate'
 import { RoleCreatedEvent } from '../events/impl/role-created.event'
 import { PermissionAssigned } from '../events/impl/permission-assigned.event'
+import { PrismaService } from '@/.shared/infra/prisma.service'
+import { LoggerService, Result } from '@/.shared/helpers'
+import { IFindByUniqueInput, IRepository } from '@/.shared/types'
 
 @Injectable()
 export class RoleRepository
@@ -35,13 +34,10 @@ export class RoleRepository
         return null
       }
 
-      const role = Role.create({
-        id: _role.id,
-        role: _role.role,
+      return Role.create({
+        ..._role,
         permissions: _role.permissions.map((permission) => permission.name),
       })
-
-      return Result.ok<Role>(role.getValue())
     } catch (error) {
       this.logger.error(
         error,
@@ -65,13 +61,10 @@ export class RoleRepository
         return null
       }
 
-      const role = Role.create({
-        id: _role.id,
-        role: _role.role,
+      return Role.create({
+        ..._role,
         permissions: _role.permissions.map((permission) => permission.name),
       })
-
-      return Result.ok<Role>(role.getValue())
     } catch (error) {
       this.logger.error(error, `Error al intentar encontrar el rol en la db`)
 
@@ -94,11 +87,9 @@ export class RoleRepository
     )
   }
 
-  private async createRole({
-    id,
-    role,
-    permissions,
-  }: RoleCreatedEvent['data']) {
+  private async createRole(newRole: RoleCreatedEvent['data']) {
+    const { permissions, ...role } = newRole
+
     try {
       const _permissions = permissions.map((permission) => ({
         name: permission,
@@ -106,8 +97,7 @@ export class RoleRepository
 
       await this.prisma.role.create({
         data: {
-          id,
-          role,
+          ...role,
           permissions: {
             connect: _permissions,
           },

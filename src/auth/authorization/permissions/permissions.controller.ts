@@ -12,11 +12,9 @@ export class PermissionsController {
   @RequiredPermissions('backoffice::crear-permiso')
   @UseGuards(PermissionGuard)
   @Post()
-  async createPermission(@Body() data: CreatePermissionDto) {
-    const { name, description, roles } = data
-
+  async createPermission(@Body() newPermission: CreatePermissionDto) {
     return await this.commandBus.execute(
-      new CreatePermissionCommand({ name, description, roles }),
+      new CreatePermissionCommand(newPermission),
     )
   }
 }

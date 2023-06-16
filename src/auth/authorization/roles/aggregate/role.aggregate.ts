@@ -1,14 +1,15 @@
 import { AggregateRoot } from '@nestjs/cqrs'
 import { AppRole } from '@prisma/client'
 
+import { PermissionAssigned } from '../events/impl/permission-assigned.event'
+import { RoleCreatedEvent } from '../events/impl/role-created.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { RoleCreatedEvent } from '../events/impl/role-created.event'
-import { PermissionAssigned } from '../events/impl/permission-assigned.event'
+import { IAggregateToDTO } from '@/.shared/types'
 
 export type RoleProps = {
   id: UniqueEntityID
-  role: AppRole
+  role: UniqueField<AppRole>
   permissions: UniqueField[]
 }
 
@@ -18,7 +19,10 @@ export type RolePropsDTO = {
   permissions: string[]
 }
 
-export class Role extends AggregateRoot {
+export class Role
+  extends AggregateRoot
+  implements IAggregateToDTO<RolePropsDTO>
+{
   private constructor(public props: RoleProps) {
     super()
   }
@@ -28,16 +32,13 @@ export class Role extends AggregateRoot {
       { argument: props.role, argumentName: 'role' },
       { argument: props.permissions, argumentName: 'permissions' },
     ])
-
     if (guardResult.isFailure) {
-      return Result.fail<Role>(guardResult.getErrorValue())
+      return Result.fail(guardResult.getErrorValue())
     }
 
-    const roleId = new UniqueEntityID(props?.id)
-
     const role = new Role({
-      id: roleId,
-      role: props.role,
+      id: new UniqueEntityID(props?.id),
+      role: new UniqueField(props.role),
       permissions: props.permissions?.map(
         (permission) => new UniqueField(permission),
       ),
@@ -45,27 +46,25 @@ export class Role extends AggregateRoot {
 
     if (!props.id) {
       const event = new RoleCreatedEvent(role.toDTO())
-
       role.apply(event)
     }
 
     return Result.ok<Role>(role)
   }
 
-  addPermission({ name }: { name: string }): Result<Role> {
-    const permissionIsAlreadyAdded = this.hasPermission(name)
+  addPermission({ permission }: { permission: string }): Result<Role> {
+    const permissionIsAlreadyAdded = this.hasPermission(permission)
     if (permissionIsAlreadyAdded) {
-      return Result.fail<Role>(
-        `El permiso ${name} ya forma parte del rol ${this.props.role}`,
+      return Result.fail(
+        `El permiso ${permission} ya forma parte del rol ${this.props.role.toValue()}`,
       )
     }
 
-    const nameAsIdentifier = new UniqueField(name)
-    this.props.permissions.push(nameAsIdentifier)
+    this.props.permissions.push(new UniqueField(permission))
 
     const event = new PermissionAssigned({
-      permission: name,
-      role: this.props.role,
+      permission,
+      role: this.props.role.toValue(),
     })
     this.apply(event)
 
@@ -86,6 +85,7 @@ export class Role extends AggregateRoot {
     return {
       ...this.props,
       id: this.props.id.toString(),
+      role: this.props.role.toValue(),
       permissions: this.props.permissions.map((permission) =>
         permission.toString(),
       ),

@@ -6,12 +6,13 @@ import {
 } from '@nestjs/common'
 
 import { CreatePermissionCommand } from '../impl/create-permission.command'
+import { Permission } from '../../aggregate/permission.aggregate'
+import { PermissionRepository } from '../../repository/permission.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { getUniqueValues } from '@/.shared/utils/getUniqueValues'
-import { Permission } from '../../aggregate/permission.aggregate'
-import { PermissionRepository } from '../../repository/permission.repository'
+import { StandardResponse } from '@/.shared/types'
 
 @CommandHandler(CreatePermissionCommand)
 export class CreatePermissionHandler
@@ -24,11 +25,10 @@ export class CreatePermissionHandler
     private readonly publisher: EventPublisher,
   ) {}
 
-  async execute(command: CreatePermissionCommand) {
+  async execute(command: CreatePermissionCommand): Promise<StandardResponse> {
     this.logger.log('Ejecutando el CreatePermission command handler')
 
     const validateCommand = this.validate(command)
-
     if (validateCommand.isFailure) {
       throw new BadRequestException(validateCommand.getErrorValue())
     }
@@ -39,48 +39,42 @@ export class CreatePermissionHandler
       where: { name: data.name },
       select: { id: true },
     })
+    if (existPermission) {
+      throw new ConflictException(`El permiso ${data.name} ya fue creado`)
+    }
 
-    if (!existPermission) {
-      if (data.roles) {
-        const { roles } = data
-        const uniqueRoles = getUniqueValues<typeof roles>(roles)
+    const uniqueRoles = getUniqueValues<typeof data.roles>(data?.roles ?? [])
 
-        for await (const _role of uniqueRoles) {
-          const existRole = await this.prisma.role.findUnique({
-            where: { role: _role },
-            select: { id: true },
-          })
+    if (uniqueRoles.length) {
+      for await (const role of uniqueRoles) {
+        const existRole = await this.prisma.role.findUnique({
+          where: { role },
+          select: { id: true },
+        })
 
-          if (!existRole) {
-            throw new NotFoundException(`El rol ${_role} no se ha encontrado`)
-          }
+        if (!existRole) {
+          throw new NotFoundException(`El rol ${role} no se ha encontrado`)
         }
       }
+    }
 
-      const permissionOrError = Permission.create({
-        name: data.name,
-        description: data.description,
-        roles: getUniqueValues(data.roles ?? []),
-      })
+    const permissionOrError = Permission.create({
+      ...data,
+      roles: uniqueRoles,
+    })
+    if (permissionOrError.isFailure) {
+      throw new BadRequestException(permissionOrError.getErrorValue())
+    }
+    const permission = permissionOrError.getValue()
 
-      if (permissionOrError.isFailure) {
-        throw new BadRequestException(permissionOrError.getErrorValue())
-      }
+    await this.permissionRepository.save(permission)
+    this.publisher.mergeObjectContext(permission).commit()
 
-      const permission = permissionOrError.getValue()
-
-      await this.permissionRepository.save(permission)
-
-      this.publisher.mergeObjectContext(permission).commit()
-
-      return {
-        success: true,
-        status: 201,
-        message: 'Permiso creado correctamente',
-        data: permission.toDTO(),
-      }
-    } else {
-      throw new ConflictException(`El permiso ${data.name} ya fue creado`)
+    return {
+      success: true,
+      status: 201,
+      message: 'Permiso creado correctamente',
+      data: permission.toDTO(),
     }
   }
 
