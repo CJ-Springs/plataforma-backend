@@ -9,6 +9,10 @@ import {
 import { RequireEmail } from '@/.shared/utils'
 
 export class AddressDto {
+  @IsOptional()
+  @IsString({ message: "El campo 'country' debe ser un string" })
+  country: string
+
   @IsNotEmpty({ message: "Debe enviar el campo 'province'" })
   @IsString({ message: "El campo 'province' debe ser un string" })
   province: string
@@ -40,14 +44,14 @@ export class RegisterCustomerDto extends AddressDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'cuil'" })
   @IsString({ message: "El campo 'cuil' debe ser un string" })
-  cuil: number
+  cuil: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'phone'" })
   @IsPhoneNumber('AR', {
     message:
       "El campo 'phone' debe cumplir con el formato de un celular argentino (10 números mínimo)",
   })
-  phone: number
+  phone: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'paymentDeadline'" })
   @IsInt({ message: "El campo 'paymentDeadline' debe ser un número entero" })

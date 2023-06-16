@@ -85,15 +85,10 @@ export class RoleRepository
     await Promise.all(
       events.map((event) => {
         if (event instanceof RoleCreatedEvent) {
-          const { data } = event
-
-          return this.createRole(data)
+          return this.createRole(event.data)
         }
-
         if (event instanceof PermissionAssigned) {
-          const { data } = event
-
-          return this.assignPermission(data)
+          return this.assignPermission(event.data)
         }
       }),
     )

@@ -212,10 +212,10 @@ model TechnicalSheet {
 model Customer {
   id String @id @default(cuid())
 
-  code String @unique
+  code Int @unique
   email String @unique
   name String 
-  phone Int 
+  phone String 
   discount Int?
   owe Int @default(0) 
   cuil String
@@ -233,6 +233,7 @@ model Customer {
 
 model Address {
   country String @default("Argentina")
+  countryCode String @default("ARG") @map("country_code")
   province String
   city String 
   locality String 

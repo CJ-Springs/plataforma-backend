@@ -37,6 +37,7 @@
     "colorette": "^2.0.20",
     "cuid": "^3.0.0",
     "helmet": "^7.0.0",
+    "i18n-iso-countries": "^7.6.0",
     "morgan": "^1.10.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",

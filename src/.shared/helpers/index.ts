@@ -1,3 +1,4 @@
+export * from './CountryCode'
 export * from './Email'
 export * from './Result'
 export * from './Validate'

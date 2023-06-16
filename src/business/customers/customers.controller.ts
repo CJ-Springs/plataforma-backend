@@ -1,11 +1,11 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common'
+import { CommandBus } from '@nestjs/cqrs'
 
-import { RegisterCustomerDto } from './dtos'
 import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
-import { CommandBus } from '@nestjs/cqrs'
+import { RegisterCustomerDto } from './dtos'
 import { RegisterCustomerCommand } from './commands/impl/register-customer.command'
 
 @Controller('clientes')
@@ -16,30 +16,14 @@ export class CustomersController {
   @UseGuards(PermissionGuard)
   @Post()
   async registerCustomer(@Body() newCustomer: RegisterCustomerDto) {
-    const {
-      name,
-      code,
-      address,
-      city,
-      cuil,
-      email,
-      locality,
-      paymentDeadline,
-      phone,
-      province,
-      discount,
-    } = newCustomer
+    const { address, city, locality, province, country, ...customer } =
+      newCustomer
 
     return await this.commandBus.execute(
       new RegisterCustomerCommand({
-        name,
-        code,
-        email,
-        cuil,
-        phone,
-        discount,
-        paymentDeadline,
+        ...customer,
         address: {
+          country,
           province,
           city,
           locality,

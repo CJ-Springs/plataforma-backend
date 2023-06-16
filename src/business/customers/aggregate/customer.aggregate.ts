@@ -1,8 +1,10 @@
 import { AggregateRoot } from '@nestjs/cqrs'
 
+import { Address, AddressPropsDTO } from './value-objects/address.value-object'
+import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
-import { Address } from './value-objects/address.value-object'
+import { DeepPartial } from '@/.shared/types'
 
 type CustomerProps = {
   id: UniqueEntityID
@@ -12,6 +14,7 @@ type CustomerProps = {
   phone: string
   cuil: string
   owe: number
+  paymentDeadline: number
   discount?: number
   address: Address
 }
@@ -24,8 +27,9 @@ type CustomerPropsDTO = {
   phone: string
   cuil: string
   owe: number
+  paymentDeadline: number
   discount?: number
-  address: Address['props']
+  address: AddressPropsDTO
 }
 
 export class Customer extends AggregateRoot {
@@ -33,13 +37,14 @@ export class Customer extends AggregateRoot {
     super()
   }
 
-  static create(props: CustomerPropsDTO): Result<Customer> {
+  static create(props: DeepPartial<CustomerPropsDTO>): Result<Customer> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.code, argumentName: 'code' },
       { argument: props.name, argumentName: 'name' },
       { argument: props.phone, argumentName: 'phone' },
       { argument: props.cuil, argumentName: 'cuil' },
       { argument: props.owe, argumentName: 'owe' },
+      { argument: props.paymentDeadline, argumentName: 'paymentDeadline' },
       { argument: props.address, argumentName: 'address' },
     ])
     if (guardResult.isFailure) {
@@ -51,35 +56,27 @@ export class Customer extends AggregateRoot {
       return Result.fail(emailResult.getErrorValue())
     }
 
-    const { address } = props
-    const addressResult = Address.create({
-      province: address.province,
-      city: address.city,
-      locality: address.locality,
-      address: address.address,
-    })
+    const addressResult = Address.create(props.address)
     if (addressResult.isFailure) {
-      return Result.fail(emailResult.getErrorValue())
+      return Result.fail(addressResult.getErrorValue())
     }
 
     const customer = new Customer({
-      id: new UniqueEntityID(props.id),
+      id: new UniqueEntityID(props?.id),
       code: new UniqueField(props.code),
       email: emailResult.getValue(),
       name: props.name,
       phone: props.phone,
       owe: props.owe,
+      paymentDeadline: props.paymentDeadline,
       cuil: props.cuil,
       discount: props?.discount,
       address: addressResult.getValue(),
     })
 
     if (!props.id) {
-      //   const event = new UserCreatedEvent({
-      //     ...user.toDTO(),
-      //     password: user.props.password.getValue(),
-      //   })
-      //   user.apply(event)
+      const event = new CustomerRegisteredEvent(customer.toDTO())
+      customer.apply(event)
     }
 
     return Result.ok<Customer>(customer)
@@ -91,7 +88,7 @@ export class Customer extends AggregateRoot {
       id: this.props.id.toString(),
       code: this.props.code.toValue(),
       email: this.props.email.getValue(),
-      address: this.props.address.getValue(),
+      address: this.props.address.toDTO(),
     }
   }
 }

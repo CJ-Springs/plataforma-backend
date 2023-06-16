@@ -1,8 +1,18 @@
 import { ValueObject } from '@/.shared/domain'
-import { Result } from '@/.shared/helpers'
+import { CountryCode, Result } from '@/.shared/helpers'
 import { Validate } from '@/.shared/helpers'
 
 type AddressProps = {
+  country: CountryCode
+  province: string
+  city: string
+  locality: string
+  address: string
+}
+
+export type AddressPropsDTO = {
+  countryCode: string
+  country: string
   province: string
   city: string
   locality: string
@@ -14,16 +24,53 @@ export class Address extends ValueObject<AddressProps> {
     super(props)
   }
 
-  static create(props: AddressProps): Result<Address> {
-    const guardResult = Validate.againstNullOrUndefinedBulk([])
+  static create(props: Partial<AddressPropsDTO>): Result<Address> {
+    const guardResult = Validate.againstNullOrUndefinedBulk([
+      { argument: props.province, argumentName: 'province' },
+      { argument: props.city, argumentName: 'city' },
+      { argument: props.locality, argumentName: 'locality' },
+      { argument: props.address, argumentName: 'address' },
+    ])
     if (guardResult.isFailure) {
-      return Result.fail<Address>(guardResult.getErrorValue())
+      return Result.fail(guardResult.getErrorValue())
     }
 
-    return Result.ok<Address>(new Address(props))
+    const atLeastOneRequiredResult = Validate.isAnyRequired(
+      props,
+      'country',
+      'countryCode',
+    )
+    if (!atLeastOneRequiredResult.success) {
+      return Result.fail(atLeastOneRequiredResult.message)
+    }
+
+    const countryResult = props?.country
+      ? CountryCode.createFromCountry(props.country)
+      : CountryCode.createFromCountryCode(props.countryCode)
+    if (countryResult.isFailure) {
+      return Result.fail(countryResult.getErrorValue())
+    }
+
+    const address = new Address({
+      country: countryResult.getValue(),
+      province: props.province,
+      city: props.city,
+      locality: props.locality,
+      address: props.address,
+    })
+
+    return Result.ok<Address>(address)
   }
 
   getValue(): AddressProps {
     return this.props
+  }
+
+  toDTO(): AddressPropsDTO {
+    return {
+      ...this.props,
+      countryCode: this.props.country.props.countryCode,
+      country: this.props.country.props.country,
+    }
   }
 }
