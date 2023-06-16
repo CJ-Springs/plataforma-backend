@@ -1,24 +1,16 @@
 import { AppRole } from '@prisma/client'
 import {
-  IsEmail,
   IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Validate,
 } from 'class-validator'
+import { RequireEmail } from '@/.shared/utils'
 
 export class CreateUserDto {
-  @IsNotEmpty({
-    message: "Debe enviar el campo 'email'",
-  })
-  @IsEmail(
-    {},
-    {
-      message:
-        "El campo 'email' debe cumplir con el formato de un email (example@gmail.com)",
-    },
-  )
+  @Validate(RequireEmail)
   email: string
 
   @IsNotEmpty({

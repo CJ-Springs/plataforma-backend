@@ -1,7 +1,7 @@
 import { ValueObject } from '@/.shared/domain'
 import { Result, ValidateResult } from '@/.shared/helpers'
 import { Validate } from '@/.shared/helpers'
-import { passwordRegExp } from '@/.shared/utils/passwordValidation'
+import { passwordRegExp } from '@/.shared/utils'
 
 type PasswordProps = {
   password: string

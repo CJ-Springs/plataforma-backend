@@ -70,19 +70,13 @@ export class UserRepository implements IRepository<User> {
     await Promise.all(
       events.map((event) => {
         if (event instanceof UserCreatedEvent) {
-          const { data } = event
-
-          return this.createUser(data)
+          return this.createUser(event.data)
         }
         if (event instanceof UserStatusChangedEvent) {
-          const { data } = event
-
-          return this.changeUserStatus(data)
+          return this.changeUserStatus(event.data)
         }
         if (event instanceof UserPasswordChangedEvent) {
-          const { data } = event
-
-          return this.changeUserPassword(data)
+          return this.changeUserPassword(event.data)
         }
       }),
     )

@@ -11,6 +11,7 @@ import { PermissionsModule } from './auth/authorization/permissions/permissions.
 import { UsersModule } from './users/users.module'
 import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
 import { NotificationsModule } from './notifications/notifications.module'
+import { CustomersModule } from './business/customers/customers.module'
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module'
     PermissionsModule,
     UsersModule,
     NotificationsModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [

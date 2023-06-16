@@ -1,17 +1,10 @@
-import { IsEmail, IsNotEmpty } from 'class-validator'
+import { Validate } from 'class-validator'
+import { Password, RequireEmail } from '@/.shared/utils'
 
-import { PasswordValidation } from '@/.shared/utils/passwordValidation'
-
-export class LoginDto extends PasswordValidation {
-  @IsNotEmpty({
-    message: "Debe enviar el campo 'email'",
-  })
-  @IsEmail(
-    {},
-    {
-      message:
-        "El campo 'email' debe cumplir con el formato de un email (example@gmail.com)",
-    },
-  )
+export class LoginDto {
+  @Validate(RequireEmail)
   email: string
+
+  @Validate(Password)
+  password: string
 }
