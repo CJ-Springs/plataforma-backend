@@ -2,6 +2,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Address, AddressPropsDTO } from './value-objects/address.value-object'
 import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
+import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
@@ -31,6 +32,10 @@ type CustomerPropsDTO = {
   discount?: number
   address: AddressPropsDTO
 }
+
+type UpdateCustomerProps = DeepPartial<
+  Omit<CustomerPropsDTO, 'id' | 'code' | 'email' | 'owe'>
+>
 
 export class Customer
   extends AggregateRoot
@@ -83,6 +88,43 @@ export class Customer
     }
 
     return Result.ok<Customer>(customer)
+  }
+
+  update(props: UpdateCustomerProps): Result<Customer> {
+    const { address, ...fieldsToUpdate } = props
+
+    for (const field of Object.keys(fieldsToUpdate)) {
+      if (field === 'discount') continue
+
+      const guardResult = Validate.againstNullOrUndefined(
+        fieldsToUpdate[field],
+        field,
+      )
+      if (guardResult.isFailure) {
+        return Result.fail(guardResult.getErrorValue())
+      }
+    }
+    this.props = { ...this.props, ...fieldsToUpdate }
+
+    if (address) {
+      const addressResult = Address.create({
+        ...this.props.address.toDTO(),
+        ...address,
+      })
+      if (addressResult.isFailure) {
+        return Result.fail(addressResult.getErrorValue())
+      }
+
+      this.props.address = addressResult.getValue()
+    }
+
+    const event = new CustomerUpdatedEvent({
+      code: this.props.code.toValue(),
+      ...props,
+    })
+    this.apply(event)
+
+    return Result.ok<Customer>(this)
   }
 
   toDTO(): CustomerPropsDTO {
