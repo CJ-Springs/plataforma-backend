@@ -1,18 +1,24 @@
 import {
+  IsDefined,
   IsInt,
   IsNotEmpty,
+  IsNotEmptyObject,
   IsOptional,
   IsPhoneNumber,
   IsPositive,
   IsString,
   Validate,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator'
+import { Type } from 'class-transformer'
+import { PartialType } from '@nestjs/swagger'
 import { RequireEmail } from '@/.shared/utils'
 
 export class AddressDto {
   @IsOptional()
   @IsString({ message: "El campo 'country' debe ser un string" })
-  country: string
+  country?: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'province'" })
   @IsString({ message: "El campo 'province' debe ser un string" })
@@ -31,7 +37,21 @@ export class AddressDto {
   address: string
 }
 
-export class RegisterCustomerDto extends AddressDto {
+export class PartialAddressDto extends PartialType(AddressDto) {
+  @ValidateIf((o) => o.province !== undefined)
+  province?: string
+
+  @ValidateIf((o) => o.locality !== undefined)
+  locality?: string
+
+  @ValidateIf((o) => o.city !== undefined)
+  city?: string
+
+  @ValidateIf((o) => o.address !== undefined)
+  address?: string
+}
+
+export class RegisterCustomerDto {
   @IsNotEmpty({ message: "Debe enviar el campo 'name'" })
   @IsString({ message: "El campo 'name' debe ser un string" })
   name: string
@@ -68,4 +88,16 @@ export class RegisterCustomerDto extends AddressDto {
     message: "El campo 'discount' no puede ser un número negativo",
   })
   discount?: number
+
+  @IsDefined({ message: "Debe enviar el campo 'address'" })
+  @IsNotEmptyObject(
+    { nullable: false },
+    { message: "El campo 'address' no puede ser un objeto vacío" },
+  )
+  @Type(() => AddressDto)
+  @ValidateNested({
+    message:
+      'El campo address debe contener las siguiente propiedades: country (opcional), province, city, locality, address',
+  })
+  address: AddressDto
 }
