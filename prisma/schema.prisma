@@ -134,12 +134,12 @@ model Product {
   description String?
   brand String
   model String
-  price Int
   isGnc Boolean @map("is_gnc")
   amountOfSales Int @default(0) @map("amount_of_sales")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
+  price ProductPricing?
   sales SaleOrderItem[]
   incomes IncomeOrderItem[]
   lossesByWarranties WarrantyOrderItem[]
@@ -149,6 +149,16 @@ model Product {
 
   @@index([code], map: "product_codes")
   @@map("products")
+}
+
+model ProductPricing {
+  price Float
+  currency String
+
+  product Product @relation(fields: [productId], references: [id])
+  productId String @unique @id @map("product_id")
+
+  @@map("products_pricing")
 }
 
 model Spring {
@@ -170,14 +180,12 @@ model Spring {
 }
 
 model Stock {
-  id String @id @default(cuid())
-
-  quantity Int
+  quantityOnHand Int @map("quantity_on_hand")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
   spring Spring @relation(fields: [springId], references: [id])
-  springId String @unique @map("spring_id")
+  springId String @unique @id @map("spring_id")
 
   @@map("stocks")
 }
