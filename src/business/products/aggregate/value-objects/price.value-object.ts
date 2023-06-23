@@ -1,5 +1,6 @@
+import { AllowedCurrency } from '@prisma/client'
 import { ValueObject } from '@/.shared/domain'
-import { AllowedCurrency, Currency, Result, Validate } from '@/.shared/helpers'
+import { Currency, Result, Validate } from '@/.shared/helpers'
 
 type PriceProps = {
   currency: Currency
@@ -17,12 +18,12 @@ export class Price extends ValueObject<PriceProps> {
   }
 
   static create(props: Partial<PricePropsDTO>): Result<Price> {
-    const priceResult = Validate.combine([
+    const guardResult = Validate.combine([
       Validate.againstNullOrUndefined(props.price, 'price'),
       Validate.isGreaterThan(props.price, 0, 'price'),
     ])
-    if (priceResult.isFailure) {
-      return Result.fail(priceResult.getErrorValue())
+    if (guardResult.isFailure) {
+      return Result.fail(guardResult.getErrorValue())
     }
 
     const price = new Price({

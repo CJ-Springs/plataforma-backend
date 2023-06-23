@@ -5,7 +5,7 @@ import { DeepPartial } from '@/.shared/types'
 
 type SpringProps = {
   code: UniqueField
-  isAssociated: boolean
+  canAssociate: boolean
   minQuantity: number
   stock: Stock
 }
@@ -13,7 +13,7 @@ type SpringProps = {
 export type SpringPropsDTO = {
   id: string
   code: string
-  isAssociated: boolean
+  canAssociate: boolean
   minQuantity: number
   stock: Stock['props']
 }
@@ -26,12 +26,19 @@ export class Spring extends Entity<SpringProps> {
   static create(props: DeepPartial<SpringPropsDTO>): Result<Spring> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.code, argumentName: 'code' },
-      { argument: props.isAssociated, argumentName: 'isAssociated' },
-      { argument: props.minQuantity, argumentName: 'minQuantity' },
+      { argument: props.canAssociate, argumentName: 'canAssociate' },
       { argument: props.stock, argumentName: 'stock' },
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
+    }
+
+    const minQuantityResult = Validate.combine([
+      Validate.againstNullOrUndefined(props.minQuantity, 'minQuantity'),
+      Validate.isGreaterOrEqualThan(props.minQuantity, 0, 'minQuantity'),
+    ])
+    if (minQuantityResult.isFailure) {
+      return Result.fail(minQuantityResult.getErrorValue())
     }
 
     const stockResult = Stock.create(props.stock)
@@ -42,7 +49,7 @@ export class Spring extends Entity<SpringProps> {
     const spring = new Spring(
       {
         code: new UniqueField(props.code),
-        isAssociated: props.isAssociated,
+        canAssociate: props.canAssociate,
         minQuantity: props.minQuantity,
         stock: stockResult.getValue(),
       },

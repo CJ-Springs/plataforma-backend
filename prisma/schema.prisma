@@ -153,9 +153,9 @@ model Product {
 
 model ProductPricing {
   price Float
-  currency String
+  currency AllowedCurrency @default(ARS)
 
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   productId String @unique @id @map("product_id")
 
   @@map("products_pricing")
@@ -165,7 +165,7 @@ model Spring {
   id String @id @default(cuid())
 
   code String @unique
-  isAssociated Boolean @map("is_associated")
+  canAssociate Boolean @map("is_associated")
   minQuantity Int @map("min_quantity")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
@@ -391,4 +391,9 @@ enum PaymentMethod {
   TRANSFERENCIA
   EFECTIVO
   CHEQUE
+}
+
+enum AllowedCurrency {
+  ARS
+  USD
 }

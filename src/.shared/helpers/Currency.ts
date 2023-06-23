@@ -1,12 +1,9 @@
-export enum AllowedCurrency {
-  ARS = 'ARS',
-  USD = 'USD',
-}
+import { AllowedCurrency } from '@prisma/client'
 
 export class Currency {
   private type: AllowedCurrency
 
-  private constructor(type = AllowedCurrency.ARS) {
+  private constructor(type: AllowedCurrency = AllowedCurrency.ARS) {
     this.type = type
   }
 

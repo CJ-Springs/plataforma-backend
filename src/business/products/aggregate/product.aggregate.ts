@@ -3,6 +3,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
+import { ProductAddedEvent } from '../events/impl/product-added.event'
 import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -78,6 +79,11 @@ export class Product
       price: priceResult.getValue(),
       spring: springResult.getValue(),
     })
+
+    if (!props?.id) {
+      const event = new ProductAddedEvent(product.toDTO())
+      product.apply(event)
+    }
 
     return Result.ok<Product>(product)
   }

@@ -1,38 +1,47 @@
-import { BadRequestException, Controller, Get } from '@nestjs/common'
-import { Product } from './aggregate/product.aggregate'
-import { ProductType } from '@prisma/client'
-import { AllowedCurrency } from '@/.shared/helpers'
+import { Body, Controller, Post, UseGuards } from '@nestjs/common'
+import { CommandBus } from '@nestjs/cqrs'
+
+import { AddProductDto } from './dtos'
+import { AddProductCommand } from './commands/impl/add-product.command'
+import {
+  PermissionGuard,
+  RequiredPermissions,
+} from '@/auth/authorization/guards'
 
 @Controller('productos')
 export class ProductsController {
-  @Get()
-  getProduct() {
-    const productOrError = Product.create({
-      code: '1203N',
-      type: ProductType.COMPETICION,
-      brand: 'Fiat',
-      model: 'Fitito',
-      isGnc: false,
-      amountOfSales: 0,
-      price: {
-        price: 6100,
-        currency: AllowedCurrency.USD,
-      },
-      spring: {
-        code: '1203N',
-        isAssociated: false,
-        minQuantity: 10,
-        stock: {
-          quantityOnHand: 7,
-        },
-      },
-    })
-    if (productOrError.isFailure) {
-      throw new BadRequestException(productOrError.getErrorValue())
-    }
-    const product = productOrError.getValue()
-    product.raisePrice(500)
+  constructor(private readonly commandBus: CommandBus) {}
 
-    return product.toDTO()
+  @RequiredPermissions('backoffice::añadir-producto')
+  @UseGuards(PermissionGuard)
+  @Post()
+  async addProduct(@Body() newProduct: AddProductDto) {
+    return await this.commandBus.execute(new AddProductCommand(newProduct))
+    // const productOrError = Product.create({
+    //   code: '1203N',
+    //   type: ProductType.COMPETICION,
+    //   brand: 'Fiat',
+    //   model: 'Fitito',
+    //   isGnc: false,
+    //   amountOfSales: 0,
+    //   price: {
+    //     price: 6100,
+    //     currency: AllowedCurrency.USD,
+    //   },
+    //   spring: {
+    //     code: '1203N',
+    //     canAssociate: false,
+    //     minQuantity: 10,
+    //     stock: {
+    //       quantityOnHand: 7,
+    //     },
+    //   },
+    // })
+    // if (productOrError.isFailure) {
+    //   throw new BadRequestException(productOrError.getErrorValue())
+    // }
+    // const product = productOrError.getValue()
+    // product.raisePrice(500)
+    // return product.toDTO()
   }
 }
