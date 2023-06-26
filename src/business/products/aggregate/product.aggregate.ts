@@ -4,6 +4,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
+import { ProductPriceIncreasedEvent } from '../events/impl/product-price-increased.event'
 import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -88,9 +89,15 @@ export class Product
     return Result.ok<Product>(product)
   }
 
-  raisePrice(percent: number) {
-    const newPrice = this.props.price.raiseByPercentage(percent)
+  increasePrice(percentage: number) {
+    const newPrice = this.props.price.increaseByPercentage(percentage)
     this.props.price = newPrice
+
+    const event = new ProductPriceIncreasedEvent({
+      code: this.props.code.toString(),
+      price: this.props.price.getValue().price,
+    })
+    this.apply(event)
   }
 
   toDTO(): ProductPropsDTO {
