@@ -1,4 +1,5 @@
 export * from './CountryCode'
+export * from './Currency'
 export * from './Email'
 export * from './Result'
 export * from './Validate'

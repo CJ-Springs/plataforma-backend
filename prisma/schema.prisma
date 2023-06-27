@@ -134,12 +134,12 @@ model Product {
   description String?
   brand String
   model String
-  price Int
   isGnc Boolean @map("is_gnc")
   amountOfSales Int @default(0) @map("amount_of_sales")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
+  price ProductPricing?
   sales SaleOrderItem[]
   incomes IncomeOrderItem[]
   lossesByWarranties WarrantyOrderItem[]
@@ -151,11 +151,23 @@ model Product {
   @@map("products")
 }
 
+model ProductPricing {
+  price Float
+  currency AllowedCurrency @default(ARS)
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String @unique @id @map("product_id")
+
+  @@map("products_pricing")
+}
+
 model Spring {
   id String @id @default(cuid())
 
   code String @unique
-  isAssociated Boolean @map("is_associated")
+  canAssociate Boolean @map("can_associate")
   minQuantity Int @map("min_quantity")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
@@ -170,14 +182,12 @@ model Spring {
 }
 
 model Stock {
-  id String @id @default(cuid())
-
-  quantity Int
+  quantityOnHand Int @map("quantity_on_hand")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
-  spring Spring @relation(fields: [springId], references: [id])
-  springId String @unique @map("spring_id")
+  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  springId String @unique @id @map("spring_id")
 
   @@map("stocks")
 }
@@ -383,4 +393,9 @@ enum PaymentMethod {
   TRANSFERENCIA
   EFECTIVO
   CHEQUE
+}
+
+enum AllowedCurrency {
+  ARS
+  USD
 }
