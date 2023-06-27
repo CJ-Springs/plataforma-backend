@@ -167,7 +167,7 @@ model Spring {
   id String @id @default(cuid())
 
   code String @unique
-  canAssociate Boolean @map("is_associated")
+  canAssociate Boolean @map("can_associate")
   minQuantity Int @map("min_quantity")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
