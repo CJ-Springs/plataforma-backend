@@ -99,6 +99,8 @@ export class ProductRepository
       ...product
     } = newProduct
 
+    console.log({ spring })
+
     try {
       await this.prisma.product.create({
         data: {
@@ -126,7 +128,7 @@ export class ProductRepository
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar crear el product ${newProduct.code} en la db`,
+        `Error al intentar crear el producto ${newProduct.code} en la db`,
       )
     }
   }

@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
 import { NotificationsModule } from './notifications/notifications.module'
 import { CustomersModule } from './business/customers/customers.module'
 import { ProductsModule } from './business/products/products.module'
+import { SpringsModule } from './business/warehouse/springs/springs.module'
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ProductsModule } from './business/products/products.module'
     NotificationsModule,
     CustomersModule,
     ProductsModule,
+    SpringsModule,
   ],
   controllers: [AppController],
   providers: [

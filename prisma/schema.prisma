@@ -200,36 +200,35 @@ model Movement {
   updatedStock Int @map("updated_stock")
   createdAt DateTime @default(now()) @map("created_at") 
 
-  spring Spring @relation(fields: [springId], references: [id])
+  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   springId String @map("spring_id")
 
   @@map("movements")
 }
 
 model TechnicalSheet {
-  id String @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
   type TechnicalSheetType
 
   //Common fields between the three posible types of Spring
 
-  weight Int 
-  height Int
-  wireThickness Int @map("wire_thickness")
+  weight Float 
+  height Float
+  wireThickness Float @map("wire_thickness")
   amountOfLaps Int @map("amount_of_laps")
-  lightBetweenBases Int @map("light_between_bases")
-  innerCore Int @map("inner_core")
+  lightBetweenBases Float @map("light_between_bases")
+  innerCore Float @map("inner_core")
 
   //Not common fields (optional)
 
-  lightBetweenBasesTwo Int? @map("light_between_bases_two")
-  innerBases Int? @map("inner_bases")
-  innerBasesTwo Int? @map("inner_bases_two")
+  lightBetweenBasesTwo Float? @map("light_between_bases_two")
+  innerBases Float? @map("inner_bases")
+  innerBasesTwo Float? @map("inner_bases_two")
   
 
-  spring Spring @relation(fields: [springId], references: [id])
-  springId String @unique @map("spring_id")
+  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  springId String @unique @id @map("spring_id")
 
   @@map("technical_sheets")
 }
