@@ -1,18 +1,20 @@
 import { AppRole } from '@prisma/client'
 import {
   IsArray,
-  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Validate,
 } from 'class-validator'
+import { RequireValueForEnum } from '@/.shared/utils'
 
 export class CreateRoleDto {
-  @IsNotEmpty({ message: "Debe enviar el campo 'role' para crear un rol" })
-  @IsIn([AppRole.ADMIN, AppRole.USER], {
-    message: `El rol debe ser uno de los siguientes: ${AppRole.ADMIN} | ${AppRole.USER}`,
-  })
-  role: AppRole
+  @Validate(RequireValueForEnum, [AppRole])
+  code: AppRole
+
+  @IsNotEmpty({ message: "Debe enviar el campo 'name'" })
+  @IsString({ message: "El campo 'name' debe ser un string" })
+  name: string
 
   @IsOptional()
   @IsArray({ message: "El campo 'permissions' debe ser un array" })

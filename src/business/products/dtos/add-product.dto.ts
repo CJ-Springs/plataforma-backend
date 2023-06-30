@@ -3,16 +3,17 @@ import { Type } from 'class-transformer'
 import {
   IsBoolean,
   IsDefined,
-  IsEnum,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Min,
+  Validate,
   ValidateIf,
   ValidateNested,
 } from 'class-validator'
+import { RequireValueForEnum } from '@/.shared/utils'
 
 class ProductSpringDto {
   @IsOptional()
@@ -61,12 +62,7 @@ export class AddProductDto {
   @IsString({ message: "El campo 'description' debe ser un string" })
   description?: string
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'type'" })
-  @IsEnum(ProductType, {
-    message: `El campo type debe ser uno de los siguientes: ${Object.values(
-      ProductType,
-    ).join(', ')}`,
-  })
+  @Validate(RequireValueForEnum, [ProductType])
   type: ProductType
 
   @IsDefined({ message: "Debe enviar el campo 'isGnc'" })
@@ -82,12 +78,8 @@ export class AddProductDto {
   price: number
 
   @IsOptional()
-  @IsEnum(AllowedCurrency, {
-    message: `El campo currency debe ser uno de los siguientes: ${Object.values(
-      AllowedCurrency,
-    ).join(', ')}`,
-  })
-  currency: AllowedCurrency
+  @Validate(RequireValueForEnum, [AllowedCurrency])
+  currency?: AllowedCurrency
 
   @IsDefined({ message: "Debe enviar el campo 'spring" })
   @Type(() => ProductSpringDto)

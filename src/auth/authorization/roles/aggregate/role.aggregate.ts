@@ -9,13 +9,15 @@ import { IAggregateToDTO } from '@/.shared/types'
 
 export type RoleProps = {
   id: UniqueEntityID
-  role: UniqueField<AppRole>
+  code: UniqueField<AppRole>
+  name: string
   permissions: UniqueField[]
 }
 
 export type RolePropsDTO = {
   id: string
-  role: AppRole
+  code: AppRole
+  name: string
   permissions: string[]
 }
 
@@ -29,7 +31,8 @@ export class Role
 
   static create(props: Partial<RolePropsDTO>): Result<Role> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
-      { argument: props.role, argumentName: 'role' },
+      { argument: props.code, argumentName: 'code' },
+      { argument: props.name, argumentName: 'name' },
       { argument: props.permissions, argumentName: 'permissions' },
     ])
     if (guardResult.isFailure) {
@@ -38,7 +41,8 @@ export class Role
 
     const role = new Role({
       id: new UniqueEntityID(props?.id),
-      role: new UniqueField(props.role),
+      code: new UniqueField(props.code),
+      name: props.name,
       permissions: props.permissions?.map(
         (permission) => new UniqueField(permission),
       ),
@@ -56,7 +60,7 @@ export class Role
     const permissionIsAlreadyAdded = this.hasPermission(permission)
     if (permissionIsAlreadyAdded) {
       return Result.fail(
-        `El permiso ${permission} ya forma parte del rol ${this.props.role.toValue()}`,
+        `El permiso ${permission} ya forma parte del rol ${this.props.code.toValue()}`,
       )
     }
 
@@ -64,7 +68,7 @@ export class Role
 
     const event = new PermissionAssigned({
       permission,
-      role: this.props.role.toValue(),
+      role: this.props.code.toValue(),
     })
     this.apply(event)
 
@@ -85,7 +89,7 @@ export class Role
     return {
       ...this.props,
       id: this.props.id.toString(),
-      role: this.props.role.toValue(),
+      code: this.props.code.toValue(),
       permissions: this.props.permissions.map((permission) =>
         permission.toString(),
       ),

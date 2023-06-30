@@ -117,7 +117,7 @@ export class RoleRepository
   }: PermissionAssigned['data']) {
     try {
       await this.prisma.role.update({
-        where: { role },
+        where: { code: role },
         data: {
           permissions: {
             connect: {

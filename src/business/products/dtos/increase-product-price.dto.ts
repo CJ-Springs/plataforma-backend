@@ -1,5 +1,6 @@
 import { ProductType } from '@prisma/client'
-import { IsDefined, IsEnum, IsNumber, IsOptional, Min } from 'class-validator'
+import { IsDefined, IsNumber, IsOptional, Min, Validate } from 'class-validator'
+import { RequireValueForEnum } from '@/.shared/utils'
 
 export class IncreaseProductPriceDto {
   @IsDefined({ message: "Debe enviar el campo 'percentage'" })
@@ -16,10 +17,6 @@ export class IncreaseProductPriceDto {
 
 export class IncreaseBulkProductsPriceDto extends IncreaseProductPriceDto {
   @IsOptional()
-  @IsEnum(ProductType, {
-    message: `El campo type debe ser uno de los siguientes: ${Object.values(
-      ProductType,
-    ).join(', ')}`,
-  })
+  @Validate(RequireValueForEnum, [ProductType])
   type?: ProductType
 }

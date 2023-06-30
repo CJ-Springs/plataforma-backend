@@ -21,7 +21,7 @@ export class PermissionRepository implements IRepository<Permission> {
         include: {
           roles: {
             select: {
-              role: true,
+              code: true,
             },
           },
         },
@@ -33,7 +33,7 @@ export class PermissionRepository implements IRepository<Permission> {
 
       return Permission.create({
         ..._permission,
-        roles: _permission.roles.map((role) => role.role),
+        roles: _permission.roles.map((role) => role.code),
       })
     } catch (error) {
       this.logger.error(

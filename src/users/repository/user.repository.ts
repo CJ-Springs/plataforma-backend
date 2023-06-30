@@ -23,7 +23,7 @@ export class UserRepository implements IRepository<User> {
         include: {
           password: true,
           profile: true,
-          role: { select: { role: true } },
+          role: { select: { code: true } },
         },
       })
 
@@ -39,7 +39,7 @@ export class UserRepository implements IRepository<User> {
         profile: {
           ...user.profile,
         },
-        role: role.role,
+        role: role.code,
       })
     } catch (error) {
       this.logger.error(
@@ -88,7 +88,7 @@ export class UserRepository implements IRepository<User> {
           },
           role: {
             connect: {
-              role,
+              code: role,
             },
           },
         },

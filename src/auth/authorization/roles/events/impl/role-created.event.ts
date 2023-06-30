@@ -2,7 +2,8 @@ import { AppRole } from '@prisma/client'
 
 type RoleCreatedEventProps = {
   id: string
-  role: AppRole
+  code: AppRole
+  name: string
   permissions: string[]
 }
 
