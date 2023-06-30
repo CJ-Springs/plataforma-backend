@@ -167,7 +167,6 @@ model Spring {
 
   code String @unique
   canAssociate Boolean @map("can_associate")
-  minQuantity Int @map("min_quantity")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
@@ -182,6 +181,7 @@ model Spring {
 
 model Stock {
   quantityOnHand Int @map("quantity_on_hand")
+  minQuantity Int @map("min_quantity")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 

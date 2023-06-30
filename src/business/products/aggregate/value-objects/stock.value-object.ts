@@ -3,6 +3,7 @@ import { Result, Validate } from '@/.shared/helpers'
 
 type StockProps = {
   quantityOnHand: number
+  minQuantity: number
 }
 
 export class Stock extends ValueObject<StockProps> {
@@ -12,8 +13,12 @@ export class Stock extends ValueObject<StockProps> {
 
   static create(props: Partial<StockProps>): Result<Stock> {
     const guardResult = Validate.combine([
-      Validate.againstNullOrUndefined(props.quantityOnHand, 'quantityOnHand'),
+      Validate.againstNullOrUndefinedBulk([
+        { argument: props.quantityOnHand, argumentName: 'quantityOnHand' },
+        { argument: props.minQuantity, argumentName: 'minQuantity' },
+      ]),
       Validate.isGreaterOrEqualThan(props.quantityOnHand, 0, 'quantityOnHand'),
+      Validate.isGreaterOrEqualThan(props.minQuantity, 0, 'minQuantity'),
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
@@ -21,6 +26,7 @@ export class Stock extends ValueObject<StockProps> {
 
     const stock = new Stock({
       quantityOnHand: props.quantityOnHand,
+      minQuantity: props.minQuantity,
     })
 
     return Result.ok<Stock>(stock)

@@ -4,15 +4,17 @@ import { CommandBus } from '@nestjs/cqrs'
 import {
   AttachTechnicalSheetDto,
   EditTechnicalSheetDto,
+  MinStockUpdateDto,
   StockAdjustmentDto,
 } from './dtos'
 import { AttachTechnicalSheetCommand } from './commands/impl/attach-technical-sheet.command'
 import { EditTechnicalSheetCommand } from './commands/impl/edit-technical-sheet.command'
+import { StockAdjustmentCommand } from './commands/impl/stock-adjustment.command'
+import { MinStockUpdateCommand } from './commands/impl/min-stock-update.command'
 import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
-import { StockAdjustmentCommand } from './commands/impl/stock-adjustment.command'
 
 @Controller('espirales')
 export class SpringsController {
@@ -56,6 +58,21 @@ export class SpringsController {
       new StockAdjustmentCommand({
         code,
         ...adjustment,
+      }),
+    )
+  }
+
+  @RequiredPermissions('backoffice::actualizar-minimo-stock')
+  @UseGuards(PermissionGuard)
+  @Patch(':code/stock/actualizar-minimo-stock')
+  async updateMinStock(
+    @Param('code') code: string,
+    @Body() update: MinStockUpdateDto,
+  ) {
+    return await this.commandBus.execute(
+      new MinStockUpdateCommand({
+        code,
+        ...update,
       }),
     )
   }

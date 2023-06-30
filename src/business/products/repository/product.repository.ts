@@ -99,8 +99,6 @@ export class ProductRepository
       ...product
     } = newProduct
 
-    console.log({ spring })
-
     try {
       await this.prisma.product.create({
         data: {
