@@ -1,9 +1,12 @@
+import { BadRequestException } from '@nestjs/common'
 import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
   isEmail,
+  isEnum,
   isNotEmpty,
+  isObject,
   matches,
 } from 'class-validator'
 
@@ -30,5 +33,27 @@ export class RequireEmail implements ValidatorConstraintInterface {
 
   defaultMessage(args: ValidationArguments) {
     return `El campo ${args.property} es requerido y debe cumplir con el formato de un email (example@gmail.com)`
+  }
+}
+
+@ValidatorConstraint({ name: 'require-value-for-enum', async: false })
+export class RequireValueForEnum implements ValidatorConstraintInterface {
+  validate(
+    value: Record<string, string>,
+    { constraints }: ValidationArguments,
+  ): boolean {
+    if (!constraints || !isObject(constraints[0])) {
+      throw new Error(
+        'BadImplemented: The RequireEnum validator must receive an enum in the first position of the constraints array',
+      )
+    }
+
+    return isNotEmpty(value) && isEnum(value, constraints[0])
+  }
+
+  defaultMessage({ constraints, property }: ValidationArguments) {
+    return `El campo ${property} es requerido y debe ser uno de los siguientes valores: ${Object.values(
+      constraints[0],
+    ).join(', ')}`
   }
 }

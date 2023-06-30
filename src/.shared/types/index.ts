@@ -24,3 +24,7 @@ export type StandardResponse<T = any> = {
 export interface IAggregateToDTO<T extends Record<string, any>> {
   toDTO(): T
 }
+
+export enum MovementReason {
+  STOCK_ADJUSTMENT = 'Ajuste de stock',
+}

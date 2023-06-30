@@ -52,6 +52,29 @@ export class Validate {
     return { success: true }
   }
 
+  public static shouldNotExist(
+    argument: any,
+    argumentName: string,
+  ): ValidateResult {
+    if (isNullOrUndefined(argument)) return { success: true }
+
+    return {
+      success: false,
+      message: `${argumentName} should be null or undefined`,
+    }
+  }
+
+  public static shouldNotExistBulk(
+    args: ValidateArgumentCollection,
+  ): ValidateResult {
+    for (const arg of args) {
+      const result = this.shouldNotExist(arg.argument, arg.argumentName)
+      if (!result.success) return result
+    }
+
+    return { success: true }
+  }
+
   public static isDate(argument: Date, argumentName: string): ValidateResult {
     if (
       argument.getMonth &&

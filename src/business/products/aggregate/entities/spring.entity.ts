@@ -6,7 +6,6 @@ import { DeepPartial } from '@/.shared/types'
 type SpringProps = {
   code: UniqueField
   canAssociate: boolean
-  minQuantity: number
   stock: Stock
 }
 
@@ -14,7 +13,6 @@ export type SpringPropsDTO = {
   id: string
   code: string
   canAssociate: boolean
-  minQuantity: number
   stock: Stock['props']
 }
 
@@ -33,14 +31,6 @@ export class Spring extends Entity<SpringProps> {
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const minQuantityResult = Validate.combine([
-      Validate.againstNullOrUndefined(props.minQuantity, 'minQuantity'),
-      Validate.isGreaterOrEqualThan(props.minQuantity, 0, 'minQuantity'),
-    ])
-    if (minQuantityResult.isFailure) {
-      return Result.fail(minQuantityResult.getErrorValue())
-    }
-
     const stockResult = Stock.create(props.stock)
     if (stockResult.isFailure) {
       return Result.fail(stockResult.getErrorValue())
@@ -50,7 +40,6 @@ export class Spring extends Entity<SpringProps> {
       {
         code: new UniqueField(props.code),
         canAssociate: props.canAssociate,
-        minQuantity: props.minQuantity,
         stock: stockResult.getValue(),
       },
       new UniqueEntityID(props?.id),

@@ -17,8 +17,8 @@ type ProductAddedEventProps = {
     id: string
     code: string
     canAssociate: boolean
-    minQuantity: number
     stock: {
+      minQuantity: number
       quantityOnHand: number
     }
   }

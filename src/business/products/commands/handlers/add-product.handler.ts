@@ -66,7 +66,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
       spring = {
         ...existingSpring,
         stock: {
-          quantityOnHand: existingSpring.stock.quantityOnHand,
+          ...existingSpring.stock,
         },
       }
     } else {
@@ -75,6 +75,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
         code: data.code,
         stock: {
           quantityOnHand: _spring.quantityOnHand,
+          minQuantity: _spring.minQuantity,
         },
       }
     }
