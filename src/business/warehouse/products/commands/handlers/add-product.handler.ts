@@ -7,13 +7,13 @@ import {
 
 import { AddProductCommand } from '../impl/add-product.command'
 
+import { Product } from '../../aggregate/product.aggregate'
+import { SpringPropsDTO } from '../../aggregate/entities/spring.entity'
+import { ProductRepository } from '../../repository/product.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { StandardResponse } from '@/.shared/types'
-import { Product } from '../../aggregate/product.aggregate'
-import { SpringPropsDTO } from '../../aggregate/entities/spring.entity'
-import { ProductRepository } from '../../repository/product.repository'
 
 @CommandHandler(AddProductCommand)
 export class AddProductHandler implements ICommandHandler<AddProductCommand> {

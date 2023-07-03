@@ -1,22 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
-import { IncreaseBulkProductsPriceDto } from './dtos'
-import { IncreaseProductPriceCommand } from './commands/impl/increase-product-price.command'
+import { IncreaseBulkPricesDto } from './dtos'
+import { IncreasePriceCommand } from './commands/impl/increase-price.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { StandardResponse } from '@/.shared/types'
 
 @Injectable()
-export class ProductsService {
+export class PricingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly commandBus: CommandBus,
   ) {}
 
-  async increaseBulkProductsPrice({
+  async increaseBulkPrices({
     percentage,
     type,
-  }: IncreaseBulkProductsPriceDto): Promise<StandardResponse> {
+  }: IncreaseBulkPricesDto): Promise<StandardResponse> {
     const products = await this.prisma.product.findMany({
       where: { type },
       select: { code: true },
@@ -30,7 +30,7 @@ export class ProductsService {
 
     for await (const product of products) {
       await this.commandBus.execute(
-        new IncreaseProductPriceCommand({
+        new IncreasePriceCommand({
           code: product.code,
           percentage,
         }),

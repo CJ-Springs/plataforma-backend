@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common'
 
 import { Product } from '../aggregate/product.aggregate'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
-import { ProductPriceIncreasedEvent } from '../events/impl/product-price-increased.event'
 import { IFindByUniqueInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -85,9 +84,6 @@ export class ProductRepository
         if (event instanceof ProductAddedEvent) {
           return this.addProduct(event.data)
         }
-        if (event instanceof ProductPriceIncreasedEvent) {
-          return this.increaseProductPrice(event.data)
-        }
       }),
     )
   }
@@ -127,30 +123,6 @@ export class ProductRepository
       this.logger.error(
         error,
         `Error al intentar crear el producto ${newProduct.code} en la db`,
-      )
-    }
-  }
-
-  private async increaseProductPrice(data: ProductPriceIncreasedEvent['data']) {
-    const { code, price } = data
-
-    try {
-      await this.prisma.product.update({
-        where: {
-          code,
-        },
-        data: {
-          price: {
-            update: {
-              price,
-            },
-          },
-        },
-      })
-    } catch (error) {
-      this.logger.error(
-        error,
-        `Error al intentar aumentar el precio del producto ${code} en la db`,
       )
     }
   }

@@ -34,22 +34,6 @@ export class Price extends ValueObject<PriceProps> {
     return Result.ok<Price>(price)
   }
 
-  increaseByPercentage(percentage: number): Price {
-    const increase = this.props.price * (percentage / 100)
-    const sum = this.props.price + increase
-    const rounded = Math.round(sum)
-
-    return new Price({ price: rounded, currency: this.props.currency })
-  }
-
-  reduceByPercentage(percentage: number): Price {
-    const reduction = this.props.price * (percentage / 100)
-    const difference = this.props.price - reduction
-    const rounded = Math.round(difference)
-
-    return new Price({ price: rounded, currency: this.props.currency })
-  }
-
   getValue(): PriceProps {
     return this.props
   }

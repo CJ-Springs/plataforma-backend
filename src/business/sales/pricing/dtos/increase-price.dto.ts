@@ -2,7 +2,7 @@ import { ProductType } from '@prisma/client'
 import { IsDefined, IsNumber, IsOptional, Min, Validate } from 'class-validator'
 import { RequireValueForEnum } from '@/.shared/utils'
 
-export class IncreaseProductPriceDto {
+export class IncreasePriceDto {
   @IsDefined({ message: "Debe enviar el campo 'percentage'" })
   @IsNumber(
     { allowNaN: false, maxDecimalPlaces: 2, allowInfinity: false },
@@ -15,7 +15,7 @@ export class IncreaseProductPriceDto {
   percentage: number
 }
 
-export class IncreaseBulkProductsPriceDto extends IncreaseProductPriceDto {
+export class IncreaseBulkPricesDto extends IncreasePriceDto {
   @IsOptional()
   @Validate(RequireValueForEnum, [ProductType])
   type?: ProductType
