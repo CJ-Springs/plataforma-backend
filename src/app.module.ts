@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 
 import { LoggerModule } from './.shared/helpers/logger/logger.module'
 import { PrismaModule } from './.shared/infra/prisma.module'
@@ -19,6 +20,7 @@ import { SpringsModule } from './business/warehouse/springs/springs.module'
   imports: [
     PrismaModule,
     LoggerModule,
+    ScheduleModule.forRoot(),
     AuthenticationModule,
     RolesModule,
     ConfigModule.forRoot({
