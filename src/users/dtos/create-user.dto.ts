@@ -1,6 +1,5 @@
 import { AppRole } from '@prisma/client'
 import {
-  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -8,7 +7,7 @@ import {
   IsString,
   Validate,
 } from 'class-validator'
-import { RequireEmail } from '@/.shared/utils'
+import { RequireEmail, RequireValueForEnum } from '@/.shared/utils'
 
 export class CreateUserDto {
   @Validate(RequireEmail)
@@ -46,8 +45,6 @@ export class CreateUserDto {
   document: number
 
   @IsOptional()
-  @IsIn([AppRole.ADMIN, AppRole.USER], {
-    message: `El rol debe ser uno de los siguientes: ${AppRole.ADMIN} | ${AppRole.USER}`,
-  })
+  @Validate(RequireValueForEnum, [AppRole])
   role?: AppRole
 }

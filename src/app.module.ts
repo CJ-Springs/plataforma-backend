@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 
 import { LoggerModule } from './.shared/helpers/logger/logger.module'
 import { PrismaModule } from './.shared/infra/prisma.module'
@@ -12,13 +13,15 @@ import { UsersModule } from './users/users.module'
 import { JwtAuthGuard } from './auth/authentication/guards/jwt-auth.guard'
 import { NotificationsModule } from './notifications/notifications.module'
 import { CustomersModule } from './business/customers/customers.module'
-import { ProductsModule } from './business/products/products.module'
+import { ProductsModule } from './business/warehouse/products/products.module'
 import { SpringsModule } from './business/warehouse/springs/springs.module'
+import { PricingModule } from './business/sales/pricing/pricing.module'
 
 @Module({
   imports: [
     PrismaModule,
     LoggerModule,
+    ScheduleModule.forRoot(),
     AuthenticationModule,
     RolesModule,
     ConfigModule.forRoot({
@@ -31,6 +34,7 @@ import { SpringsModule } from './business/warehouse/springs/springs.module'
     CustomersModule,
     ProductsModule,
     SpringsModule,
+    PricingModule,
   ],
   controllers: [AppController],
   providers: [

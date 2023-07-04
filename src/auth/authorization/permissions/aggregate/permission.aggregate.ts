@@ -10,7 +10,7 @@ export type PermissionProps = {
   id: UniqueEntityID
   name: UniqueField
   description: string
-  roles: UniqueField[]
+  roles: UniqueField<AppRole>[]
 }
 
 export type PermissionPropsDTO = {

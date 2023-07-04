@@ -40,7 +40,7 @@ export class AssignPermissionHandler
     }
 
     const roleOrNull = await this.roleRepository.findOneByUniqueInput({
-      role: data.role,
+      code: data.role,
     })
     if (!roleOrNull) {
       throw new NotFoundException(`El rol ${data.role} no se ha encontrado`)

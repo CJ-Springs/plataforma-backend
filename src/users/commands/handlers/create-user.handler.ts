@@ -45,7 +45,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
 
     if (data?.role) {
       const existRole = await this.prisma.role.findUnique({
-        where: { role: data.role },
+        where: { code: data.role },
       })
       if (!existRole) {
         throw new NotFoundException(`El rol ${data.role} no ha sido creado`)
@@ -79,7 +79,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
 
   validate(command: CreateUserCommand) {
     const validation = Validate.isRequiredBulk([
-      { argument: command.data.email, argumentName: '.email' },
+      { argument: command.data.email, argumentName: 'email' },
       { argument: command.data.profile, argumentName: 'profile' },
     ])
 

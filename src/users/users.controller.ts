@@ -9,14 +9,14 @@ import {
 } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
-import {
-  PermissionGuard,
-  RequiredPermissions,
-} from '@/auth/authorization/guards'
 import { CreateUserDto } from './dtos'
 import { UsersService } from './users.service'
 import { CreateUserCommand } from './commands/impl/create-user.command'
 import { ChangeUserStatusCommand } from './commands/impl/change-user-status.command'
+import {
+  PermissionGuard,
+  RequiredPermissions,
+} from '@/auth/authorization/guards'
 
 @Controller('usuarios')
 export class UsersController {

@@ -48,7 +48,7 @@ export class CreatePermissionHandler
     if (uniqueRoles.length) {
       for await (const role of uniqueRoles) {
         const existRole = await this.prisma.role.findUnique({
-          where: { role },
+          where: { code: role },
           select: { id: true },
         })
 

@@ -76,13 +76,15 @@ model Code {
 model Role {
   id String @id @default(cuid())
 
-  role AppRole @default(USER) @unique 
+  code AppRole @default(USER) @unique 
+  name String @default("User")
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
   users User[]
   permissions Permission[] @relation("roles_permissions")
 
+  @@index([code], map: "role_code")
   @@map("roles")
 }
 
@@ -156,8 +158,8 @@ model ProductPricing {
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  productId String @unique @id @map("product_id")
+  product Product @relation(fields: [productCode], references: [code], onDelete: Cascade, onUpdate: Cascade)
+  productCode String @unique @id @map("product_code")
 
   @@map("products_pricing")
 }
@@ -321,7 +323,7 @@ model SaleOrderItem {
   requested Int
   price Int
   discount Int?
-  totalPrice Int @map("total_price")
+  salePrice Int @map("sale_price")
   createdAt DateTime @default(now()) @map("created_at") 
 
   order SaleOrder @relation(fields: [orderId], references: [id])
