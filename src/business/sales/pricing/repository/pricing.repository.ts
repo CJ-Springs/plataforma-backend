@@ -1,29 +1,29 @@
 import { Injectable } from '@nestjs/common'
 
-import { Pricing } from '../aggregate/pricing.aggregate'
+import { Price } from '../aggregate/price.aggregate'
 import { PriceIncreasedEvent } from '../events/impl/price-increased.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
 @Injectable()
-export class PricingRepository implements IRepository<Pricing> {
+export class PricingRepository implements IRepository<Price> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
   ) {}
 
-  async findOneById(code: string): Promise<Result<Pricing>> {
+  async findOneById(code: string): Promise<Result<Price>> {
     try {
-      const pricing = await this.prisma.productPricing.findUnique({
+      const price = await this.prisma.productPricing.findUnique({
         where: { productCode: code },
       })
 
-      if (!pricing) {
+      if (!price) {
         return null
       }
 
-      return Pricing.create(pricing)
+      return Price.create(price)
     } catch (error) {
       this.logger.error(
         error,
@@ -33,8 +33,8 @@ export class PricingRepository implements IRepository<Pricing> {
     }
   }
 
-  async save(pricing: Pricing): Promise<void> {
-    const events = pricing.getUncommittedEvents()
+  async save(price: Price): Promise<void> {
+    const events = price.getUncommittedEvents()
 
     await Promise.all(
       events.map((event) => {

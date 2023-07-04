@@ -6,27 +6,27 @@ import { Currency, Result, Validate } from '@/.shared/helpers'
 import { IAggregateToDTO } from '@/.shared/types'
 import { UniqueField } from '@/.shared/domain'
 
-type PricingProps = {
+type PriceProps = {
   productCode: UniqueField
   currency: Currency
   price: number
 }
 
-export type PricingPropsDTO = {
+export type PricePropsDTO = {
   productCode: string
   currency: AllowedCurrency
   price: number
 }
 
-export class Pricing
+export class Price
   extends AggregateRoot
-  implements IAggregateToDTO<PricingPropsDTO>
+  implements IAggregateToDTO<PricePropsDTO>
 {
-  private constructor(public props: PricingProps) {
+  private constructor(public props: PriceProps) {
     super()
   }
 
-  static create(props: PricingPropsDTO): Result<Pricing> {
+  static create(props: PricePropsDTO): Result<Price> {
     const guardResult = Validate.combine([
       Validate.againstNullOrUndefinedBulk([
         { argument: props.productCode, argumentName: 'productCode' },
@@ -38,16 +38,16 @@ export class Pricing
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const price = new Pricing({
+    const price = new Price({
       productCode: new UniqueField(props.productCode),
       price: props.price,
       currency: Currency.create(props?.currency),
     })
 
-    return Result.ok<Pricing>(price)
+    return Result.ok<Price>(price)
   }
 
-  increaseByPercentage(percentage: number): Result<Pricing> {
+  increaseByPercentage(percentage: number): Result<Price> {
     const increase = this.props.price * (percentage / 100)
     const sum = this.props.price + increase
     const rounded = Math.round(sum)
@@ -60,10 +60,10 @@ export class Pricing
     })
     this.apply(event)
 
-    return Result.ok<Pricing>(this)
+    return Result.ok<Price>(this)
   }
 
-  reduceByPercentage(percentage: number): Result<Pricing> {
+  reduceByPercentage(percentage: number): Result<Price> {
     const reduction = this.props.price * (percentage / 100)
     const difference = this.props.price - reduction
     const rounded = Math.round(difference)
@@ -77,14 +77,14 @@ export class Pricing
     // })
     // this.apply(event)
 
-    return Result.ok<Pricing>(this)
+    return Result.ok<Price>(this)
   }
 
-  getValue(): PricingProps {
+  getValue(): PriceProps {
     return this.props
   }
 
-  toDTO(): PricingPropsDTO {
+  toDTO(): PricePropsDTO {
     return {
       ...this.props,
       productCode: this.props.productCode.toString(),

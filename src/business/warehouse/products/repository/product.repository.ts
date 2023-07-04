@@ -1,16 +1,13 @@
-import { Prisma } from '@prisma/client'
 import { Injectable } from '@nestjs/common'
 
 import { Product } from '../aggregate/product.aggregate'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
-import { IFindByUniqueInput, IRepository } from '@/.shared/types'
+import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
 @Injectable()
-export class ProductRepository
-  implements IRepository<Product>, IFindByUniqueInput<Product>
-{
+export class ProductRepository implements IRepository<Product> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
@@ -39,38 +36,6 @@ export class ProductRepository
       this.logger.error(
         error,
         `Error al intentar buscar el producto ${id} en la db`,
-      )
-      return null
-    }
-  }
-
-  async findOneByUniqueInput(
-    where: Prisma.ProductWhereUniqueInput,
-  ): Promise<Result<Product>> {
-    try {
-      const product = await this.prisma.product.findUnique({
-        where,
-        include: {
-          price: true,
-          spring: {
-            include: {
-              stock: true,
-            },
-          },
-        },
-      })
-
-      if (!product) {
-        return null
-      }
-
-      return Product.create(product)
-    } catch (error) {
-      this.logger.error(
-        error,
-        `Error al intentar buscar el producto por unique input ${JSON.stringify(
-          where,
-        )} en la db`,
       )
       return null
     }

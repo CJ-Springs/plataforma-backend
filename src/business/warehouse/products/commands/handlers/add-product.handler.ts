@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common'
 
 import { AddProductCommand } from '../impl/add-product.command'
-
 import { Product } from '../../aggregate/product.aggregate'
 import { SpringPropsDTO } from '../../aggregate/entities/spring.entity'
 import { ProductRepository } from '../../repository/product.repository'
