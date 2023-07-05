@@ -19,8 +19,20 @@ jobs:
         with:
           node-version: 16.x
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.6.2
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile]
+            - args: [--global, typescript]
+
       - name: Install packages
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Railway
+        run: pnpm i -g @railway/cli
 
       - name: Install Railway
         run: npm i -g @railway/cli
