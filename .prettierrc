@@ -3,5 +3,10 @@
   "trailingComma": "all",
   "semi": false,
   "bracketSpacing": true,
-  "arrowParens": "always"
+  "arrowParens": "always",
+  "overrides": [
+    {
+      "files": "*.{js,ts}"
+    }
+  ]
 }
