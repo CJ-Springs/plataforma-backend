@@ -2,7 +2,8 @@ import { AllowedCurrency } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { PriceIncreasedEvent } from '../events/impl/price-increased.event'
-import { Currency, Result, Validate } from '@/.shared/helpers'
+import { PriceManuallyUpdatedEvent } from '../events/impl/price-manually-updated.event'
+import { Currency, Result, Validate, ValidateResult } from '@/.shared/helpers'
 import { IAggregateToDTO } from '@/.shared/types'
 import { UniqueField } from '@/.shared/domain'
 
@@ -28,11 +29,8 @@ export class Price
 
   static create(props: PricePropsDTO): Result<Price> {
     const guardResult = Validate.combine([
-      Validate.againstNullOrUndefinedBulk([
-        { argument: props.productCode, argumentName: 'productCode' },
-        { argument: props.price, argumentName: 'price' },
-      ]),
-      Validate.isGreaterThan(props.price, 0, 'price'),
+      Validate.againstNullOrUndefined(props.productCode, 'productCode'),
+      Price.validatePrice(props.price),
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
@@ -45,6 +43,23 @@ export class Price
     })
 
     return Result.ok<Price>(price)
+  }
+
+  manuallyUpdatePrice(newPrice: number): Result<Price> {
+    const guardResult = Price.validatePrice(newPrice)
+    if (guardResult.isFailure) {
+      return Result.fail(guardResult.getErrorValue().message)
+    }
+
+    this.props.price = newPrice
+
+    const event = new PriceManuallyUpdatedEvent({
+      price: this.props.price,
+      code: this.props.productCode.toString(),
+    })
+    this.apply(event)
+
+    return Result.ok<Price>(this)
   }
 
   increaseByPercentage(percentage: number): Result<Price> {
@@ -78,6 +93,13 @@ export class Price
     // this.apply(event)
 
     return Result.ok<Price>(this)
+  }
+
+  private static validatePrice(price: number): Result<ValidateResult> {
+    return Result.combine([
+      Validate.againstNullOrUndefined(price, 'price'),
+      Validate.isGreaterThan(price, 0, 'price'),
+    ])
   }
 
   getValue(): PriceProps {
