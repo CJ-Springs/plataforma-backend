@@ -2,8 +2,13 @@ import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
 import { PricingService } from './pricing.service'
-import { IncreaseBulkPricesDto, IncreasePriceDto } from './dtos'
+import {
+  IncreaseBulkPricesDto,
+  IncreasePriceDto,
+  ManuallyUpdatePriceDto,
+} from './dtos'
 import { IncreasePriceCommand } from './commands/impl/increase-price.command'
+import { ManuallyUpdatePriceCommand } from './commands/impl/manually-update-price.command'
 import {
   PermissionGuard,
   RequiredPermissions,
@@ -32,6 +37,21 @@ export class PricingController {
   ) {
     return await this.commandBus.execute(
       new IncreasePriceCommand({
+        code,
+        ...data,
+      }),
+    )
+  }
+
+  @RequiredPermissions('backoffice::actualizar-precio-manualmente')
+  @UseGuards(PermissionGuard)
+  @Patch('actualizar-precio/:code')
+  async manuallyUpdatePrice(
+    @Param('code') code: string,
+    @Body() data: ManuallyUpdatePriceDto,
+  ) {
+    return await this.commandBus.execute(
+      new ManuallyUpdatePriceCommand({
         code,
         ...data,
       }),
