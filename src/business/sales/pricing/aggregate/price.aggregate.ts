@@ -4,7 +4,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { PriceIncreasedEvent } from '../events/impl/price-increased.event'
 import { PriceManuallyUpdatedEvent } from '../events/impl/price-manually-updated.event'
 import { Currency, Result, Validate, ValidateResult } from '@/.shared/helpers'
-import { IAggregateToDTO } from '@/.shared/types'
+import { IToDTO } from '@/.shared/types'
 import { UniqueField } from '@/.shared/domain'
 
 type PriceProps = {
@@ -19,10 +19,7 @@ export type PricePropsDTO = {
   price: number
 }
 
-export class Price
-  extends AggregateRoot
-  implements IAggregateToDTO<PricePropsDTO>
-{
+export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
   private constructor(public props: PriceProps) {
     super()
   }

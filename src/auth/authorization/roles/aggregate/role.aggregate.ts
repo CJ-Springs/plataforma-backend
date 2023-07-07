@@ -5,7 +5,7 @@ import { PermissionAssigned } from '../events/impl/permission-assigned.event'
 import { RoleCreatedEvent } from '../events/impl/role-created.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { IAggregateToDTO } from '@/.shared/types'
+import { IToDTO } from '@/.shared/types'
 
 export type RoleProps = {
   id: UniqueEntityID
@@ -21,10 +21,7 @@ export type RolePropsDTO = {
   permissions: string[]
 }
 
-export class Role
-  extends AggregateRoot
-  implements IAggregateToDTO<RolePropsDTO>
-{
+export class Role extends AggregateRoot implements IToDTO<RolePropsDTO> {
   private constructor(public props: RoleProps) {
     super()
   }

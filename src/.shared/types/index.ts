@@ -21,7 +21,7 @@ export type StandardResponse<T = any> = {
   data?: T
 }
 
-export interface IAggregateToDTO<T extends Record<string, any>> {
+export interface IToDTO<T extends Record<string, any>> {
   toDTO(): T
 }
 

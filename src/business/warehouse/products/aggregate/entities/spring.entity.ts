@@ -1,7 +1,7 @@
 import { Stock } from '../value-objects/stock.value-object'
 import { Entity, UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { DeepPartial } from '@/.shared/types'
+import { DeepPartial, IToDTO } from '@/.shared/types'
 
 type SpringProps = {
   code: UniqueField
@@ -16,7 +16,10 @@ export type SpringPropsDTO = {
   stock: Stock['props']
 }
 
-export class Spring extends Entity<SpringProps> {
+export class Spring
+  extends Entity<SpringProps>
+  implements IToDTO<SpringPropsDTO>
+{
   private constructor(props: SpringProps, id?: UniqueEntityID) {
     super(props, id)
   }

@@ -4,7 +4,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
-import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
+import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
 
@@ -34,10 +34,7 @@ type ProductPropsDTO = {
   spring: SpringPropsDTO
 }
 
-export class Product
-  extends AggregateRoot
-  implements IAggregateToDTO<ProductPropsDTO>
-{
+export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
   private constructor(public props: ProductProps) {
     super()
   }
