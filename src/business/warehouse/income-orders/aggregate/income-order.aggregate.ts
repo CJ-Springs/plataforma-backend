@@ -6,10 +6,8 @@ import {
   IncomeOrderItemPropsDTO,
 } from './entities/income-order-item.entity'
 import { IncomeOrderPlacedEvent } from '../events/impl/income-order-placed.event'
-import { ItemAddedEvent } from '../events/impl/item-added.event'
-import { ItemQuantityIncrementedEvent } from '../events/impl/item-quantity-incremented.event'
-import { IToDTO } from '@/.shared/types'
-import { UniqueEntityID, UniqueField } from '@/.shared/domain'
+import { DeepPartial, IToDTO } from '@/.shared/types'
+import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
 
 type IncomeOrderProps = {
@@ -34,10 +32,11 @@ export class IncomeOrder
     super()
   }
 
-  static create(props: Partial<IncomeOrderPropsDTO>): Result<IncomeOrder> {
+  static create(props: DeepPartial<IncomeOrderPropsDTO>): Result<IncomeOrder> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.status, argumentName: 'status' },
       { argument: props.userId, argumentName: 'userId' },
+      { argument: props.items, argumentName: 'items' },
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
@@ -45,15 +44,13 @@ export class IncomeOrder
 
     const items: IncomeOrderItem[] = []
 
-    if (props.items) {
-      for (const item of props.items) {
-        const itemOrError = IncomeOrderItem.create(item)
-        if (itemOrError.isFailure) {
-          return Result.fail(itemOrError.getErrorValue())
-        }
-
-        items.push(itemOrError.getValue())
+    for (const item of props.items) {
+      const itemOrError = IncomeOrderItem.create(item)
+      if (itemOrError.isFailure) {
+        return Result.fail(itemOrError.getErrorValue())
       }
+
+      items.push(itemOrError.getValue())
     }
 
     const incomeOrder = new IncomeOrder({
@@ -64,44 +61,11 @@ export class IncomeOrder
     })
 
     if (!props?.id) {
-      const data = incomeOrder.toDTO()
-
-      const event = new IncomeOrderPlacedEvent({
-        id: data.id,
-        status: data.status,
-        userId: data.userId,
-      })
+      const event = new IncomeOrderPlacedEvent(incomeOrder.toDTO())
       incomeOrder.apply(event)
     }
 
     return Result.ok<IncomeOrder>(incomeOrder)
-  }
-
-  addItem({ entered, productCode }: Omit<IncomeOrderItemPropsDTO, 'id'>) {
-    const existingItem = this.props.items.find((item) =>
-      item.props.productCode.equals(new UniqueField(productCode)),
-    )
-
-    if (existingItem) {
-      existingItem.incrementQuantity(entered)
-
-      const event = new ItemQuantityIncrementedEvent(existingItem.toDTO())
-      this.apply(event)
-    } else {
-      const itemOrError = IncomeOrderItem.create({ entered, productCode })
-      if (itemOrError.isFailure) {
-        return Result.fail(itemOrError.getErrorValue())
-      }
-      const item = itemOrError.getValue()
-
-      this.props.items.push(item)
-
-      const event = new ItemAddedEvent({
-        ...item.toDTO(),
-        orderId: this.props.id.toString(),
-      })
-      this.apply(event)
-    }
   }
 
   toDTO(): IncomeOrderPropsDTO {

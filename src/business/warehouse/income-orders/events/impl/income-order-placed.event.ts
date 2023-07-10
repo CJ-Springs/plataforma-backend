@@ -4,6 +4,11 @@ type IncomeOrderPlacedEventProps = {
   id: string
   status: IncomeOrderStatus
   userId: string
+  items: {
+    id: string
+    productCode: string
+    entered: number
+  }[]
 }
 
 export class IncomeOrderPlacedEvent {

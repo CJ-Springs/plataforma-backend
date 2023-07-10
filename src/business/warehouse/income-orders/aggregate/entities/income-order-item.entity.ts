@@ -9,8 +9,8 @@ type IncomeOrderItemProps = {
 
 export type IncomeOrderItemPropsDTO = {
   id: string
-  entered: number
   productCode: string
+  entered: number
 }
 
 export class IncomeOrderItem
@@ -44,10 +44,6 @@ export class IncomeOrderItem
     )
 
     return Result.ok<IncomeOrderItem>(incomeOrderItem)
-  }
-
-  incrementQuantity(quantity) {
-    this.props.entered += quantity
   }
 
   toDTO(): IncomeOrderItemPropsDTO {

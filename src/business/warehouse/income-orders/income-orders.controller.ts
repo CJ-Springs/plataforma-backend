@@ -1,7 +1,8 @@
-import { Controller, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Post, UseGuards } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
 import { PlaceIncomeOrderCommand } from './commands/impl/place-income-order.command'
+import { PlaceIncomeOrderDto } from './dtos'
 import {
   PermissionGuard,
   RequiredPermissions,
@@ -15,9 +16,12 @@ export class IncomeOrdersController {
   @RequiredPermissions('backoffice::crear-orden-ingreso')
   @UseGuards(PermissionGuard)
   @Post()
-  async placeIncomeOrder(@UserDec('id') userId: string) {
+  async placeIncomeOrder(
+    @Body() incomeOrder: PlaceIncomeOrderDto,
+    @UserDec('id') userId: string,
+  ) {
     return await this.commandBus.execute(
-      new PlaceIncomeOrderCommand({ userId }),
+      new PlaceIncomeOrderCommand({ ...incomeOrder, userId }),
     )
   }
 }
