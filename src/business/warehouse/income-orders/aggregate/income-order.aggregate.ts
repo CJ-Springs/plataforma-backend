@@ -6,6 +6,7 @@ import {
   IncomeOrderItemPropsDTO,
 } from './entities/income-order-item.entity'
 import { IncomeOrderPlacedEvent } from '../events/impl/income-order-placed.event'
+import { IncomeOrderCancelledEvent } from '../events/impl/cancel-income-order.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -66,6 +67,28 @@ export class IncomeOrder
     }
 
     return Result.ok<IncomeOrder>(incomeOrder)
+  }
+
+  cancelOrder(): Result<IncomeOrder> {
+    const currentStatus = this.props.status
+    const orderId = this.props.id.toString()
+
+    if (currentStatus === IncomeOrderStatus.ANULADA) {
+      return Result.fail(`La orden de ingreso ${orderId} ya ha sido anulada`)
+    }
+
+    if (currentStatus === IncomeOrderStatus.CONCRETADA) {
+      return Result.fail(
+        `La orden de ingreso ${orderId} ya está concretada y no puede ser anulada`,
+      )
+    }
+
+    this.props.status = IncomeOrderStatus.ANULADA
+
+    const event = new IncomeOrderCancelledEvent({ orderId })
+    this.apply(event)
+
+    return Result.ok<IncomeOrder>(this)
   }
 
   toDTO(): IncomeOrderPropsDTO {
