@@ -3,6 +3,7 @@ import { EditTechnicalSheetHandler } from './edit-technical-sheet.handlers'
 import { MinStockUpdateHandler } from './min-stock-update.handler'
 import { StockAdjustmentHandler } from './stock-adjustment.handler'
 import { RegisterMovementHandler } from './register-movement.handler'
+import { IncrementStockHandler } from './increment-stock.handler'
 
 export const CommandHandlers = [
   AttachTechnicalSheetHandler,
@@ -10,4 +11,5 @@ export const CommandHandlers = [
   StockAdjustmentHandler,
   MinStockUpdateHandler,
   RegisterMovementHandler,
+  IncrementStockHandler,
 ]

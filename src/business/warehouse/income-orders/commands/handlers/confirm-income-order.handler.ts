@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common'
 
 import { IncomeOrderRepository } from '../../repository/income-order.repository'
-import { CancelIncomeOrderCommand } from '../impl/cancel-income-order.command'
+import { ConfirmIncomeOrderCommand } from '../impl/confirm-income-order.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(CancelIncomeOrderCommand)
-export class CancelIncomeOrderHandler
-  implements ICommandHandler<CancelIncomeOrderCommand>
+@CommandHandler(ConfirmIncomeOrderCommand)
+export class ConfirmIncomeOrderHandler
+  implements ICommandHandler<ConfirmIncomeOrderCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -21,8 +21,8 @@ export class CancelIncomeOrderHandler
     private readonly orderRepository: IncomeOrderRepository,
   ) {}
 
-  async execute(command: CancelIncomeOrderCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CancelIncomeOrder command handler')
+  async execute(command: ConfirmIncomeOrderCommand): Promise<StandardResponse> {
+    this.logger.log('Ejecutando el ConfirmIncomeOrder command handler')
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
@@ -41,9 +41,9 @@ export class CancelIncomeOrderHandler
     }
     const order = orderOrNull.getValue()
 
-    const cancelOrderResult = order.cancelOrder()
-    if (cancelOrderResult.isFailure) {
-      throw new ConflictException(cancelOrderResult.getErrorValue())
+    const confirmOrderResult = order.confirmOrder()
+    if (confirmOrderResult.isFailure) {
+      throw new ConflictException(confirmOrderResult.getErrorValue())
     }
 
     await this.orderRepository.save(order)
@@ -52,11 +52,11 @@ export class CancelIncomeOrderHandler
     return {
       success: true,
       status: 200,
-      message: `Orden de ingreso ${orderId} anulada`,
+      message: `Orden de ingreso ${orderId} concretada`,
     }
   }
 
-  validate(command: CancelIncomeOrderCommand) {
+  validate(command: ConfirmIncomeOrderCommand) {
     const validation = Validate.isRequired(command.data.orderId, 'orderId')
 
     if (!validation.success) {

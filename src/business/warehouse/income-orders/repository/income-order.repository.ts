@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common'
 
 import { IncomeOrder } from '../aggregate/income-order.aggregate'
 import { IncomeOrderPlacedEvent } from '../events/impl/income-order-placed.event'
-import { IncomeOrderCancelledEvent } from '../events/impl/cancel-income-order.event'
+import { IncomeOrderCancelledEvent } from '../events/impl/income-order-cancelled.event'
+import { IncomeOrderConfirmedEvent } from '../events/impl/income-order-confirmed.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -49,6 +50,9 @@ export class IncomeOrderRepository implements IRepository<IncomeOrder> {
         if (event instanceof IncomeOrderCancelledEvent) {
           return this.cancelIncomeOrder(event.data)
         }
+        if (event instanceof IncomeOrderConfirmedEvent) {
+          return this.confirmIncomeOrder({ orderId: event.data.id })
+        }
       }),
     )
   }
@@ -68,7 +72,7 @@ export class IncomeOrderRepository implements IRepository<IncomeOrder> {
     }
   }
 
-  private async cancelIncomeOrder(data: IncomeOrderCancelledEvent['data']) {
+  private async cancelIncomeOrder(data: { orderId: string }) {
     try {
       await this.prisma.incomeOrder.update({
         where: { id: data.orderId },
@@ -78,6 +82,20 @@ export class IncomeOrderRepository implements IRepository<IncomeOrder> {
       this.logger.error(
         error,
         `Error al intentar anular la orden de ingreso ${data.orderId} en la db`,
+      )
+    }
+  }
+
+  private async confirmIncomeOrder(data: { orderId: string }) {
+    try {
+      await this.prisma.incomeOrder.update({
+        where: { id: data.orderId },
+        data: { status: IncomeOrderStatus.CONCRETADA },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar concretar la orden de ingreso ${data.orderId} en la db`,
       )
     }
   }

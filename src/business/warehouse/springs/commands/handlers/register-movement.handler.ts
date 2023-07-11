@@ -29,10 +29,7 @@ export class RegisterMovementHandler
     try {
       await this.prisma.movement.create({
         data: {
-          updatedStock: movement.updatedStock,
-          quantity: movement.quantity,
-          reason: movement.reason,
-          type: movement.type,
+          ...movement,
           spring: {
             connect: {
               code,
