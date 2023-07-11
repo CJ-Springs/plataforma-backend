@@ -4,7 +4,7 @@ import { AppRole } from '@prisma/client'
 import { PermissionCreatedEvent } from '../events/impl/permission-created.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
-import { IAggregateToDTO } from '@/.shared/types'
+import { IToDTO } from '@/.shared/types'
 
 export type PermissionProps = {
   id: UniqueEntityID
@@ -22,7 +22,7 @@ export type PermissionPropsDTO = {
 
 export class Permission
   extends AggregateRoot
-  implements IAggregateToDTO<PermissionPropsDTO>
+  implements IToDTO<PermissionPropsDTO>
 {
   private constructor(public props: PermissionProps) {
     super()

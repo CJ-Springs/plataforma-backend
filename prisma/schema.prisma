@@ -119,10 +119,10 @@ model IncomeOrderItem {
   entered Int
   createdAt DateTime @default(now()) @map("created_at") 
 
-  order IncomeOrder @relation(fields: [orderId], references: [id])
+  order IncomeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orderId String @map("order_id")
-  product Product @relation(fields: [productId], references: [id])
-  productId String @map("product_id")
+  product Product @relation(fields: [productCode], references: [code])
+  productCode String @map("product_code")
 
   @@map("income_order_items")
 }

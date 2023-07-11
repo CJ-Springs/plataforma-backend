@@ -21,10 +21,11 @@ export type StandardResponse<T = any> = {
   data?: T
 }
 
-export interface IAggregateToDTO<T extends Record<string, any>> {
+export interface IToDTO<T extends Record<string, any>> {
   toDTO(): T
 }
 
 export enum MovementReason {
   STOCK_ADJUSTMENT = 'Ajuste de stock',
+  INCOME_ORDER = 'Orden de ingreso',
 }

@@ -5,7 +5,7 @@ import { CustomerRegisteredEvent } from '../events/impl/customer-registered.even
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
-import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
+import { DeepPartial, IToDTO } from '@/.shared/types'
 
 type CustomerProps = {
   id: UniqueEntityID
@@ -39,7 +39,7 @@ type UpdateCustomerProps = DeepPartial<
 
 export class Customer
   extends AggregateRoot
-  implements IAggregateToDTO<CustomerPropsDTO>
+  implements IToDTO<CustomerPropsDTO>
 {
   private constructor(public props: CustomerProps) {
     super()

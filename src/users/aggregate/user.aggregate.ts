@@ -8,7 +8,7 @@ import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Email, Result, Validate } from '@/.shared/helpers'
-import { DeepPartial, IAggregateToDTO } from '@/.shared/types'
+import { DeepPartial, IToDTO } from '@/.shared/types'
 
 export type UserProps = {
   id: UniqueEntityID
@@ -34,7 +34,7 @@ export type UserPropsDTOWithoutPassword = Omit<UserPropsDTO, 'password'>
 
 export class User
   extends AggregateRoot
-  implements IAggregateToDTO<UserPropsDTOWithoutPassword>
+  implements IToDTO<UserPropsDTOWithoutPassword>
 {
   private constructor(public props: UserProps) {
     super()
