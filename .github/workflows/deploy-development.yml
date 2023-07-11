@@ -8,7 +8,7 @@ on:
     branches: ['dev']
 
 jobs:
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,9 +33,6 @@ jobs:
 
       - name: Install Railway
         run: pnpm i -g @railway/cli
-
-      - name: Install Railway
-        run: npm i -g @railway/cli
 
       - name: Deploy
         run: railway up
