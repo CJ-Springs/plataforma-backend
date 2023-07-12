@@ -282,8 +282,8 @@ model WarrantyOrder {
 
   items WarrantyOrderItem[]
 
-  customer Customer @relation(fields: [customerId], references: [id])
-  customerId String @map("customer_id")
+  customer Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int @map("customer_code")
 
   @@map("warranty_orders")
 }
@@ -296,8 +296,8 @@ model WarrantyOrderItem {
 
   order WarrantyOrder @relation(fields: [orderId], references: [id])
   orderId String @map("order_id")
-  product Product @relation(fields: [productId], references: [id])
-  productId String @map("product_id")
+  product Product @relation(fields: [productCode], references: [code])
+  productCode String @map("product_code")
 
   @@map("warranty_order_items")
 }

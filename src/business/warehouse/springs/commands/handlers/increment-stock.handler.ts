@@ -70,7 +70,7 @@ export class IncrementStockHandler
     return {
       success: true,
       status: 200,
-      message: `Han ingresado ${entered} pares del stock del espiral ${code}`,
+      message: `Han ingresado ${entered} juegos del espiral ${code}`,
     }
   }
 
