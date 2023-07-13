@@ -8,13 +8,13 @@ import {
 } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
+import { CreateWarrantyOrderDto } from './dtos'
+import { CreateWarrantyOrderCommand } from './commands/impl/create-warranty-order.command'
 import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
 import { UserDec } from '@/.shared/decorators'
-import { CreateWarrantyOrderDto } from './dtos'
-import { CreateWarrantyOrderCommand } from './commands/impl/create-warranty-order.command'
 
 @Controller('clientes/garantias')
 export class WarrantiesController {

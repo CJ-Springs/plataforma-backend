@@ -1,10 +1,12 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 import {
   BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common'
 
+import { WarrantyOrder } from '../../aggregate/warranty-order.aggregate'
+import { WarrantyOrderRepository } from '../../repository/warranty-order.repository'
 import { CreateWarrantyOrderCommand } from '../impl/create-warranty-order.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
@@ -25,6 +27,8 @@ export class CreateWarrantyOrderHandler
   constructor(
     private readonly logger: LoggerService,
     private readonly prisma: PrismaService,
+    private readonly publisher: EventPublisher,
+    private readonly orderRepository: WarrantyOrderRepository,
   ) {}
 
   async execute(
@@ -123,26 +127,26 @@ export class CreateWarrantyOrderHandler
       }
     }
 
-    // const orderOrError = IncomeOrder.create({
-    //   userId: data.userId,
-    //   status: IncomeOrderStatus.EN_PROGRESO,
-    //   items: Array.from(itemsMap).map(([productCode, entered]) => ({
-    //     productCode,
-    //     entered,
-    //   })),
-    // })
-    // if (orderOrError.isFailure) {
-    //   throw new BadRequestException(orderOrError.getErrorValue())
-    // }
-    // const order = orderOrError.getValue()
+    const orderOrError = WarrantyOrder.create({
+      ...data,
+      items: Array.from(itemsMap).map(([productCode, requested]) => ({
+        productCode,
+        requested,
+      })),
+    })
+    if (orderOrError.isFailure) {
+      throw new BadRequestException(orderOrError.getErrorValue())
+    }
+    const order = orderOrError.getValue()
 
-    // await this.orderRepository.save(order)
-    // this.publisher.mergeObjectContext(order).commit()
+    await this.orderRepository.save(order)
+    this.publisher.mergeObjectContext(order).commit()
 
     return {
       success: true,
       status: 201,
-      message: 'Orden de ingreso creada correctamente',
+      message: 'Orden de garantía creada',
+      data: order.toDTO(),
     }
   }
 
