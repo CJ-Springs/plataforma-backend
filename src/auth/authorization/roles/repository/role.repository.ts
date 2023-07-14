@@ -19,7 +19,7 @@ export class RoleRepository
 
   async findOneById(id: string): Promise<Result<Role> | null> {
     try {
-      const _role = await this.prisma.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where: { id },
         include: {
           permissions: {
@@ -30,13 +30,13 @@ export class RoleRepository
         },
       })
 
-      if (!_role) {
+      if (!role) {
         return null
       }
 
       return Role.create({
-        ..._role,
-        permissions: _role.permissions.map((permission) => permission.name),
+        ...role,
+        permissions: role.permissions.map((permission) => permission.name),
       })
     } catch (error) {
       this.logger.error(
@@ -52,18 +52,18 @@ export class RoleRepository
     where: Prisma.RoleWhereUniqueInput,
   ): Promise<Result<Role> | null> {
     try {
-      const _role = await this.prisma.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where,
         include: { permissions: { select: { name: true } } },
       })
 
-      if (!_role) {
+      if (!role) {
         return null
       }
 
       return Role.create({
-        ..._role,
-        permissions: _role.permissions.map((permission) => permission.name),
+        ...role,
+        permissions: role.permissions.map((permission) => permission.name),
       })
     } catch (error) {
       this.logger.error(error, `Error al intentar encontrar el rol en la db`)

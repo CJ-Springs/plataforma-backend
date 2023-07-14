@@ -48,7 +48,7 @@ export class IncrementStockHandler
           springId: existingSpring.id,
         },
         data: {
-          quantityOnHand: updatedStock,
+          quantityOnHand: { increment: entered },
         },
       })
 

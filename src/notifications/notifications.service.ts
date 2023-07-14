@@ -39,6 +39,14 @@ export class NotificationsService implements OnModuleInit {
     }
   }
 
+  async removeSubscriber(subscriberId: string) {
+    try {
+      await this.novu.subscribers.delete(subscriberId)
+    } catch (error) {
+      this.logger.error(error, 'Al eliminar un subscriber de Novu')
+    }
+  }
+
   async trigger(event: NovuEvent, data: ITriggerPayloadOptions) {
     try {
       await this.novu.trigger(event, data)

@@ -16,15 +16,15 @@ export class StockAdjustedHandler implements IEventHandler<StockAdjustedEvent> {
   handle(event: StockAdjustedEvent) {
     this.logger.log('Ejecutando el StockAdjusted event handler', 'En springs')
     const { data } = event
+    const { prevStock, updatedStock, ...info } = data
 
     const type =
-      data.prevStock > data.updatedStock
-        ? MovementType.EGRESO
-        : MovementType.INGRESO
+      prevStock > updatedStock ? MovementType.EGRESO : MovementType.INGRESO
 
     this.commandBus.execute(
       new RegisterMovementCommand({
-        ...data,
+        ...info,
+        updatedStock,
         reason: MovementReason.STOCK_ADJUSTMENT,
         type,
       }),

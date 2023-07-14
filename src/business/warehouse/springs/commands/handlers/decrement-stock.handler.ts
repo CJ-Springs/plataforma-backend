@@ -58,7 +58,7 @@ export class DecrementStockHandler
           springId: existingSpring.id,
         },
         data: {
-          quantityOnHand: updatedStock,
+          quantityOnHand: { decrement: requested },
         },
       })
 
@@ -73,7 +73,7 @@ export class DecrementStockHandler
     } catch (error) {
       this.logger.error(error, `Al disminuir el stock del espiral ${code}`)
       throw new BadRequestException(
-        `Error durante al disminuir el stock del espiral ${code}`,
+        `Error al disminuir el stock del espiral ${code}`,
       )
     }
 

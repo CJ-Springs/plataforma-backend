@@ -1,16 +1,20 @@
-import { LoggerService } from '@/.shared/helpers'
-import { PrismaService } from '@/.shared/infra/prisma.service'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { EventBus } from '@nestjs/cqrs'
+
+import { LoggerService } from '@/.shared/helpers'
+import { PrismaService } from '@/.shared/infra/prisma.service'
+import { UserDeletedEvent } from './events/impl/user-deleted.event'
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
+    private readonly eventBus: EventBus,
   ) {}
 
   private async findUserOrThrow(id: string) {
@@ -33,10 +37,12 @@ export class UsersService {
     try {
       await this.prisma.user.delete({ where: { id } })
 
+      this.eventBus.publish(new UserDeletedEvent({ id: existingUser.id }))
+
       return {
         success: true,
         statusCode: 200,
-        message: 'Usuario eliminado correctamente',
+        message: `Usuario ${existingUser.email} eliminado`,
       }
     } catch (error) {
       this.logger.error(error, 'Error al intentar eliminar un usuario de la db')
