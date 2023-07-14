@@ -43,7 +43,7 @@ export class StockAdjustmentHandler
           springId: existingSpring.id,
         },
         data: {
-          quantityOnHand: adjustment,
+          quantityOnHand: { set: adjustment },
         },
       })
 

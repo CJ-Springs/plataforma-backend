@@ -31,7 +31,7 @@ model User {
   role Role @relation(fields: [roleId], references: [id])
   roleId String @map("role_id")
 
-  @@index([email], map: "email")
+  @@index([email, id], map: "users_id_email")
   @@map("users")
 }
 
@@ -84,7 +84,7 @@ model Role {
   users User[]
   permissions Permission[] @relation("roles_permissions")
 
-  @@index([code], map: "role_code")
+  @@index([code], map: "roles_code")
   @@map("roles")
 }
 
@@ -148,7 +148,7 @@ model Product {
   spring Spring @relation(fields: [springId], references: [id])
   springId String @map("spring_id")
 
-  @@index([code], map: "product_codes")
+  @@index([code], map: "products_code")
   @@map("products")
 }
 
@@ -177,7 +177,7 @@ model Spring {
   products Product[]
   movements Movement[]
 
-  @@index([code], map: "spring_codes")
+  @@index([code], map: "springs_code")
   @@map("springs")
 }
 
@@ -253,7 +253,7 @@ model Customer {
   buys SaleOrder[]
   warranties WarrantyOrder[]
 
-  @@index([code], map: "customer_codes")
+  @@index([code], map: "customers_code")
   @@map("customers")
 }
 
