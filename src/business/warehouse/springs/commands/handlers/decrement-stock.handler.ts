@@ -1,16 +1,20 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs'
-import { BadRequestException, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common'
 
-import { IncrementStockCommand } from '../impl/increment-stock.command'
-import { StockIncrementedEvent } from '../../events/impl/stock-incremented.event'
+import { DecrementStockCommand } from '../impl/decrement-stock.command'
+import { StockDecrementedEvent } from '../../events/impl/stock-decremented.event'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(IncrementStockCommand)
-export class IncrementStockHandler
-  implements ICommandHandler<IncrementStockCommand>
+@CommandHandler(DecrementStockCommand)
+export class DecrementStockHandler
+  implements ICommandHandler<DecrementStockCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -18,8 +22,8 @@ export class IncrementStockHandler
     private readonly eventBus: EventBus,
   ) {}
 
-  async execute(command: IncrementStockCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el IncrementStock command handler')
+  async execute(command: DecrementStockCommand): Promise<StandardResponse> {
+    this.logger.log('Ejecutando el DecrementStock command handler')
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
@@ -27,7 +31,7 @@ export class IncrementStockHandler
     }
 
     const { data } = command
-    const { code, entered, reason } = data
+    const { code, requested, reason } = data
 
     const existingSpring = await this.prisma.spring.findUnique({
       where: { code },
@@ -41,7 +45,13 @@ export class IncrementStockHandler
     }
 
     try {
-      const updatedStock = existingSpring.stock.quantityOnHand + entered
+      const updatedStock = existingSpring.stock.quantityOnHand - requested
+
+      if (updatedStock < 0) {
+        throw new ConflictException(
+          `Falta de stock para el espiral ${code} - stock en mano ${existingSpring.stock.quantityOnHand} - stock solicitado ${requested})`,
+        )
+      }
 
       await this.prisma.stock.update({
         where: {
@@ -53,46 +63,46 @@ export class IncrementStockHandler
       })
 
       this.eventBus.publish(
-        new StockIncrementedEvent({
+        new StockDecrementedEvent({
           code,
           reason,
-          quantity: entered,
+          quantity: requested,
           updatedStock,
         }),
       )
     } catch (error) {
-      this.logger.error(error, `Al incrementar el stock del espiral ${code}`)
+      this.logger.error(error, `Al disminuir el stock del espiral ${code}`)
       throw new BadRequestException(
-        `Error durante al incrementar el stock del espiral ${code}`,
+        `Error durante al disminuir el stock del espiral ${code}`,
       )
     }
 
     return {
       success: true,
       status: 200,
-      message: `Han ingresado ${entered} juegos del espiral ${code}`,
+      message: `Se restaron ${requested} juegos del espiral ${code}`,
     }
   }
 
-  validate(command: IncrementStockCommand) {
+  validate(command: DecrementStockCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.code, argumentName: 'code' },
       { argument: command.data.reason, argumentName: 'reason' },
-      { argument: command.data.entered, argumentName: 'entered' },
+      { argument: command.data.requested, argumentName: 'requested' },
     ])
 
     if (!validation.success) {
       return Result.fail<string>(validation.message)
     }
 
-    const enteredValidation = Validate.isGreaterOrEqualThan(
-      command.data.entered,
+    const requestedValidation = Validate.isGreaterOrEqualThan(
+      command.data.requested,
       0,
-      'entered',
+      'requested',
     )
 
-    if (enteredValidation.isFailure) {
-      return Result.fail<string>(enteredValidation.getErrorValue())
+    if (requestedValidation.isFailure) {
+      return Result.fail<string>(requestedValidation.getErrorValue())
     }
 
     return Result.ok()

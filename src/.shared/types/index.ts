@@ -28,4 +28,5 @@ export interface IToDTO<T extends Record<string, any>> {
 export enum MovementReason {
   STOCK_ADJUSTMENT = 'Ajuste de stock',
   INCOME_ORDER = 'Orden de ingreso',
+  WARRANTY_ORDER = 'Orden de garantía',
 }
