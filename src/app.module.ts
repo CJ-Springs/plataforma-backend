@@ -15,8 +15,8 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { CustomersModule } from './business/customers/customers.module'
 import { ProductsModule } from './business/warehouse/products/products.module'
 import { SpringsModule } from './business/warehouse/springs/springs.module'
-import { PricingModule } from './business/sales/pricing/pricing.module'
 import { IncomeOrdersModule } from './business/warehouse/income-orders/income-orders.module'
+import { SalesModule } from './business/sales/sales.module'
 
 @Module({
   imports: [
@@ -35,8 +35,8 @@ import { IncomeOrdersModule } from './business/warehouse/income-orders/income-or
     CustomersModule,
     ProductsModule,
     SpringsModule,
-    PricingModule,
     IncomeOrdersModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [

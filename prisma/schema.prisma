@@ -311,8 +311,8 @@ model SaleOrder {
   items SaleOrderItem[]
   invoice Invoice?
 
-  customer Customer @relation(fields: [customerId], references: [id])
-  customerId String @map("customer_id")
+  customer Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int @map("customer_code")
 
   @@map("sale_orders")
 }
@@ -321,15 +321,15 @@ model SaleOrderItem {
   id String @id @default(cuid())
 
   requested Int
-  price Int
+  price Float
   discount Int?
-  salePrice Int @map("sale_price")
+  salePrice Float @map("sale_price")
   createdAt DateTime @default(now()) @map("created_at") 
 
-  order SaleOrder @relation(fields: [orderId], references: [id])
+  order SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orderId String @map("order_id")
-  product Product @relation(fields: [productId], references: [id])
-  productId String @map("product_id")
+  product Product @relation(fields: [productCode], references: [code])
+  productCode String @map("product_code")
 
   @@map("sale_order_items")
 }
