@@ -1,18 +1,23 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
-import { BadRequestException, NotFoundException } from '@nestjs/common'
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common'
 
 import { PlaceSaleOrderCommand } from '../impl/place-sale-order.command'
+import { SaleOrder } from '../../aggregate/sale-order.aggregate'
+import { SaleOrderRepository } from '../../repository/sale-order.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
-// type StockRequested = {
-//   springCode: string
-//   productsCode: string[]
-//   quantityOnHand: number
-//   requested: number
-// }
+type StockRequested = {
+  productsCode: string[]
+  quantityOnHand: number
+  requested: number
+}
 
 @CommandHandler(PlaceSaleOrderCommand)
 export class PlaceSaleOrderHandler
@@ -20,7 +25,9 @@ export class PlaceSaleOrderHandler
 {
   constructor(
     private readonly logger: LoggerService,
-    private readonly prisma: PrismaService, // private readonly publisher: EventPublisher,
+    private readonly prisma: PrismaService,
+    private readonly publisher: EventPublisher,
+    private readonly orderRepository: SaleOrderRepository,
   ) {}
 
   async execute(command: PlaceSaleOrderCommand): Promise<StandardResponse> {
@@ -44,99 +51,109 @@ export class PlaceSaleOrderHandler
         )
       })
 
-    // const itemsMap = data.items.reduce((acc, { productCode, requested }) => {
-    //   if (acc.has(productCode)) {
-    //     const prevRequested = acc.get(productCode)
-    //     return acc.set(productCode, prevRequested + requested)
-    //   }
+    const itemsMap = data.items.reduce((acc, { productCode, ...item }) => {
+      if (acc.has(productCode)) {
+        const { requested, discount } = acc.get(productCode)
 
-    //   return acc.set(productCode, requested)
-    // }, new Map<string, number>())
+        return acc.set(productCode, {
+          requested: requested + item.requested,
+          discount:
+            item.discount && item.discount > (discount ?? 0)
+              ? item.discount
+              : discount,
+        })
+      }
 
-    // let stocksRequested: StockRequested[] = []
+      return acc.set(productCode, {
+        requested: item.requested,
+        discount: item?.discount,
+      })
+    }, new Map<string, { requested: number; discount?: number }>())
 
-    // for await (const [code, requested] of itemsMap) {
-    //   const existingProduct = await this.prisma.product
-    //     .findUniqueOrThrow({
-    //       where: { code },
-    //       select: {
-    //         spring: {
-    //           select: {
-    //             code: true,
-    //             stock: { select: { quantityOnHand: true } },
-    //           },
-    //         },
-    //       },
-    //     })
-    //     .catch(() => {
-    //       throw new NotFoundException(`El producto ${code} no se ha encontrado`)
-    //     })
+    const items = await Promise.all(
+      Array.from(itemsMap).map(async ([code, { requested, discount }]) => {
+        const existingProduct = await this.prisma.product
+          .findUniqueOrThrow({
+            where: { code },
+            include: {
+              price: true,
+              spring: {
+                select: {
+                  code: true,
+                  stock: { select: { quantityOnHand: true } },
+                },
+              },
+            },
+          })
+          .catch(() => {
+            throw new NotFoundException(
+              `El producto ${code} no se ha encontrado`,
+            )
+          })
 
-    //   const { code: springCode, stock } = existingProduct.spring
+        return {
+          productCode: code,
+          requested,
+          price: existingProduct.price.price,
+          springCode: existingProduct.spring.code,
+          discount,
+          quantityOnHand: existingProduct.spring.stock.quantityOnHand,
+        }
+      }),
+    )
 
-    //   const sharedStock = stocksRequested.find(
-    //     (stock) => stock.springCode === springCode,
-    //   )
+    const stocksRequested = items.reduce((acc, { springCode, ...item }) => {
+      if (acc.has(springCode)) {
+        const sharedSpring = acc.get(springCode)
 
-    //   if (sharedStock) {
-    //     stocksRequested = stocksRequested.map((stock) =>
-    //       stock.springCode === springCode
-    //         ? {
-    //             ...stock,
-    //             requested: stock.requested + requested,
-    //             productsCode: [...stock.productsCode, code],
-    //           }
-    //         : stock,
-    //     )
-    //   } else {
-    //     stocksRequested.push({
-    //       springCode,
-    //       quantityOnHand: stock.quantityOnHand,
-    //       requested,
-    //       productsCode: [code],
-    //     })
-    //   }
-    // }
+        return acc.set(springCode, {
+          ...sharedSpring,
+          requested: sharedSpring.requested + item.requested,
+          productsCode: [...sharedSpring.productsCode, item.productCode],
+        })
+      }
 
-    // for (const {
-    //   productsCode,
-    //   requested,
-    //   quantityOnHand,
-    //   springCode,
-    // } of stocksRequested) {
-    //   if (requested > quantityOnHand) {
-    //     const isOneProduct = productsCode.length === 1
+      return acc.set(springCode, {
+        quantityOnHand: item.quantityOnHand,
+        requested: item.requested,
+        productsCode: [item.productCode],
+      })
+    }, new Map<string, StockRequested>())
 
-    //     throw new ConflictException(
-    //       `No se posee el suficiente stock para ${
-    //         isOneProduct ? 'el producto' : 'los productos'
-    //       } ${productsCode.join(
-    //         ', ',
-    //       )} (espiral ${springCode} - stock en mano ${quantityOnHand} - stock solicitado ${requested})`,
-    //     )
-    //   }
-    // }
+    for (const [
+      springCode,
+      { productsCode, requested, quantityOnHand },
+    ] of stocksRequested) {
+      if (requested > quantityOnHand) {
+        const isOneProduct = productsCode.length === 1
 
-    // const orderOrError = WarrantyOrder.create({
-    //   ...data,
-    //   items: Array.from(itemsMap).map(([productCode, requested]) => ({
-    //     productCode,
-    //     requested,
-    //   })),
-    // })
-    // if (orderOrError.isFailure) {
-    //   throw new BadRequestException(orderOrError.getErrorValue())
-    // }
-    // const order = orderOrError.getValue()
+        throw new ConflictException(
+          `No se posee el suficiente stock para ${
+            isOneProduct ? 'el producto' : 'los productos'
+          } ${productsCode.join(
+            ', ',
+          )} (espiral ${springCode} - stock en mano ${quantityOnHand} - stock solicitado ${requested})`,
+        )
+      }
+    }
 
-    // await this.orderRepository.save(order)
-    // this.publisher.mergeObjectContext(order).commit()
+    const orderOrError = SaleOrder.create({
+      ...data,
+      items,
+    })
+    if (orderOrError.isFailure) {
+      throw new BadRequestException(orderOrError.getErrorValue())
+    }
+    const order = orderOrError.getValue()
+
+    await this.orderRepository.save(order)
+    this.publisher.mergeObjectContext(order).commit()
 
     return {
       success: true,
       status: 201,
       message: `Orden de venta creada (cliente ${data.customerCode})`,
-      //   data: order.toDTO(),
+      data: order.toDTO(),
     }
   }
 

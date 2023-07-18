@@ -338,7 +338,7 @@ model Invoice {
   id String @id @default(cuid())
 
   amount Int 
-  dueDate DateTime @db.Date
+  dueDate DateTime @db.Date @map("due_date")
   status InvoiceStatus @default(POR_PAGAR)
   createdAt DateTime @default(now()) @map("created_at") 
 
