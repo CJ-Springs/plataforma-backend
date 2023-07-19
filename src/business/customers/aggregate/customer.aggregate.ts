@@ -14,7 +14,7 @@ type CustomerProps = {
   name: string
   phone: string
   cuil: string
-  owe: number
+  balance: number
   paymentDeadline: number
   discount?: number
   address: Address
@@ -27,14 +27,14 @@ type CustomerPropsDTO = {
   name: string
   phone: string
   cuil: string
-  owe: number
+  balance: number
   paymentDeadline: number
   discount?: number
   address: AddressPropsDTO
 }
 
 type UpdateCustomerProps = DeepPartial<
-  Omit<CustomerPropsDTO, 'id' | 'code' | 'email' | 'owe'>
+  Omit<CustomerPropsDTO, 'id' | 'code' | 'email' | 'balance'>
 >
 
 export class Customer
@@ -51,7 +51,7 @@ export class Customer
       { argument: props.name, argumentName: 'name' },
       { argument: props.phone, argumentName: 'phone' },
       { argument: props.cuil, argumentName: 'cuil' },
-      { argument: props.owe, argumentName: 'owe' },
+      { argument: props.balance, argumentName: 'balance' },
       { argument: props.paymentDeadline, argumentName: 'paymentDeadline' },
       { argument: props.address, argumentName: 'address' },
     ])
@@ -75,7 +75,7 @@ export class Customer
       email: emailResult.getValue(),
       name: props.name,
       phone: props.phone,
-      owe: props.owe,
+      balance: props.balance,
       paymentDeadline: props.paymentDeadline,
       cuil: props.cuil,
       discount: props?.discount,

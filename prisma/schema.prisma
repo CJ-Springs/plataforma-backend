@@ -243,7 +243,7 @@ model Customer {
   name String 
   phone String 
   discount Int?
-  owe Int @default(0) 
+  balance Float @default(0) 
   cuil String
   paymentDeadline Int @map("payment_deadline")
   createdAt DateTime @default(now()) @map("created_at") 
@@ -337,7 +337,8 @@ model SaleOrderItem {
 model Invoice {
   id String @id @default(cuid())
 
-  amount Int 
+  total Float
+  deposited Float 
   dueDate DateTime @db.Date @map("due_date")
   status InvoiceStatus @default(POR_PAGAR)
   createdAt DateTime @default(now()) @map("created_at") 

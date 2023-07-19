@@ -5,7 +5,7 @@ type CustomerRegisteredEventProps = {
   name: string
   phone: string
   cuil: string
-  owe: number
+  balance: number
   paymentDeadline: number
   discount?: number
   address: {
