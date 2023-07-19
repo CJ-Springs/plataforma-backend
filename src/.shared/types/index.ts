@@ -29,4 +29,5 @@ export enum MovementReason {
   STOCK_ADJUSTMENT = 'Ajuste de stock',
   INCOME_ORDER = 'Orden de ingreso',
   WARRANTY_ORDER = 'Orden de garantía',
+  SALE_ORDER = 'Orden de venta',
 }
