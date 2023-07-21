@@ -3,6 +3,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Address, AddressPropsDTO } from './value-objects/address.value-object'
 import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
+import { BalanceReducedEvent } from '../events/impl/balance-reduced.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -121,6 +122,26 @@ export class Customer
     const event = new CustomerUpdatedEvent({
       code: this.props.code.toValue(),
       ...props,
+    })
+    this.apply(event)
+
+    return Result.ok<Customer>(this)
+  }
+
+  reduceBalance(reduction: number): Result<Customer> {
+    const validateReduction = Validate.isGreaterThan(reduction, 0, 'reduction')
+    if (validateReduction.isFailure) {
+      return Result.fail(validateReduction.getErrorValue())
+    }
+
+    const prevBalance = this.props.balance
+    this.props.balance -= reduction
+
+    const event = new BalanceReducedEvent({
+      code: this.props.code.toValue(),
+      prevBalance,
+      reduction,
+      currentBalance: this.props.balance,
     })
     this.apply(event)
 

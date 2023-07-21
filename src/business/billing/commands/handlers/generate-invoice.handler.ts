@@ -10,8 +10,9 @@ import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
-//TODO: aumentar el campo ventas de los productos al hacer una sale order - actualizar el balance del cliente
-
+// TODO:
+// 1. Cron para cambiar el estado a DEUDA de aquellas facturas que vencieron y no fueron pagadas
+// 2. Revisar como se almacena la due date de la factura en la DB
 @CommandHandler(GenerateInvoiceCommand)
 export class GenerateInvoiceHandler
   implements ICommandHandler<GenerateInvoiceCommand>

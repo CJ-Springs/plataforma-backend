@@ -4,6 +4,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
+import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-incremented.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -83,6 +84,26 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
     }
 
     return Result.ok<Product>(product)
+  }
+
+  incrementAmountOfSales(increment: number): Result<Product> {
+    const validateIncrement = Validate.isGreaterThan(increment, 0, 'increment')
+    if (validateIncrement.isFailure) {
+      return Result.fail(validateIncrement.getErrorValue())
+    }
+
+    const prevAmount = this.props.amountOfSales
+    this.props.amountOfSales += increment
+
+    const event = new AmountOfSalesIncrementedEvent({
+      code: this.props.code.toString(),
+      prevAmount,
+      increment,
+      currentAmount: this.props.amountOfSales,
+    })
+    this.apply(event)
+
+    return Result.ok<Product>(this)
   }
 
   toDTO(): ProductPropsDTO {
