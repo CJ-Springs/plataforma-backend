@@ -51,10 +51,15 @@ export class GenerateInvoiceHandler
       return acc + item.salePrice * item.quantity
     }, 0)
 
+    // const today = new Date()
+    // today.setHours(23, 59, 59, 999)
+    // const dueDate = new Date(
+    //   today.setDate(today.getDate() + existingOrder.customer.paymentDeadline),
+    // )
     const today = new Date()
     today.setHours(23, 59, 59, 999)
     const dueDate = new Date(
-      today.setDate(today.getDate() + existingOrder.customer.paymentDeadline),
+      today.setDate(today.getDate() - existingOrder.customer.paymentDeadline),
     )
 
     const invoiceOrError = Invoice.create({

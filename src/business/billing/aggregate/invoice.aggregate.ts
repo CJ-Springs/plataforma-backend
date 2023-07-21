@@ -2,6 +2,7 @@ import { InvoiceStatus } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
+import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -55,6 +56,30 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     return Result.ok<Invoice>(invoice)
+  }
+
+  due(): Result<Invoice> {
+    const invoiceCurrentStatus = this.props.status
+
+    if (invoiceCurrentStatus === InvoiceStatus.PAGADA) {
+      return Result.fail('La factura ya fue pagada')
+    }
+    if (invoiceCurrentStatus === InvoiceStatus.DEUDA) {
+      return Result.fail('La factura ya fue marcada como deuda')
+    }
+
+    if (this.props.dueDate > new Date()) {
+      return Result.fail(
+        'La factura todavía no ha cumplido su fecha de vencimiento',
+      )
+    }
+
+    this.props.status = InvoiceStatus.DEUDA
+
+    const event = new InvoiceDuedEvent({ id: this.props.id.toString() })
+    this.apply(event)
+
+    return Result.ok<Invoice>(this)
   }
 
   toDTO(): InvoicePropsDTO {
