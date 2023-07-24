@@ -9,10 +9,8 @@ import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
+import { getTimeZone } from '@/.shared/utils'
 
-// TODO:
-// 1. Cron para cambiar el estado a DEUDA de aquellas facturas que vencieron y no fueron pagadas
-// 2. Revisar como se almacena la due date de la factura en la DB
 @CommandHandler(GenerateInvoiceCommand)
 export class GenerateInvoiceHandler
   implements ICommandHandler<GenerateInvoiceCommand>
@@ -51,16 +49,8 @@ export class GenerateInvoiceHandler
       return acc + item.salePrice * item.quantity
     }, 0)
 
-    // const today = new Date()
-    // today.setHours(23, 59, 59, 999)
-    // const dueDate = new Date(
-    //   today.setDate(today.getDate() + existingOrder.customer.paymentDeadline),
-    // )
-    const today = new Date()
-    today.setHours(23, 59, 59, 999)
-    const dueDate = new Date(
-      today.setDate(today.getDate() - existingOrder.customer.paymentDeadline),
-    )
+    const dueDate = getTimeZone()
+    dueDate.setDate(dueDate.getDate() + existingOrder.customer.paymentDeadline)
 
     const invoiceOrError = Invoice.create({
       orderId,
