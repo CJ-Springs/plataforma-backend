@@ -5,9 +5,12 @@ import { InvoiceRepository } from './repository/invoice.repository'
 import { CommandHandlers } from './commands/handlers'
 import { EventHandlers } from './events/handlers'
 import { BillingService } from './billing.service'
+import { BillingController } from './billing.controller'
+import { RolesModule } from '@/auth/authorization/roles/roles.module'
 
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule, RolesModule],
+  controllers: [BillingController],
   providers: [
     BillingService,
     InvoiceRepository,

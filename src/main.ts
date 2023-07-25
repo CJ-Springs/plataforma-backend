@@ -15,7 +15,10 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter())
 
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
   )
 
   await app.listen(process.env.PORT || 3000)
