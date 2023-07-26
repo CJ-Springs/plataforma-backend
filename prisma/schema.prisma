@@ -228,7 +228,6 @@ model TechnicalSheet {
   innerBases Float? @map("inner_bases")
   innerBasesTwo Float? @map("inner_bases_two")
   
-
   spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   springId String @unique @id @map("spring_id")
 
@@ -361,7 +360,7 @@ model Payment {
   createdAt DateTime @default(now()) @map("created_at")
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
-  invoiceId String @unique @map("invoice_id")
+  invoiceId String @map("invoice_id")
 
   @@map("payments")
 }

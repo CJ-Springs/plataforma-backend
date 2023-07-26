@@ -36,17 +36,19 @@ export class EnterPaymentDto {
   @IsString({ message: "El campo 'mpUser' debe ser un string" })
   mpUser?: string
 
-  @ValidateIf(
-    (o) =>
-      o.paymentMethod === PaymentMethod.MERCADO_PAGO ||
-      o.paymentMethod === PaymentMethod.TRANSFERENCIA,
-    {
-      message: `El campo 'voucherNumber' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO} o ${PaymentMethod.TRANSFERENCIA}`,
-    },
-  )
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO, {
+    message: `El campo 'voucherNumber' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO} o ${PaymentMethod.TRANSFERENCIA}`,
+  })
   @IsDefined({ message: "Debe enviar el campo 'voucherNumber'" })
   @IsInt({ message: "El campo 'voucherNumber' debe ser un número entero" })
   voucherNumber?: number
+
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA, {
+    message: `El campo 'operationNumber' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO} o ${PaymentMethod.TRANSFERENCIA}`,
+  })
+  @IsDefined({ message: "Debe enviar el campo 'operationNumber'" })
+  @IsInt({ message: "El campo 'operationNumber' debe ser un número entero" })
+  operationNumber?: number
 
   @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA, {
     message: `El campo 'cvu' solo debe ser enviado si el método de pago es ${PaymentMethod.TRANSFERENCIA}`,

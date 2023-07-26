@@ -58,6 +58,7 @@ export class GenerateInvoiceHandler
       dueDate,
       status: InvoiceStatus.POR_PAGAR,
       total,
+      payments: [],
     })
     if (invoiceOrError.isFailure) {
       throw new BadRequestException(invoiceOrError.getErrorValue())

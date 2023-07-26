@@ -1,9 +1,11 @@
 import { InvoiceStatus } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
+import { Payment, PaymentPropsDTO } from './entities/payment.entity'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
-import { IToDTO } from '@/.shared/types'
+import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
+import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
 
@@ -14,6 +16,7 @@ type InvoiceProps = {
   dueDate: Date
   status: InvoiceStatus
   orderId: UniqueEntityID
+  payments: Payment[]
 }
 
 type InvoicePropsDTO = {
@@ -23,6 +26,7 @@ type InvoicePropsDTO = {
   dueDate: Date
   status: InvoiceStatus
   orderId: string
+  payments: PaymentPropsDTO[]
 }
 
 export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
@@ -30,17 +34,32 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     super()
   }
 
-  static create(props: Partial<InvoicePropsDTO>): Result<Invoice> {
+  static create(
+    props: DeepPartial<Omit<InvoicePropsDTO, 'dueDate'>> &
+      Partial<Pick<InvoicePropsDTO, 'dueDate'>>,
+  ): Result<Invoice> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.total, argumentName: 'total' },
       { argument: props.deposited, argumentName: 'deposited' },
       { argument: props.dueDate, argumentName: 'dueDate' },
       { argument: props.status, argumentName: 'status' },
       { argument: props.orderId, argumentName: 'orderId' },
+      { argument: props.payments, argumentName: 'payments' },
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
     }
+
+    const payments: Payment[] = []
+
+    for (const payment of props.payments) {
+      const paymentOrError = Payment.create(payment)
+      if (paymentOrError.isFailure) {
+        return Result.fail(paymentOrError.getErrorValue())
+      }
+      payments.push(paymentOrError.getValue())
+    }
+
     const invoice = new Invoice({
       id: new UniqueEntityID(props?.id),
       total: props.total,
@@ -48,6 +67,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       dueDate: props.dueDate,
       status: props.status,
       orderId: new UniqueEntityID(props.orderId),
+      payments,
     })
 
     if (!props?.id) {
@@ -82,11 +102,47 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(this)
   }
 
+  appendPayment(props: Partial<PaymentPropsDTO>): Result<Invoice> {
+    if (this.props.status === InvoiceStatus.PAGADA) {
+      return Result.fail('La factura ya ha sido pagada en su totalidad')
+    }
+
+    const paymentOrError = Payment.create(props)
+    if (paymentOrError.isFailure) {
+      return Result.fail(paymentOrError.getErrorValue())
+    }
+    const payment = paymentOrError.getValue()
+
+    if (this.props.deposited + payment.props.amount > this.props.total) {
+      return Result.fail(
+        `El pago (monto del pago $${
+          payment.props.amount
+        }) excede lo que queda por pagar de la factura (por pagar $${
+          this.props.total - this.props.deposited
+        })`,
+      )
+    }
+
+    this.props.payments.push(payment)
+    this.props.deposited += payment.props.amount
+
+    const event = new PaymentAppendedEvent({
+      invoiceId: this.props.id.toString(),
+      deposited: this.props.deposited,
+      total: this.props.total,
+      payment: payment.toDTO(),
+    })
+    this.apply(event)
+
+    return Result.ok<Invoice>(this)
+  }
+
   toDTO(): InvoicePropsDTO {
     return {
       ...this.props,
       id: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
+      payments: this.props.payments.map((payment) => payment.toDTO()),
     }
   }
 }

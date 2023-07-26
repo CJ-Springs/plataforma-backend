@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common'
 import { Invoice } from '../aggregate/invoice.aggregate'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
+import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -19,13 +20,24 @@ export class InvoiceRepository implements IRepository<Invoice> {
     try {
       const invoice = await this.prisma.invoice.findUnique({
         where: { id },
+        include: {
+          payments: true,
+        },
       })
 
       if (!invoice) {
         return null
       }
 
-      return Invoice.create(invoice)
+      const { payments, ...props } = invoice
+
+      return Invoice.create({
+        ...props,
+        payments: payments.map((payment) => ({
+          ...payment,
+          metadata: payment.metadata as object,
+        })),
+      })
     } catch (error) {
       this.logger.error(
         error,
@@ -45,6 +57,9 @@ export class InvoiceRepository implements IRepository<Invoice> {
         }
         if (event instanceof InvoiceDuedEvent) {
           return this.dueInvoice(event.data)
+        }
+        if (event instanceof PaymentAppendedEvent) {
+          return this.appendPayment(event.data)
         }
       }),
     )
@@ -73,6 +88,30 @@ export class InvoiceRepository implements IRepository<Invoice> {
       this.logger.error(
         error,
         `Error al intentar vencer la factura ${id} en la db`,
+      )
+    }
+  }
+
+  private async appendPayment(data: PaymentAppendedEvent['data']) {
+    const { invoiceId: id, deposited, payment } = data
+
+    try {
+      await this.prisma.invoice.update({
+        where: { id },
+        data: {
+          deposited: deposited,
+          payments: {
+            create: {
+              ...payment,
+              metadata: payment.metadata,
+            },
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar agregar un pago a la factura ${id} en la db`,
       )
     }
   }
