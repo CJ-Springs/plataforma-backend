@@ -3,6 +3,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Payment, PaymentPropsDTO } from './entities/payment.entity'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
+import { InvoicePaidEvent } from '../events/impl/invoice-paid.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -78,6 +79,31 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(invoice)
   }
 
+  pay(): Result<Invoice> {
+    if (this.props.status === InvoiceStatus.PAGADA) {
+      return Result.fail('La factura ya fue pagada')
+    }
+
+    if (this.props.deposited < this.props.total) {
+      return Result.fail(
+        `Lo depositado ($${
+          this.props.deposited
+        }) no cubre el total de la factura ($${
+          this.props.total
+        }). Monto restante a pagar: $${
+          this.props.total - this.props.deposited
+        }`,
+      )
+    }
+
+    this.props.status = InvoiceStatus.PAGADA
+
+    const event = new InvoicePaidEvent({ id: this.props.id.toString() })
+    this.apply(event)
+
+    return Result.ok<Invoice>(this)
+  }
+
   due(): Result<Invoice> {
     const invoiceCurrentStatus = this.props.status
 
@@ -128,6 +154,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
 
     const event = new PaymentAppendedEvent({
       invoiceId: this.props.id.toString(),
+      orderId: this.props.orderId.toString(),
       deposited: this.props.deposited,
       total: this.props.total,
       payment: payment.toDTO(),

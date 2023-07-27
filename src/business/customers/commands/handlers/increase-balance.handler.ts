@@ -1,15 +1,15 @@
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 
-import { ReduceBalanceCommand } from '../impl/reduce-balance.command'
+import { IncreaseBalanceCommand } from '../impl/increase-balance.command'
 import { CustomerRepository } from '../../repository/customer.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(ReduceBalanceCommand)
-export class ReduceBalanceHandler
-  implements ICommandHandler<ReduceBalanceCommand>
+@CommandHandler(IncreaseBalanceCommand)
+export class IncreaseBalanceHandler
+  implements ICommandHandler<IncreaseBalanceCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -17,16 +17,17 @@ export class ReduceBalanceHandler
     private readonly customerRepository: CustomerRepository,
   ) {}
 
-  async execute(command: ReduceBalanceCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el ReduceBalance command handler')
+  async execute(command: IncreaseBalanceCommand): Promise<StandardResponse> {
+    this.logger.log('Ejecutando el IncreaseBalance command handler')
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
       throw new BadRequestException(validateCommand.getErrorValue())
     }
 
-    const { data } = command
-    const { code } = data
+    const {
+      data: { code, increment },
+    } = command
 
     const customerOrNull = await this.customerRepository.findOneByUniqueInput({
       code,
@@ -36,9 +37,9 @@ export class ReduceBalanceHandler
     }
     const customer = customerOrNull.getValue()
 
-    const reduceBalanceResult = customer.reduceBalance(data.reduction)
-    if (reduceBalanceResult.isFailure) {
-      throw new BadRequestException(reduceBalanceResult.getErrorValue())
+    const increaseBalanceResult = customer.increaseBalance(increment)
+    if (increaseBalanceResult.isFailure) {
+      throw new BadRequestException(increaseBalanceResult.getErrorValue())
     }
 
     await this.customerRepository.save(customer)
@@ -47,15 +48,15 @@ export class ReduceBalanceHandler
     return {
       success: true,
       status: 200,
-      message: `Balance del cliente ${code} reducido $${data.reduction}`,
+      message: `Balance del cliente ${code} aumentado $${increment}`,
       data: customer.toDTO(),
     }
   }
 
-  validate(command: ReduceBalanceCommand) {
+  validate(command: IncreaseBalanceCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.code, argumentName: 'code' },
-      { argument: command.data.reduction, argumentName: 'reduction' },
+      { argument: command.data.increment, argumentName: 'increment' },
     ])
 
     if (!validation.success) {

@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common'
 
 import { Invoice } from '../aggregate/invoice.aggregate'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
+import { InvoicePaidEvent } from '../events/impl/invoice-paid.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
 import { IRepository } from '@/.shared/types'
@@ -55,6 +56,9 @@ export class InvoiceRepository implements IRepository<Invoice> {
         if (event instanceof InvoiceGeneratedEvent) {
           return this.generateInvoice(event.data)
         }
+        if (event instanceof InvoicePaidEvent) {
+          return this.payInvoice(event.data)
+        }
         if (event instanceof InvoiceDuedEvent) {
           return this.dueInvoice(event.data)
         }
@@ -66,14 +70,40 @@ export class InvoiceRepository implements IRepository<Invoice> {
   }
 
   private async generateInvoice(data: InvoiceGeneratedEvent['data']) {
+    const { payments, ...invoice } = data
+
     try {
       await this.prisma.invoice.create({
-        data,
+        data: {
+          ...invoice,
+          payments: {
+            createMany: {
+              data: payments.map((payment) => ({
+                ...payment,
+                metadata: payment.metadata,
+              })),
+            },
+          },
+        },
       })
     } catch (error) {
       this.logger.error(
         error,
         `Error al intentar crear la factura de la orden ${data.orderId} en la db`,
+      )
+    }
+  }
+
+  private async payInvoice({ id }: InvoiceDuedEvent['data']) {
+    try {
+      await this.prisma.invoice.update({
+        where: { id },
+        data: { status: InvoiceStatus.PAGADA },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar pagar la factura ${id} en la db`,
       )
     }
   }
@@ -93,13 +123,15 @@ export class InvoiceRepository implements IRepository<Invoice> {
   }
 
   private async appendPayment(data: PaymentAppendedEvent['data']) {
-    const { invoiceId: id, deposited, payment } = data
+    const { invoiceId: id, payment } = data
 
     try {
       await this.prisma.invoice.update({
         where: { id },
         data: {
-          deposited: deposited,
+          deposited: {
+            increment: payment.amount,
+          },
           payments: {
             create: {
               ...payment,

@@ -57,7 +57,7 @@ export class GenerateInvoiceHandler
       deposited: 0,
       dueDate,
       status: InvoiceStatus.POR_PAGAR,
-      total,
+      total: Math.round(total),
       payments: [],
     })
     if (invoiceOrError.isFailure) {

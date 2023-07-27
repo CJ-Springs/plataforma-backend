@@ -2,6 +2,7 @@ import { PaymentMethod } from '@prisma/client'
 
 type PaymentAppendedEventProps = {
   invoiceId: string
+  orderId: string
   deposited: number
   total: number
   payment: {

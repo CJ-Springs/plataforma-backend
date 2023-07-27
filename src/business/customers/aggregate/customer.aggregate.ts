@@ -4,6 +4,7 @@ import { Address, AddressPropsDTO } from './value-objects/address.value-object'
 import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
 import { BalanceReducedEvent } from '../events/impl/balance-reduced.event'
+import { BalanceIncreasedEvent } from '../events/impl/balance-increased.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -134,14 +135,30 @@ export class Customer
       return Result.fail(validateReduction.getErrorValue())
     }
 
-    const prevBalance = this.props.balance
     this.props.balance -= reduction
 
     const event = new BalanceReducedEvent({
       code: this.props.code.toValue(),
-      prevBalance,
       reduction,
-      currentBalance: this.props.balance,
+      balance: this.props.balance,
+    })
+    this.apply(event)
+
+    return Result.ok<Customer>(this)
+  }
+
+  increaseBalance(increment: number): Result<Customer> {
+    const validateIncrement = Validate.isGreaterThan(increment, 0, 'increment')
+    if (validateIncrement.isFailure) {
+      return Result.fail(validateIncrement.getErrorValue())
+    }
+
+    this.props.balance += increment
+
+    const event = new BalanceIncreasedEvent({
+      code: this.props.code.toValue(),
+      increment,
+      balance: this.props.balance,
     })
     this.apply(event)
 

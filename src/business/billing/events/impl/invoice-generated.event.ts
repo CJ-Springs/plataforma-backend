@@ -1,4 +1,4 @@
-import { InvoiceStatus } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod } from '@prisma/client'
 
 type InvoiceGeneratedEventProps = {
   id: string
@@ -7,6 +7,13 @@ type InvoiceGeneratedEventProps = {
   dueDate: Date
   status: InvoiceStatus
   orderId: string
+  payments: {
+    id: string
+    paymentMethod: PaymentMethod
+    amount: number
+    createdBy: string
+    metadata?: Record<string, any>
+  }[]
 }
 
 export class InvoiceGeneratedEvent {

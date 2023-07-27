@@ -359,7 +359,7 @@ model Payment {
   createdBy String @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
 
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   invoiceId String @map("invoice_id")
 
   @@map("payments")

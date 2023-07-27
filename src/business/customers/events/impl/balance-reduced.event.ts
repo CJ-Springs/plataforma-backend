@@ -1,8 +1,7 @@
 type BalanceReducedEventProps = {
   code: number
-  prevBalance: number
   reduction: number
-  currentBalance: number
+  balance: number
 }
 
 export class BalanceReducedEvent {
