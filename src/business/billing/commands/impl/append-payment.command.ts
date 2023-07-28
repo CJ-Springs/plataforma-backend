@@ -1,6 +1,6 @@
 import { PaymentMethod } from '@prisma/client'
 
-type EnterPaymentCommandProps = {
+type AppendPaymentCommandProps = {
   invoiceId: string
   paymentMethod: PaymentMethod
   amount: number
@@ -11,8 +11,9 @@ type EnterPaymentCommandProps = {
   cvu?: number
   code?: number
   paymentDate?: Date
+  thirdParty?: boolean
 }
 
-export class EnterPaymentCommand {
-  constructor(public readonly data: EnterPaymentCommandProps) {}
+export class AppendPaymentCommand {
+  constructor(public readonly data: AppendPaymentCommandProps) {}
 }

@@ -1,4 +1,4 @@
-import { PaymentMethod } from '@prisma/client'
+import { PaymentMethod, PaymentStatus } from '@prisma/client'
 
 type PaymentAppendedEventProps = {
   invoiceId: string
@@ -10,6 +10,8 @@ type PaymentAppendedEventProps = {
     paymentMethod: PaymentMethod
     amount: number
     createdBy: string
+    canceledBy?: string
+    status: PaymentStatus
     metadata?: Record<string, any>
   }
 }

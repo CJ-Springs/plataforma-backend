@@ -1,5 +1,6 @@
 import { PaymentMethod } from '@prisma/client'
 import {
+  IsBoolean,
   IsDateString,
   IsDefined,
   IsInt,
@@ -28,49 +29,41 @@ export class EnterPaymentDto {
   @Min(0.01, { message: "El campo 'amount' debe ser mayor a 0" })
   amount: number
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO, {
-    message: `El campo 'mpUser' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO}`,
-    always: true,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO)
   @IsNotEmpty({ message: "Debe enviar el campo 'mpUser'" })
   @IsString({ message: "El campo 'mpUser' debe ser un string" })
   mpUser?: string
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO, {
-    message: `El campo 'voucherNumber' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO} o ${PaymentMethod.TRANSFERENCIA}`,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO)
   @IsDefined({ message: "Debe enviar el campo 'voucherNumber'" })
   @IsInt({ message: "El campo 'voucherNumber' debe ser un número entero" })
   voucherNumber?: number
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA, {
-    message: `El campo 'operationNumber' solo debe ser enviado si el método de pago es ${PaymentMethod.MERCADO_PAGO} o ${PaymentMethod.TRANSFERENCIA}`,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA)
   @IsDefined({ message: "Debe enviar el campo 'operationNumber'" })
   @IsInt({ message: "El campo 'operationNumber' debe ser un número entero" })
   operationNumber?: number
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA, {
-    message: `El campo 'cvu' solo debe ser enviado si el método de pago es ${PaymentMethod.TRANSFERENCIA}`,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.TRANSFERENCIA)
   @IsDefined({ message: "Debe enviar el campo 'cvu'" })
   @IsInt({ message: "El campo 'cvu' debe ser un número entero" })
   cvu?: number
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.CHEQUE, {
-    message: `El campo 'code' solo debe ser enviado si el método de pago es ${PaymentMethod.CHEQUE}`,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.CHEQUE)
   @IsDefined({ message: "Debe enviar el campo 'code'" })
   @IsInt({ message: "El campo 'code' debe ser un número entero" })
   code?: number
 
-  @ValidateIf((o) => o.paymentMethod === PaymentMethod.CHEQUE, {
-    message: `El campo 'cvu' solo debe ser enviado si el método de pago es ${PaymentMethod.CHEQUE}`,
-  })
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.CHEQUE)
   @IsDefined({ message: "Debe enviar el campo 'paymentDate'" })
   @IsDateString(
     {},
     { message: "El campo 'paymentDate' debe ser una fecha (YYYY-MM-DD)" },
   )
   paymentDate?: Date
+
+  @ValidateIf((o) => o.paymentMethod === PaymentMethod.CHEQUE)
+  @IsDefined({ message: "Debe enviar el campo 'thirdParty'" })
+  @IsBoolean({ message: "El campo 'thirdParty' debe ser un boolean" })
+  thirdParty?: boolean
 }

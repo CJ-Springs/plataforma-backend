@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
@@ -10,7 +12,7 @@ import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterDepositDto, EnterPaymentDto } from './dtos'
 import { BillingService } from './billing.service'
-import { EnterPaymentCommand } from './commands/impl/enter-payment.command'
+import { AppendPaymentCommand } from './commands/impl/append-payment.command'
 import {
   PermissionGuard,
   RequiredPermissions,
@@ -33,7 +35,7 @@ export class BillingController {
     @UserDec('email') email: string,
   ) {
     return await this.commandBus.execute(
-      new EnterPaymentCommand({
+      new AppendPaymentCommand({
         ...payment,
         invoiceId,
         createdBy: email,
@@ -43,6 +45,7 @@ export class BillingController {
 
   @RequiredPermissions('backoffice::ingresar-deposito')
   @UseGuards(PermissionGuard)
+  @HttpCode(HttpStatus.OK)
   @Post(':customerCode/ingresar-deposito')
   async enterDeposit(
     @Param('customerCode', ParseIntPipe) customerCode: number,

@@ -1,16 +1,16 @@
-import { PaymentMethod } from '@prisma/client'
+import { PaymentMethod, PaymentStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { InvoiceRepository } from '../../repository/invoice.repository'
-import { EnterPaymentCommand } from '../impl/enter-payment.command'
+import { AppendPaymentCommand } from '../impl/append-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(EnterPaymentCommand)
-export class EnterPaymentHandler
-  implements ICommandHandler<EnterPaymentCommand>
+@CommandHandler(AppendPaymentCommand)
+export class AppendPaymentHandler
+  implements ICommandHandler<AppendPaymentCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -18,8 +18,8 @@ export class EnterPaymentHandler
     private readonly invoiceRepository: InvoiceRepository,
   ) {}
 
-  async execute(command: EnterPaymentCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el EnterPayment command handler')
+  async execute(command: AppendPaymentCommand): Promise<StandardResponse> {
+    this.logger.log('Ejecutando el AppendPayment command handler')
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
@@ -40,6 +40,7 @@ export class EnterPaymentHandler
       amount,
       createdBy,
       paymentMethod,
+      status: PaymentStatus.ABONADO,
       metadata,
     })
     if (appendPaymentResult.isFailure) {
@@ -60,7 +61,7 @@ export class EnterPaymentHandler
     }
   }
 
-  validate(command: EnterPaymentCommand) {
+  validate(command: AppendPaymentCommand) {
     const validation = Validate.isRequiredBulk([
       {
         argument: command.data.invoiceId,
@@ -114,6 +115,10 @@ export class EnterPaymentHandler
           argument: command.data.paymentDate,
           argumentName: 'paymentDate',
         },
+        {
+          argument: command.data.thirdParty,
+          argumentName: 'thirdParty',
+        },
       ])
 
       if (!guardAgainstPropertiesShouldNotExist.success) {
@@ -152,6 +157,10 @@ export class EnterPaymentHandler
         {
           argument: command.data.paymentDate,
           argumentName: 'paymentDate',
+        },
+        {
+          argument: command.data.thirdParty,
+          argumentName: 'thirdParty',
         },
       ])
 
@@ -195,6 +204,10 @@ export class EnterPaymentHandler
           argument: command.data.paymentDate,
           argumentName: 'paymentDate',
         },
+        {
+          argument: command.data.thirdParty,
+          argumentName: 'thirdParty',
+        },
       ])
 
       if (!guardAgainstPropertiesShouldNotExist.success) {
@@ -210,6 +223,10 @@ export class EnterPaymentHandler
         {
           argument: command.data.paymentDate,
           argumentName: 'paymentDate',
+        },
+        {
+          argument: command.data.thirdParty,
+          argumentName: 'thirdParty',
         },
       ])
 

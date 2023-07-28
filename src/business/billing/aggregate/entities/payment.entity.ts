@@ -1,4 +1,4 @@
-import { PaymentMethod } from '@prisma/client'
+import { PaymentMethod, PaymentStatus } from '@prisma/client'
 
 import { Entity, UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -8,6 +8,8 @@ type PaymentProps = {
   paymentMethod: PaymentMethod
   amount: number
   createdBy: string
+  canceledBy?: string
+  status: PaymentStatus
   metadata?: Record<string, any>
 }
 
@@ -16,6 +18,8 @@ export type PaymentPropsDTO = {
   paymentMethod: PaymentMethod
   amount: number
   createdBy: string
+  canceledBy?: string
+  status: PaymentStatus
   metadata?: Record<string, any>
 }
 
@@ -33,6 +37,7 @@ export class Payment
         { argument: props.paymentMethod, argumentName: 'paymentMethod' },
         { argument: props.amount, argumentName: 'amount' },
         { argument: props.createdBy, argumentName: 'createdBy' },
+        { argument: props.status, argumentName: 'status' },
       ]),
       Validate.isGreaterThan(props.amount, 0, 'amount'),
     ])
@@ -45,6 +50,8 @@ export class Payment
         paymentMethod: props.paymentMethod,
         amount: props.amount,
         createdBy: props.createdBy,
+        canceledBy: props?.canceledBy,
+        status: props.status,
         metadata: props?.metadata,
       },
       new UniqueEntityID(props?.id),
