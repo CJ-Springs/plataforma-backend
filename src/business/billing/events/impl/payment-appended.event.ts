@@ -5,6 +5,7 @@ type PaymentAppendedEventProps = {
   orderId: string
   deposited: number
   total: number
+  remaining?: number
   payment: {
     id: string
     paymentMethod: PaymentMethod

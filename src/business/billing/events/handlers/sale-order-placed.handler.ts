@@ -17,12 +17,13 @@ export class SaleOrderPlacedHandler
     this.logger.log('Ejecutando el SaleOrderPlaced event handler', 'En billing')
 
     const {
-      data: { id, items },
+      data: { id, items, createdBy },
     } = event
 
     return this.commandBus.execute(
       new GenerateInvoiceCommand({
         orderId: id,
+        createdBy,
         items: items.map((item) => ({
           productCode: item.productCode,
           salePrice: item.salePrice,

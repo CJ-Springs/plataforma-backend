@@ -20,7 +20,7 @@ type InvoiceProps = {
   payments: Payment[]
 }
 
-type InvoicePropsDTO = {
+export type InvoicePropsDTO = {
   id: string
   total: number
   deposited: number
@@ -139,14 +139,10 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
     const payment = paymentOrError.getValue()
 
-    if (this.props.deposited + payment.props.amount > this.props.total) {
-      return Result.fail(
-        `El pago (monto del pago $${
-          payment.props.amount
-        }) excede lo que queda por pagar de la factura (por pagar $${
-          this.props.total - this.props.deposited
-        })`,
-      )
+    const remaining =
+      payment.props.amount - (this.props.total - this.props.deposited)
+    if (remaining > 0) {
+      payment.reduceAmount(remaining)
     }
 
     this.props.payments.push(payment)
@@ -157,6 +153,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       orderId: this.props.orderId.toString(),
       deposited: this.props.deposited,
       total: this.props.total,
+      remaining: remaining > 0 ? remaining : null,
       payment: payment.toDTO(),
     })
     this.apply(event)

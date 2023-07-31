@@ -31,7 +31,9 @@ export class PaymentAppendedHandler
     return this.commandBus.execute(
       new IncreaseBalanceCommand({
         code: order.customer.code,
-        increment: data.payment.amount,
+        increment: data.remaining
+          ? data.payment.amount + data.remaining
+          : data.payment.amount,
       }),
     )
   }

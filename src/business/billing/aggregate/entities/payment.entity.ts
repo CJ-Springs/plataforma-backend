@@ -60,6 +60,21 @@ export class Payment
     return Result.ok<Payment>(payment)
   }
 
+  reduceAmount(reduction: number): Result<Payment> {
+    const validateReduction = Validate.inRange(
+      reduction,
+      0,
+      this.props.amount,
+      'reduction',
+    )
+    if (validateReduction.isFailure) {
+      return Result.fail(validateReduction.getErrorValue())
+    }
+
+    this.props.amount -= reduction
+    return Result.ok<Payment>(this)
+  }
+
   toDTO(): PaymentPropsDTO {
     return {
       id: this._id.toString(),

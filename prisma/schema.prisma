@@ -356,7 +356,7 @@ model Payment {
 
   paymentMethod PaymentMethod @map("payment_method")
   amount Float
-  metadata Json
+  metadata Json?
   createdBy String @map("created_by")
   canceledBy String? @map("canceled_by")
   status PaymentStatus @default(ABONADO)
@@ -419,6 +419,7 @@ enum PaymentMethod {
   TRANSFERENCIA
   EFECTIVO
   CHEQUE
+  SALDO_A_FAVOR
 }
 
 enum AllowedCurrency {

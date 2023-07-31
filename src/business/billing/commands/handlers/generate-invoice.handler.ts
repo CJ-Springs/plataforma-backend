@@ -1,8 +1,9 @@
-import { InvoiceStatus } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { Invoice } from '../../aggregate/invoice.aggregate'
+import { PaymentPropsDTO } from '../../aggregate/entities/payment.entity'
 import { InvoiceRepository } from '../../repository/invoice.repository'
 import { GenerateInvoiceCommand } from '../impl/generate-invoice.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
@@ -31,7 +32,7 @@ export class GenerateInvoiceHandler
     }
 
     const {
-      data: { orderId, items },
+      data: { orderId, items, createdBy },
     } = command
 
     const existingOrder = await this.prisma.saleOrder
@@ -48,17 +49,44 @@ export class GenerateInvoiceHandler
     const total = items.reduce((acc, item) => {
       return acc + item.salePrice * item.quantity
     }, 0)
+    const roundedTotal = Math.round(total)
+
+    const customerBalance = existingOrder.customer.balance
+    let status: InvoiceStatus = InvoiceStatus.POR_PAGAR
+    let deposited = 0
+    const payments: Partial<PaymentPropsDTO>[] = []
+
+    if (customerBalance > 0) {
+      if (customerBalance >= roundedTotal) {
+        status = InvoiceStatus.PAGADA
+        deposited = roundedTotal
+        payments.push({
+          amount: roundedTotal,
+          createdBy,
+          paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+          status: PaymentStatus.ABONADO,
+        })
+      } else {
+        deposited = customerBalance
+        payments.push({
+          amount: customerBalance,
+          createdBy,
+          paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+          status: PaymentStatus.ABONADO,
+        })
+      }
+    }
 
     const dueDate = getTimeZone()
     dueDate.setDate(dueDate.getDate() + existingOrder.customer.paymentDeadline)
 
     const invoiceOrError = Invoice.create({
       orderId,
-      deposited: 0,
+      deposited,
       dueDate,
-      status: InvoiceStatus.POR_PAGAR,
-      total: Math.round(total),
-      payments: [],
+      status,
+      total: roundedTotal,
+      payments,
     })
     if (invoiceOrError.isFailure) {
       throw new BadRequestException(invoiceOrError.getErrorValue())
@@ -79,6 +107,7 @@ export class GenerateInvoiceHandler
   validate(command: GenerateInvoiceCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.orderId, argumentName: 'createdBy' },
+      { argument: command.data.createdBy, argumentName: 'createdBy' },
       { argument: command.data.items, argumentName: 'items' },
     ])
 

@@ -1,5 +1,6 @@
 type GenerateInvoiceCommandProps = {
   orderId: string
+  createdBy: string
   items: {
     productCode: string
     salePrice: number

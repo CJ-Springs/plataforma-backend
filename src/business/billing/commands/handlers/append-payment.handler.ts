@@ -1,7 +1,8 @@
-import { PaymentMethod, PaymentStatus } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
+import { InvoicePropsDTO } from '../../aggregate/invoice.aggregate'
 import { InvoiceRepository } from '../../repository/invoice.repository'
 import { AppendPaymentCommand } from '../impl/append-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
@@ -18,7 +19,9 @@ export class AppendPaymentHandler
     private readonly invoiceRepository: InvoiceRepository,
   ) {}
 
-  async execute(command: AppendPaymentCommand): Promise<StandardResponse> {
+  async execute(
+    command: AppendPaymentCommand,
+  ): Promise<StandardResponse<InvoicePropsDTO>> {
     this.logger.log('Ejecutando el AppendPayment command handler')
 
     const validateCommand = this.validate(command)
@@ -29,6 +32,7 @@ export class AppendPaymentHandler
     const {
       data: { invoiceId, createdBy, amount, paymentMethod, ...metadata },
     } = command
+    const emptyMetadata = !Object.values(metadata).length
 
     const invoiceOrNull = await this.invoiceRepository.findOneById(invoiceId)
     if (!invoiceOrNull) {
@@ -41,7 +45,7 @@ export class AppendPaymentHandler
       createdBy,
       paymentMethod,
       status: PaymentStatus.ABONADO,
-      metadata,
+      metadata: emptyMetadata ? undefined : metadata,
     })
     if (appendPaymentResult.isFailure) {
       throw new BadRequestException(appendPaymentResult.getErrorValue())
@@ -57,7 +61,13 @@ export class AppendPaymentHandler
         .split('_')
         .join(' ')
         .toLowerCase()} de monto $${amount} registrado a la factura ${invoiceId}`,
-      data: invoice.toDTO(),
+      data: {
+        ...invoice.toDTO(),
+        status:
+          invoice.props.total === invoice.props.deposited
+            ? InvoiceStatus.PAGADA
+            : invoice.props.status,
+      },
     }
   }
 
