@@ -1,4 +1,4 @@
-import { InvoiceStatus } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod } from '@prisma/client'
 import {
   ConflictException,
   Injectable,
@@ -14,6 +14,7 @@ import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-bala
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
+import { PaymentPropsDTO } from './aggregate/entities/payment.entity'
 
 @Injectable()
 export class BillingService {
@@ -23,17 +24,11 @@ export class BillingService {
     private readonly logger: LoggerService,
   ) {}
 
-  async enterDeposit(
-    customerCode: number,
-    deposit: EnterDepositDto,
-    createdBy: string,
-  ): Promise<StandardResponse> {
+  private async getCustomerPendingOrDueInvoices(customerCode: number) {
     await this.prisma.customer
       .findUniqueOrThrow({
         where: { code: customerCode },
-        select: {
-          balance: true,
-        },
+        select: { code: true },
       })
       .catch(() => {
         throw new NotFoundException(
@@ -41,7 +36,7 @@ export class BillingService {
         )
       })
 
-    const pendingInvoices = await this.prisma.invoice.findMany({
+    return await this.prisma.invoice.findMany({
       where: {
         AND: [
           { order: { customerCode } },
@@ -52,6 +47,16 @@ export class BillingService {
         createdAt: 'asc',
       },
     })
+  }
+
+  async enterDeposit(
+    customerCode: number,
+    deposit: EnterDepositDto,
+    createdBy: string,
+  ): Promise<StandardResponse> {
+    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
+      customerCode,
+    )
 
     if (!pendingInvoices.length) {
       throw new ConflictException(
@@ -111,6 +116,72 @@ export class BillingService {
         .split('_')
         .join()
         .toLowerCase()}`,
+    }
+  }
+
+  async usePaymentRemaining(
+    customerCode: number,
+    remaining: number,
+    paymentInfo: {
+      paymentMethod: PaymentMethod
+      createdBy: string
+      metadata?: Record<string, any>
+    },
+  ): Promise<StandardResponse> {
+    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
+      customerCode,
+    )
+
+    for await (const invoice of pendingInvoices) {
+      if (remaining === 0) {
+        break
+      }
+
+      const leftToPay = invoice.total - invoice.deposited
+
+      if (remaining >= leftToPay) {
+        await this.commandBus.execute(
+          new AppendPaymentCommand({
+            amount: leftToPay,
+            invoiceId: invoice.id,
+            paymentMethod: paymentInfo.paymentMethod,
+            createdBy: paymentInfo.createdBy,
+            ...paymentInfo.metadata,
+          }),
+        )
+
+        remaining -= leftToPay
+      } else {
+        await this.commandBus.execute(
+          new AppendPaymentCommand({
+            amount: remaining,
+            invoiceId: invoice.id,
+            paymentMethod: paymentInfo.paymentMethod,
+            createdBy: paymentInfo.createdBy,
+            ...paymentInfo.metadata,
+          }),
+        )
+
+        remaining = 0
+      }
+    }
+
+    if (remaining > 0) {
+      await this.commandBus.execute(
+        new IncreaseBalanceCommand({
+          code: customerCode,
+          increment: remaining,
+        }),
+      )
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: `Sobrante de monto $${remaining} de un pago realizado con ${paymentInfo.paymentMethod
+        .split('_')
+        .join()
+        .toLowerCase()} utilizado para saldar facturas pendientes o incrementar el balance del usuario`,
     }
   }
 
