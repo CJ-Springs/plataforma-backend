@@ -14,7 +14,6 @@ import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-bala
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
-import { PaymentPropsDTO } from './aggregate/entities/payment.entity'
 
 @Injectable()
 export class BillingService {
