@@ -38,6 +38,7 @@
     "class-validator": "^0.14.0",
     "colorette": "^2.0.20",
     "cuid": "^3.0.0",
+    "dayjs": "^1.11.9",
     "helmet": "^7.0.0",
     "i18n-iso-countries": "^7.6.0",
     "morgan": "^1.10.0",

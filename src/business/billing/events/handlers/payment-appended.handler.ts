@@ -1,7 +1,6 @@
-import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { PaymentAppendedEvent } from '../impl/payment-appended.event'
-import { PayInvoiceCommand } from '../../commands/impl/pay-invoice.command'
 import { BillingService } from '../../billing.service'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -13,7 +12,6 @@ export class PaymentAppendedHandler
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
-    private readonly commandBus: CommandBus,
     private readonly billingService: BillingService,
   ) {}
 
@@ -21,12 +19,8 @@ export class PaymentAppendedHandler
     this.logger.log('Ejecutando el PaymentAppended event handler', 'En billing')
 
     const {
-      data: { invoiceId, deposited, total, remaining, ...data },
+      data: { invoiceId, remaining, ...data },
     } = event
-
-    if (deposited === total) {
-      await this.commandBus.execute(new PayInvoiceCommand({ invoiceId }))
-    }
 
     if (remaining) {
       const order = await this.prisma.saleOrder.findUnique({

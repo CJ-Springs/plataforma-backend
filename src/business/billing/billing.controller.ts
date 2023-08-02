@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common'
@@ -13,6 +14,7 @@ import { CommandBus } from '@nestjs/cqrs'
 import { EnterDepositDto, EnterPaymentDto } from './dtos'
 import { BillingService } from './billing.service'
 import { AppendPaymentCommand } from './commands/impl/append-payment.command'
+import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
 import {
   PermissionGuard,
   RequiredPermissions,
@@ -53,5 +55,17 @@ export class BillingController {
     @UserDec('email') email: string,
   ) {
     return await this.billingService.enterDeposit(customerCode, deposit, email)
+  }
+
+  @RequiredPermissions('backoffice::anular-pago')
+  @UseGuards(PermissionGuard)
+  @Patch('anular-pago/:paymentId')
+  async cancelPayment(
+    @Param('paymentId') paymentId: string,
+    @UserDec('email') email: string,
+  ) {
+    return await this.commandBus.execute(
+      new CancelPaymentCommand({ paymentId, canceledBy: email }),
+    )
   }
 }

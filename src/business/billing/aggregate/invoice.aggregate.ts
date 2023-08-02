@@ -3,12 +3,12 @@ import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Payment, PaymentPropsDTO } from './entities/payment.entity'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
-import { InvoicePaidEvent } from '../events/impl/invoice-paid.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
+import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
 import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
-import { Result, Validate } from '@/.shared/helpers'
+import { Result, Validate, DateTime } from '@/.shared/helpers'
 
 type InvoiceProps = {
   id: UniqueEntityID
@@ -20,7 +20,7 @@ type InvoiceProps = {
   payments: Payment[]
 }
 
-export type InvoicePropsDTO = {
+type InvoicePropsDTO = {
   id: string
   total: number
   deposited: number
@@ -79,31 +79,6 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(invoice)
   }
 
-  pay(): Result<Invoice> {
-    if (this.props.status === InvoiceStatus.PAGADA) {
-      return Result.fail('La factura ya fue pagada')
-    }
-
-    if (this.props.deposited < this.props.total) {
-      return Result.fail(
-        `Lo depositado ($${
-          this.props.deposited
-        }) no cubre el total de la factura ($${
-          this.props.total
-        }). Monto restante a pagar: $${
-          this.props.total - this.props.deposited
-        }`,
-      )
-    }
-
-    this.props.status = InvoiceStatus.PAGADA
-
-    const event = new InvoicePaidEvent({ id: this.props.id.toString() })
-    this.apply(event)
-
-    return Result.ok<Invoice>(this)
-  }
-
   due(): Result<Invoice> {
     const invoiceCurrentStatus = this.props.status
 
@@ -148,13 +123,66 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     this.props.payments.push(payment)
     this.props.deposited += payment.props.amount
 
+    if (this.props.deposited === this.props.total) {
+      this.props.status = InvoiceStatus.PAGADA
+    }
+
     const event = new PaymentAppendedEvent({
       invoiceId: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
-      deposited: this.props.deposited,
-      total: this.props.total,
+      status: this.props.status,
       remaining: remaining > 0 ? remaining : null,
       payment: payment.toDTO(),
+    })
+    this.apply(event)
+
+    return Result.ok<Invoice>(this)
+  }
+
+  cancelPayment({
+    paymentId,
+    canceledBy,
+  }: {
+    paymentId: string
+    canceledBy: string
+  }): Result<Invoice> {
+    const payment = this.props.payments.find(
+      (payment) => payment.toDTO().id === paymentId,
+    )
+    if (!payment) {
+      return Result.fail(`No se ha encontrado el pago ${paymentId}`)
+    }
+
+    const cancelPaymentResult = payment.cancelPayment(canceledBy)
+    if (cancelPaymentResult.isFailure) {
+      return Result.fail(cancelPaymentResult.getErrorValue())
+    }
+
+    this.props.deposited -= payment.props.amount
+
+    console.log({ today: DateTime.today().date })
+    console.log({ now: DateTime.now().date })
+
+    const dueDate = DateTime.createFromDate(this.props.dueDate, false)
+    console.log({ dueDate })
+
+    if (this.props.status === InvoiceStatus.PAGADA) {
+      if (dueDate.greaterThanOrEqual(DateTime.today())) {
+        this.props.status = InvoiceStatus.POR_PAGAR
+      } else {
+        this.props.status = InvoiceStatus.DEUDA
+      }
+    }
+
+    const event = new PaymentCanceledEvent({
+      invoiceId: this.props.id.toString(),
+      orderId: this.props.orderId.toString(),
+      status: this.props.status,
+      payment: {
+        id: payment.toDTO().id,
+        amount: payment.props.amount,
+        canceledBy: payment.props.canceledBy,
+      },
     })
     this.apply(event)
 

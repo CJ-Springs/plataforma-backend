@@ -75,6 +75,21 @@ export class Payment
     return Result.ok<Payment>(this)
   }
 
+  cancelPayment(canceledBy: string): Result<Payment> {
+    const validate = Validate.againstNullOrUndefined(canceledBy, 'canceledBy')
+    if (validate.isFailure) {
+      return Result.fail(validate.getErrorValue())
+    }
+    if (this.props.status === PaymentStatus.ANULADO) {
+      return Result.fail('El pago ya ha sido anulado')
+    }
+
+    this.props.status = PaymentStatus.ANULADO
+    this.props.canceledBy = canceledBy
+
+    return Result.ok<Payment>(this)
+  }
+
   toDTO(): PaymentPropsDTO {
     return {
       id: this._id.toString(),

@@ -1,17 +1,19 @@
-import { InvoiceStatus } from '@prisma/client'
+import { InvoiceStatus, PaymentStatus, Prisma } from '@prisma/client'
 import { Injectable } from '@nestjs/common'
 
 import { Invoice } from '../aggregate/invoice.aggregate'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
-import { InvoicePaidEvent } from '../events/impl/invoice-paid.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
-import { IRepository } from '@/.shared/types'
+import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
+import { IFindByInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
 @Injectable()
-export class InvoiceRepository implements IRepository<Invoice> {
+export class InvoiceRepository
+  implements IRepository<Invoice>, IFindByInput<Invoice>
+{
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
@@ -48,6 +50,39 @@ export class InvoiceRepository implements IRepository<Invoice> {
     }
   }
 
+  async findOneByInput(
+    where: Prisma.InvoiceWhereInput,
+  ): Promise<Result<Invoice>> {
+    try {
+      const invoice = await this.prisma.invoice.findFirst({
+        where,
+        include: {
+          payments: true,
+        },
+      })
+
+      if (!invoice) {
+        return null
+      }
+
+      const { payments, ...props } = invoice
+
+      return Invoice.create({
+        ...props,
+        payments: payments.map((payment) => ({
+          ...payment,
+          metadata: payment.metadata as object,
+        })),
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar buscar la factura ${JSON.stringify(where)} en la db`,
+      )
+      return null
+    }
+  }
+
   async save(invoice: Invoice): Promise<void> {
     const events = invoice.getUncommittedEvents()
 
@@ -56,14 +91,14 @@ export class InvoiceRepository implements IRepository<Invoice> {
         if (event instanceof InvoiceGeneratedEvent) {
           return this.generateInvoice(event.data)
         }
-        if (event instanceof InvoicePaidEvent) {
-          return this.payInvoice(event.data)
-        }
         if (event instanceof InvoiceDuedEvent) {
           return this.dueInvoice(event.data)
         }
         if (event instanceof PaymentAppendedEvent) {
           return this.appendPayment(event.data)
+        }
+        if (event instanceof PaymentCanceledEvent) {
+          return this.cancelPayment(event.data)
         }
       }),
     )
@@ -94,20 +129,6 @@ export class InvoiceRepository implements IRepository<Invoice> {
     }
   }
 
-  private async payInvoice({ id }: InvoiceDuedEvent['data']) {
-    try {
-      await this.prisma.invoice.update({
-        where: { id },
-        data: { status: InvoiceStatus.PAGADA },
-      })
-    } catch (error) {
-      this.logger.error(
-        error,
-        `Error al intentar pagar la factura ${id} en la db`,
-      )
-    }
-  }
-
   private async dueInvoice({ id }: InvoiceDuedEvent['data']) {
     try {
       await this.prisma.invoice.update({
@@ -123,12 +144,13 @@ export class InvoiceRepository implements IRepository<Invoice> {
   }
 
   private async appendPayment(data: PaymentAppendedEvent['data']) {
-    const { invoiceId: id, payment } = data
+    const { invoiceId: id, status, payment } = data
 
     try {
       await this.prisma.invoice.update({
         where: { id },
         data: {
+          status,
           deposited: {
             increment: payment.amount,
           },
@@ -144,6 +166,38 @@ export class InvoiceRepository implements IRepository<Invoice> {
       this.logger.error(
         error,
         `Error al intentar agregar un pago a la factura ${id} en la db`,
+      )
+    }
+  }
+
+  private async cancelPayment(data: PaymentCanceledEvent['data']) {
+    const { invoiceId: id, status, payment } = data
+
+    try {
+      await this.prisma.invoice.update({
+        where: { id },
+        data: {
+          status,
+          deposited: {
+            decrement: payment.amount,
+          },
+          payments: {
+            update: {
+              where: {
+                id: payment.id,
+              },
+              data: {
+                status: PaymentStatus.ANULADO,
+                canceledBy: payment.canceledBy,
+              },
+            },
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar cancelar el pago ${payment.id} de la factura ${id} en la db`,
       )
     }
   }
