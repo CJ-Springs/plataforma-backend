@@ -19,7 +19,7 @@ export class PaymentAppendedHandler
     this.logger.log('Ejecutando el PaymentAppended event handler', 'En billing')
 
     const {
-      data: { invoiceId, remaining, ...data },
+      data: { remaining, ...data },
     } = event
 
     if (remaining) {

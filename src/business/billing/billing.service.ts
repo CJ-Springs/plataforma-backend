@@ -12,8 +12,13 @@ import { DueInvoiceCommand } from './commands/impl/due-invoice.command'
 import { AppendPaymentCommand } from './commands/impl/append-payment.command'
 import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-balance.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
-import { LoggerService } from '@/.shared/helpers'
+import { DateTime, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
+import { NotificationsService } from '@/notifications/notifications.service'
+import {
+  InvoicesDueTodayPayload,
+  NovuEvent,
+} from '@/notifications/novu-events.types'
 
 @Injectable()
 export class BillingService {
@@ -21,6 +26,7 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly commandBus: CommandBus,
     private readonly logger: LoggerService,
+    private readonly notification: NotificationsService,
   ) {}
 
   private async getCustomerPendingOrDueInvoices(customerCode: number) {
@@ -188,7 +194,7 @@ export class BillingService {
     name: 'Mark unpaid expired invoices as due',
     timeZone: 'America/Argentina/Buenos_Aires',
   })
-  async handleCron() {
+  async handleDueInvoices() {
     this.logger.log(
       'Mark unpaid expired invoices as due',
       'Running schedule task',
@@ -206,6 +212,125 @@ export class BillingService {
       await this.commandBus.execute(
         new DueInvoiceCommand({ invoiceId: invoice.id }),
       )
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_7AM, {
+    name: 'Send notification of invoices that due today',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
+  async handleInvoicesDueToday() {
+    this.logger.log(
+      'Send notification of invoices that due today',
+      'Running schedule task',
+    )
+
+    const today = DateTime.today()
+    console.log({ today })
+
+    const invoicesThatDueToday = await this.prisma.invoice.findMany({
+      where: {
+        AND: [
+          { status: { equals: InvoiceStatus.POR_PAGAR } },
+          { dueDate: { equals: today.date } },
+        ],
+      },
+      select: {
+        total: true,
+        deposited: true,
+        order: {
+          select: {
+            items: {
+              select: {
+                requested: true,
+                price: true,
+                discount: true,
+                salePrice: true,
+                product: {
+                  select: {
+                    brand: true,
+                    model: true,
+                  },
+                },
+              },
+            },
+            customer: {
+              select: {
+                name: true,
+                code: true,
+                phone: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    const groupInvoicesByCustomer = invoicesThatDueToday.reduce(
+      (acc, { order, ...invoice }) => {
+        const { code, ...customer } = order.customer
+
+        if (acc.has(code)) {
+          const customerInvoices = acc.get(code)
+
+          return acc.set(code, {
+            ...customerInvoices,
+            invoices: [
+              ...customerInvoices.invoices,
+              {
+                deposited: invoice.deposited,
+                total: invoice.total,
+                toPay: invoice.total - invoice.deposited,
+                items: order.items.map((item) => ({
+                  ...item,
+                  productName: `${item.product.brand} ${item.product.model}`,
+                })),
+              },
+            ],
+          })
+        }
+
+        return acc.set(code, {
+          customerEmail: customer.email,
+          customerPhone: customer.phone,
+          customerName: customer.name,
+          invoices: [
+            {
+              deposited: invoice.deposited,
+              total: invoice.total,
+              toPay: invoice.total - invoice.deposited,
+              items: order.items.map((item) => ({
+                ...item,
+                productName: `${item.product.brand} ${item.product.model}`,
+              })),
+            },
+          ],
+        })
+      },
+      new Map<
+        number,
+        Omit<
+          InvoicesDueTodayPayload,
+          'customerCode' | 'customerPendingInvoices'
+        >
+      >(),
+    )
+
+    for (const [code, data] of groupInvoicesByCustomer) {
+      const notificationPayload: InvoicesDueTodayPayload = {
+        ...data,
+        customerCode: code,
+        customerPendingInvoices: data.invoices.length,
+      }
+
+      this.notification.trigger(NovuEvent.INVOICES_DUE_TODAY, {
+        to: {
+          subscriberId: 'clivqlm380000z8wb6xi1hd8q',
+          email: 'francomusolino55@gmail.com',
+        },
+        payload: notificationPayload as any,
+      })
     }
   }
 }

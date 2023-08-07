@@ -7,9 +7,10 @@ import { EventHandlers } from './events/handlers'
 import { BillingService } from './billing.service'
 import { BillingController } from './billing.controller'
 import { RolesModule } from '@/auth/authorization/roles/roles.module'
+import { NotificationsModule } from '@/notifications/notifications.module'
 
 @Module({
-  imports: [CqrsModule, RolesModule],
+  imports: [CqrsModule, RolesModule, NotificationsModule],
   controllers: [BillingController],
   providers: [
     BillingService,

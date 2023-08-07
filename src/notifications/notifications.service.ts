@@ -3,7 +3,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Novu, ISubscriberPayload, ITriggerPayloadOptions } from '@novu/node'
 
-import { NovuEvent } from './novu-events.enum'
+import { NovuEvent } from './novu-events.types'
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
