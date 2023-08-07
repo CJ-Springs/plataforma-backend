@@ -17,6 +17,7 @@ import { ProductsModule } from './business/warehouse/products/products.module'
 import { SpringsModule } from './business/warehouse/springs/springs.module'
 import { IncomeOrdersModule } from './business/warehouse/income-orders/income-orders.module'
 import { SalesModule } from './business/sales/sales.module'
+import { BillingModule } from './business/billing/billing.module'
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SalesModule } from './business/sales/sales.module'
     SpringsModule,
     IncomeOrdersModule,
     SalesModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [

@@ -4,6 +4,8 @@ import { Injectable } from '@nestjs/common'
 import { Customer } from '../aggregate/customer.aggregate'
 import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
+import { BalanceReducedEvent } from '../events/impl/balance-reduced.event'
+import { BalanceIncreasedEvent } from '../events/impl/balance-increased.event'
 import { IFindByUniqueInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -78,6 +80,12 @@ export class CustomerRepository
         if (event instanceof CustomerUpdatedEvent) {
           return this.updateCustomer(event.data)
         }
+        if (event instanceof BalanceReducedEvent) {
+          return this.reduceBalance(event.data)
+        }
+        if (event instanceof BalanceIncreasedEvent) {
+          return this.increaseBalance(event.data)
+        }
       }),
     )
   }
@@ -123,6 +131,46 @@ export class CustomerRepository
       this.logger.error(
         error,
         `Error al intentar actualizar el cliente ${code} en la db`,
+      )
+    }
+  }
+
+  private async reduceBalance(data: BalanceReducedEvent['data']) {
+    const { code, reduction } = data
+
+    try {
+      await this.prisma.customer.update({
+        where: { code },
+        data: {
+          balance: {
+            decrement: reduction,
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar reducir el balance del cliente ${code} en la db`,
+      )
+    }
+  }
+
+  private async increaseBalance(data: BalanceIncreasedEvent['data']) {
+    const { code, increment } = data
+
+    try {
+      await this.prisma.customer.update({
+        where: { code },
+        data: {
+          balance: {
+            increment,
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar aumentar el balance del cliente ${code} en la db`,
       )
     }
   }

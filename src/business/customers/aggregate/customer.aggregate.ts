@@ -3,6 +3,8 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Address, AddressPropsDTO } from './value-objects/address.value-object'
 import { CustomerRegisteredEvent } from '../events/impl/customer-registered.event'
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
+import { BalanceReducedEvent } from '../events/impl/balance-reduced.event'
+import { BalanceIncreasedEvent } from '../events/impl/balance-increased.event'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -14,7 +16,7 @@ type CustomerProps = {
   name: string
   phone: string
   cuil: string
-  owe: number
+  balance: number
   paymentDeadline: number
   discount?: number
   address: Address
@@ -27,14 +29,14 @@ type CustomerPropsDTO = {
   name: string
   phone: string
   cuil: string
-  owe: number
+  balance: number
   paymentDeadline: number
   discount?: number
   address: AddressPropsDTO
 }
 
 type UpdateCustomerProps = DeepPartial<
-  Omit<CustomerPropsDTO, 'id' | 'code' | 'email' | 'owe'>
+  Omit<CustomerPropsDTO, 'id' | 'code' | 'email' | 'balance'>
 >
 
 export class Customer
@@ -51,7 +53,7 @@ export class Customer
       { argument: props.name, argumentName: 'name' },
       { argument: props.phone, argumentName: 'phone' },
       { argument: props.cuil, argumentName: 'cuil' },
-      { argument: props.owe, argumentName: 'owe' },
+      { argument: props.balance, argumentName: 'balance' },
       { argument: props.paymentDeadline, argumentName: 'paymentDeadline' },
       { argument: props.address, argumentName: 'address' },
     ])
@@ -75,7 +77,7 @@ export class Customer
       email: emailResult.getValue(),
       name: props.name,
       phone: props.phone,
-      owe: props.owe,
+      balance: props.balance,
       paymentDeadline: props.paymentDeadline,
       cuil: props.cuil,
       discount: props?.discount,
@@ -121,6 +123,42 @@ export class Customer
     const event = new CustomerUpdatedEvent({
       code: this.props.code.toValue(),
       ...props,
+    })
+    this.apply(event)
+
+    return Result.ok<Customer>(this)
+  }
+
+  reduceBalance(reduction: number): Result<Customer> {
+    const validateReduction = Validate.isGreaterThan(reduction, 0, 'reduction')
+    if (validateReduction.isFailure) {
+      return Result.fail(validateReduction.getErrorValue())
+    }
+
+    this.props.balance -= reduction
+
+    const event = new BalanceReducedEvent({
+      code: this.props.code.toValue(),
+      reduction,
+      balance: this.props.balance,
+    })
+    this.apply(event)
+
+    return Result.ok<Customer>(this)
+  }
+
+  increaseBalance(increment: number): Result<Customer> {
+    const validateIncrement = Validate.isGreaterThan(increment, 0, 'increment')
+    if (validateIncrement.isFailure) {
+      return Result.fail(validateIncrement.getErrorValue())
+    }
+
+    this.props.balance += increment
+
+    const event = new BalanceIncreasedEvent({
+      code: this.props.code.toValue(),
+      increment,
+      balance: this.props.balance,
     })
     this.apply(event)
 

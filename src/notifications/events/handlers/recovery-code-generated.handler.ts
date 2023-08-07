@@ -3,7 +3,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs'
 import { RecoveryCodeGeneratedEvent } from '@/auth/authentication/events/impl/recovery-code-generated.event'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { NotificationsService } from '@/notifications/notifications.service'
-import { NovuEvent } from '@/notifications/novu-events.enum'
+import { NovuEvent } from '@/notifications/novu-events.types'
 
 @EventsHandler(RecoveryCodeGeneratedEvent)
 export class RecoveryCodeGeneratedHandler

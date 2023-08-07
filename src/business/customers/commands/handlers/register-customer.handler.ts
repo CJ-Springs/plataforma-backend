@@ -41,7 +41,7 @@ export class RegisterCustomerHandler
 
     const customerOrError = Customer.create({
       ...data,
-      owe: 0,
+      balance: 0,
       address: {
         ...data.address,
         country: data.address?.country ?? 'Argentina',
