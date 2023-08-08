@@ -17,7 +17,9 @@ export class ChangeUserStatusHandler
   ) {}
 
   async execute(command: ChangeUserStatusCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el ChangeUserStatus command handler')
+    this.logger.log('Users', 'Ejecutando el ChangeUserStatus command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

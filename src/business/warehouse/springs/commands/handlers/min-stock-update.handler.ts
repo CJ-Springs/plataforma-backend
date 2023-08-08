@@ -17,7 +17,9 @@ export class MinStockUpdateHandler
   ) {}
 
   async execute(command: MinStockUpdateCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el MinStockUpdate command handler')
+    this.logger.log('Springs', 'Ejecutando el MinStockUpdate command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -23,8 +23,9 @@ export class WarrantyOrderCreatedHandler
 
   async handle(event: WarrantyOrderCreatedEvent) {
     this.logger.log(
+      'Springs',
       'Ejecutando el WarrantyOrderCreated event handler',
-      'En springs',
+      { logType: 'event-handler' },
     )
 
     const { data } = event

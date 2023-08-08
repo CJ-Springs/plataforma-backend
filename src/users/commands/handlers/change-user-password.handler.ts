@@ -17,7 +17,11 @@ export class ChangeUserPasswordHandler
   ) {}
 
   async execute(command: ChangeUserPasswordCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el ChangeUserPassword command handler')
+    this.logger.log(
+      'Users',
+      'Ejecutando el ChangeUserPassword command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

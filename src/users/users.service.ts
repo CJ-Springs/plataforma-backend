@@ -26,6 +26,10 @@ export class UsersService {
   }
 
   async deleteUser(id: string) {
+    this.logger.log('Users', 'Ejecutando el método deleteUser', {
+      logType: 'service',
+    })
+
     const existingUser = await this.findUserOrThrow(id)
 
     if (existingUser.deleted) {

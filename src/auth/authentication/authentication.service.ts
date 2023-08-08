@@ -27,6 +27,10 @@ export class AuthenticationService {
   ) {}
 
   async login({ email, password }: LoginDto): Promise<StandardResponse> {
+    this.logger.log('Auth', 'Ejecutando el método login', {
+      logType: 'service',
+    })
+
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -71,6 +75,10 @@ export class AuthenticationService {
   }
 
   async generateRecoveryCode({ email }: StepOneDto): Promise<StandardResponse> {
+    this.logger.log('Auth', 'Ejecutando el método generateRecoveryCode', {
+      logType: 'service',
+    })
+
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -116,6 +124,10 @@ export class AuthenticationService {
   }
 
   async validateCode({ email, code }: StepTwoDto): Promise<StandardResponse> {
+    this.logger.log('Auth', 'Ejecutando el método validateCode', {
+      logType: 'service',
+    })
+
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -162,6 +174,10 @@ export class AuthenticationService {
     email,
     password,
   }: StepThreeDto): Promise<StandardResponse> {
+    this.logger.log('Auth', 'Ejecutando el método useRecoveryCode', {
+      logType: 'service',
+    })
+
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
@@ -213,10 +229,9 @@ export class AuthenticationService {
     timeZone: 'America/Argentina/Buenos_Aires',
   })
   async handleCron() {
-    this.logger.log(
-      'Remove used or expired Recovery codes',
-      'Running schedule task',
-    )
+    this.logger.log('Auth', 'Remove used or expired Recovery codes', {
+      logType: 'schedule-task',
+    })
 
     try {
       const { count } = await this.prisma.code.deleteMany({
@@ -225,7 +240,7 @@ export class AuthenticationService {
         },
       })
 
-      this.logger.log(`Se eliminaron ${count} código/s`)
+      console.log(`Se eliminaron ${count} código/s`)
     } catch (error) {
       this.logger.error(
         error,

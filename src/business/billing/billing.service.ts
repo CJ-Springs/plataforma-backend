@@ -16,7 +16,7 @@ import { DateTime, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { NotificationsService } from '@/notifications/notifications.service'
 import {
-  InvoicesDueTodayPayload,
+  InvoicesDueTodayNotificationPayload,
   NovuEvent,
 } from '@/notifications/novu-events.types'
 
@@ -59,6 +59,10 @@ export class BillingService {
     deposit: EnterDepositDto,
     createdBy: string,
   ): Promise<StandardResponse> {
+    this.logger.log('Billing', 'Ejecutando el método enterDeposit', {
+      logType: 'service',
+    })
+
     const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
       customerCode,
     )
@@ -133,6 +137,10 @@ export class BillingService {
       metadata?: Record<string, any>
     },
   ): Promise<StandardResponse> {
+    this.logger.log('Billing', 'Ejecutando el método usePaymentRemaining', {
+      logType: 'service',
+    })
+
     const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
       customerCode,
     )
@@ -195,10 +203,10 @@ export class BillingService {
     timeZone: 'America/Argentina/Buenos_Aires',
   })
   async handleDueInvoices() {
-    this.logger.log(
-      'Mark unpaid expired invoices as due',
-      'Running schedule task',
-    )
+    this.logger.log('Billing', 'Mark unpaid expired invoices as due', {
+      logType: 'schedule-task',
+    })
+
     const unpaidAndExpiredInvoices = await this.prisma.invoice.findMany({
       where: {
         AND: [
@@ -220,10 +228,9 @@ export class BillingService {
     timeZone: 'America/Argentina/Buenos_Aires',
   })
   async handleInvoicesDueToday() {
-    this.logger.log(
-      'Send notification of invoices that due today',
-      'Running schedule task',
-    )
+    this.logger.log('Billing', 'Send notification of invoices that due today', {
+      logType: 'schedule-task',
+    })
 
     const today = DateTime.today()
     console.log({ today })
@@ -311,14 +318,14 @@ export class BillingService {
       new Map<
         number,
         Omit<
-          InvoicesDueTodayPayload,
+          InvoicesDueTodayNotificationPayload,
           'customerCode' | 'customerPendingInvoices'
         >
       >(),
     )
 
     for (const [code, data] of groupInvoicesByCustomer) {
-      const notificationPayload: InvoicesDueTodayPayload = {
+      const notificationPayload: InvoicesDueTodayNotificationPayload = {
         ...data,
         customerCode: code,
         customerPendingInvoices: data.invoices.length,

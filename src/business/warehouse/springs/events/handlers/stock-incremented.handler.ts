@@ -15,10 +15,9 @@ export class StockIncrementedHandler
   ) {}
 
   handle(event: StockIncrementedEvent) {
-    this.logger.log(
-      'Ejecutando el StockIncremented event handler',
-      'En springs',
-    )
+    this.logger.log('Springs', 'Ejecutando el StockIncremented event handler', {
+      logType: 'event-handler',
+    })
 
     const { data } = event
 

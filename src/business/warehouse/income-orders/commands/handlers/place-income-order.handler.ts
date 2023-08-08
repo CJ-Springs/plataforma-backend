@@ -22,7 +22,11 @@ export class PlaceIncomeOrderHandler
   ) {}
 
   async execute(command: PlaceIncomeOrderCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el PlaceIncomeOrder command handler')
+    this.logger.log(
+      'Income_Orders',
+      'Ejecutando el PlaceIncomeOrder command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

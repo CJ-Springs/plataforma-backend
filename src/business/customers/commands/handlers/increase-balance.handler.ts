@@ -18,7 +18,11 @@ export class IncreaseBalanceHandler
   ) {}
 
   async execute(command: IncreaseBalanceCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el IncreaseBalance command handler')
+    this.logger.log(
+      'Customers',
+      'Ejecutando el IncreaseBalance command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

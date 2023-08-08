@@ -18,7 +18,11 @@ export class UpdateCustomerHandler
   ) {}
 
   async execute(command: UpdateCustomerCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el UpdateCustomer command handler')
+    this.logger.log(
+      'Customers',
+      'Ejecutando el UpdateCustomer command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

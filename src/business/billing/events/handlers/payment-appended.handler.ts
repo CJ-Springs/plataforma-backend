@@ -16,7 +16,9 @@ export class PaymentAppendedHandler
   ) {}
 
   async handle(event: PaymentAppendedEvent) {
-    this.logger.log('Ejecutando el PaymentAppended event handler', 'En billing')
+    this.logger.log('Billing', 'Ejecutando el PaymentAppended event handler', {
+      logType: 'event-handler',
+    })
 
     const {
       data: { remaining, ...data },

@@ -14,10 +14,9 @@ export class SaleOrderPlacedHandler
   ) {}
 
   async handle(event: SaleOrderPlacedEvent) {
-    this.logger.log(
-      'Ejecutando el SaleOrderPlaced event handler',
-      'En products',
-    )
+    this.logger.log('Products', 'Ejecutando el SaleOrderPlaced event handler', {
+      logType: 'event-handler',
+    })
 
     const { data } = event
 

@@ -24,7 +24,9 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
   ) {}
 
   async execute(command: AddProductCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el AddProduct command handler')
+    this.logger.log('Products', 'Ejecutando el AddProduct command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -14,7 +14,9 @@ export class PermissionCreatedHandler
   ) {}
 
   async handle(event: PermissionCreatedEvent) {
-    this.logger.log('Ejecutando PermissionCreated event handler', 'En roles')
+    this.logger.log('Roles', 'Ejecutando PermissionCreated event handler', {
+      logType: 'event-handler',
+    })
 
     const { data } = event
 

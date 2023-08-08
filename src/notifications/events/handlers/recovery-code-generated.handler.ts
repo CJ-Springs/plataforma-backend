@@ -16,8 +16,9 @@ export class RecoveryCodeGeneratedHandler
 
   handle(event: RecoveryCodeGeneratedEvent) {
     this.logger.log(
+      'Notifications',
       'Ejecutando el RecoveryCodeGenerated event handler',
-      'En notifications',
+      { logType: 'event-handler' },
     )
     const { data } = event
 

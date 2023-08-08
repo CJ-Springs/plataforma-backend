@@ -22,7 +22,9 @@ export class NotificationsService implements OnModuleInit {
     try {
       const NOVU_API_KEY = this.configService.getOrThrow('NOVU_API_KEY')
       this.novu = new Novu(NOVU_API_KEY)
-      this.logger.log('Novu conectado correctamente', 'Novu service')
+      this.logger.log('Notifications', 'Novu conectado correctamente', {
+        logType: 'service',
+      })
     } catch (error) {
       this.logger.error(
         'Missing NOVU_API_KEY. Please, set it in your env file',
@@ -32,6 +34,10 @@ export class NotificationsService implements OnModuleInit {
   }
 
   async addSubscriber(subscriberId: string, payload: ISubscriberPayload) {
+    this.logger.log('Notifications', 'Ejecutando el método addSubscriber', {
+      logType: 'service',
+    })
+
     try {
       await this.novu.subscribers.identify(subscriberId, payload)
     } catch (error) {
@@ -40,6 +46,10 @@ export class NotificationsService implements OnModuleInit {
   }
 
   async removeSubscriber(subscriberId: string) {
+    this.logger.log('Notifications', 'Ejecutando el método removeSubscriber', {
+      logType: 'service',
+    })
+
     try {
       await this.novu.subscribers.delete(subscriberId)
     } catch (error) {
@@ -48,6 +58,10 @@ export class NotificationsService implements OnModuleInit {
   }
 
   async trigger(event: NovuEvent, data: ITriggerPayloadOptions) {
+    this.logger.log('Notifications', 'Ejecutando el método trigger', {
+      logType: 'service',
+    })
+
     try {
       await this.novu.trigger(event, data)
     } catch (error) {

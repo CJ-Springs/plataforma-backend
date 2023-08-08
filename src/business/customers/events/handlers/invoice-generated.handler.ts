@@ -17,8 +17,9 @@ export class InvoiceGeneratedHandler
 
   async handle(event: InvoiceGeneratedEvent) {
     this.logger.log(
+      'Customers',
       'Ejecutando el InvoiceGenerated event handler',
-      'En customers',
+      { logType: 'event-handler' },
     )
 
     const { data } = event

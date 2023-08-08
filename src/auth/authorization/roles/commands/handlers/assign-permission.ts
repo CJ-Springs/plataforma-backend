@@ -20,7 +20,11 @@ export class AssignPermissionHandler
   ) {}
 
   async execute(command: AssignPermissionCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el AssignPermission command handler')
+    this.logger.log(
+      'Permissions',
+      'Ejecutando el AssignPermission command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

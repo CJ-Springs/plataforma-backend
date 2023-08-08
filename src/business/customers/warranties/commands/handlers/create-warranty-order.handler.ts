@@ -34,7 +34,11 @@ export class CreateWarrantyOrderHandler
   async execute(
     command: CreateWarrantyOrderCommand,
   ): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CreateWarrantyOrder command handler')
+    this.logger.log(
+      'Warranties',
+      'Ejecutando el CreateWarrantyOrder command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

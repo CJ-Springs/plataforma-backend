@@ -22,7 +22,11 @@ export class IncrementAmountOfSalesHandler
   async execute(
     command: IncrementAmountOfSalesCommand,
   ): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el IncrementAmountOfSales command handler')
+    this.logger.log(
+      'Products',
+      'Ejecutando el IncrementAmountOfSales command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

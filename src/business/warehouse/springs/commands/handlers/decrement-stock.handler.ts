@@ -23,7 +23,9 @@ export class DecrementStockHandler
   ) {}
 
   async execute(command: DecrementStockCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el DecrementStock command handler')
+    this.logger.log('Springs', 'Ejecutando el DecrementStock command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

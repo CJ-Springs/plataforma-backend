@@ -17,8 +17,9 @@ export class PaymentCanceledHandler
 
   async handle(event: PaymentCanceledEvent) {
     this.logger.log(
+      'Customers',
       'Ejecutando el PaymentCanceled event handler',
-      'En customers',
+      { logType: 'event-handler' },
     )
 
     const { data } = event

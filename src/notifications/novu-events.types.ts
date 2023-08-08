@@ -3,7 +3,7 @@ export enum NovuEvent {
   INVOICES_DUE_TODAY = 'invoices-due-today',
 }
 
-export type InvoicesDueTodayPayload = {
+export type InvoicesDueTodayNotificationPayload = {
   customerName: string
   customerCode: number
   customerPendingInvoices: number
