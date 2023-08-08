@@ -1,6 +1,6 @@
 import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 
-type PaymentAppendedEventProps = {
+type PaymentAddedEventProps = {
   invoiceId: string
   orderId: string
   status: InvoiceStatus
@@ -16,6 +16,6 @@ type PaymentAppendedEventProps = {
   }
 }
 
-export class PaymentAppendedEvent {
-  constructor(public readonly data: PaymentAppendedEventProps) {}
+export class PaymentAddedEvent {
+  constructor(public readonly data: PaymentAddedEventProps) {}
 }

@@ -1,4 +1,4 @@
 import { SaleOrderPlacedHandler } from './sale-order-placed.handler'
-import { PaymentAppendedHandler } from './payment-appended.handler'
+import { PaymentAddedHandler } from './payment-added.handler'
 
-export const EventHandlers = [SaleOrderPlacedHandler, PaymentAppendedHandler]
+export const EventHandlers = [SaleOrderPlacedHandler, PaymentAddedHandler]

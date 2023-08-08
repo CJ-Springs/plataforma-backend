@@ -3,23 +3,21 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { InvoiceRepository } from '../../repository/invoice.repository'
-import { AppendPaymentCommand } from '../impl/append-payment.command'
+import { AddPaymentCommand } from '../impl/add-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(AppendPaymentCommand)
-export class AppendPaymentHandler
-  implements ICommandHandler<AppendPaymentCommand>
-{
+@CommandHandler(AddPaymentCommand)
+export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
   constructor(
     private readonly logger: LoggerService,
     private readonly publisher: EventPublisher,
     private readonly invoiceRepository: InvoiceRepository,
   ) {}
 
-  async execute(command: AppendPaymentCommand): Promise<StandardResponse> {
-    this.logger.log('Billing', 'Ejecutando el AppendPayment command handler', {
+  async execute(command: AddPaymentCommand): Promise<StandardResponse> {
+    this.logger.log('Billing', 'Ejecutando el AddPayment command handler', {
       logType: 'command-handler',
     })
 
@@ -39,7 +37,7 @@ export class AppendPaymentHandler
     }
     const invoice = invoiceOrNull.getValue()
 
-    const appendPaymentResult = invoice.appendPayment({
+    const appendPaymentResult = invoice.addPayment({
       amount,
       createdBy,
       paymentMethod,
@@ -64,7 +62,7 @@ export class AppendPaymentHandler
     }
   }
 
-  validate(command: AppendPaymentCommand) {
+  validate(command: AddPaymentCommand) {
     const validation = Validate.isRequiredBulk([
       {
         argument: command.data.invoiceId,

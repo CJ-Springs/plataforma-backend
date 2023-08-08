@@ -4,8 +4,8 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Payment, PaymentPropsDTO } from './entities/payment.entity'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
+import { PaymentAddedEvent } from '../events/impl/payment-added.event'
 import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
-import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
 import { Result, Validate, DateTime } from '@/.shared/helpers'
@@ -103,7 +103,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(this)
   }
 
-  appendPayment(props: Partial<PaymentPropsDTO>): Result<Invoice> {
+  addPayment(props: Partial<PaymentPropsDTO>): Result<Invoice> {
     if (this.props.status === InvoiceStatus.PAGADA) {
       return Result.fail('La factura ya ha sido pagada en su totalidad')
     }
@@ -127,7 +127,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       this.props.status = InvoiceStatus.PAGADA
     }
 
-    const event = new PaymentAppendedEvent({
+    const event = new PaymentAddedEvent({
       invoiceId: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
       status: this.props.status,

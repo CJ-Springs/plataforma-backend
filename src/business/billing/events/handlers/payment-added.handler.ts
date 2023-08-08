@@ -1,22 +1,20 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
-import { PaymentAppendedEvent } from '../impl/payment-appended.event'
+import { PaymentAddedEvent } from '../impl/payment-added.event'
 import { BillingService } from '../../billing.service'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
-@EventsHandler(PaymentAppendedEvent)
-export class PaymentAppendedHandler
-  implements IEventHandler<PaymentAppendedEvent>
-{
+@EventsHandler(PaymentAddedEvent)
+export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
     private readonly billingService: BillingService,
   ) {}
 
-  async handle(event: PaymentAppendedEvent) {
-    this.logger.log('Billing', 'Ejecutando el PaymentAppended event handler', {
+  async handle(event: PaymentAddedEvent) {
+    this.logger.log('Billing', 'Ejecutando el PaymentAdded event handler', {
       logType: 'event-handler',
     })
 

@@ -13,7 +13,7 @@ import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterDepositDto, EnterPaymentDto } from './dtos'
 import { BillingService } from './billing.service'
-import { AppendPaymentCommand } from './commands/impl/append-payment.command'
+import { AddPaymentCommand } from './commands/impl/add-payment.command'
 import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
 import {
   PermissionGuard,
@@ -31,13 +31,13 @@ export class BillingController {
   @RequiredPermissions('backoffice::ingresar-pago')
   @UseGuards(PermissionGuard)
   @Post(':invoiceId/ingresar-pago')
-  async enterPayment(
+  async addPayment(
     @Param('invoiceId') invoiceId: string,
     @Body() payment: EnterPaymentDto,
     @UserDec('email') email: string,
   ) {
     return await this.commandBus.execute(
-      new AppendPaymentCommand({
+      new AddPaymentCommand({
         ...payment,
         invoiceId,
         createdBy: email,

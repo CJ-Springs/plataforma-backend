@@ -9,7 +9,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { EnterDepositDto } from './dtos'
 import { DueInvoiceCommand } from './commands/impl/due-invoice.command'
-import { AppendPaymentCommand } from './commands/impl/append-payment.command'
+import { AddPaymentCommand } from './commands/impl/add-payment.command'
 import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-balance.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { DateTime, LoggerService } from '@/.shared/helpers'
@@ -84,7 +84,7 @@ export class BillingService {
 
       if (paymentAmount >= leftToPay) {
         await this.commandBus.execute(
-          new AppendPaymentCommand({
+          new AddPaymentCommand({
             ...deposit,
             amount: leftToPay,
             invoiceId: invoice.id,
@@ -95,7 +95,7 @@ export class BillingService {
         paymentAmount -= leftToPay
       } else {
         await this.commandBus.execute(
-          new AppendPaymentCommand({
+          new AddPaymentCommand({
             ...deposit,
             amount: paymentAmount,
             invoiceId: invoice.id,
@@ -154,7 +154,7 @@ export class BillingService {
 
       if (remaining >= leftToPay) {
         await this.commandBus.execute(
-          new AppendPaymentCommand({
+          new AddPaymentCommand({
             amount: leftToPay,
             invoiceId: invoice.id,
             paymentMethod: paymentInfo.paymentMethod,
@@ -166,7 +166,7 @@ export class BillingService {
         remaining -= leftToPay
       } else {
         await this.commandBus.execute(
-          new AppendPaymentCommand({
+          new AddPaymentCommand({
             amount: remaining,
             invoiceId: invoice.id,
             paymentMethod: paymentInfo.paymentMethod,

@@ -1,26 +1,22 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
-import { PaymentAppendedEvent } from '@/business/billing/events/impl/payment-appended.event'
+import { PaymentAddedEvent } from '@/business/billing/events/impl/payment-added.event'
 import { IncreaseBalanceCommand } from '../../commands/impl/increase-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
-@EventsHandler(PaymentAppendedEvent)
-export class PaymentAppendedHandler
-  implements IEventHandler<PaymentAppendedEvent>
-{
+@EventsHandler(PaymentAddedEvent)
+export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
   constructor(
     private readonly logger: LoggerService,
     private readonly commandBus: CommandBus,
     private readonly prisma: PrismaService,
   ) {}
 
-  async handle(event: PaymentAppendedEvent) {
-    this.logger.log(
-      'Customers',
-      'Ejecutando el PaymentAppended event handler',
-      { logType: 'event-handler' },
-    )
+  async handle(event: PaymentAddedEvent) {
+    this.logger.log('Customers', 'Ejecutando el PaymentAdded event handler', {
+      logType: 'event-handler',
+    })
 
     const { data } = event
 

@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common'
 import { Invoice } from '../aggregate/invoice.aggregate'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
-import { PaymentAppendedEvent } from '../events/impl/payment-appended.event'
+import { PaymentAddedEvent } from '../events/impl/payment-added.event'
 import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
 import { IFindByInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
@@ -94,8 +94,8 @@ export class InvoiceRepository
         if (event instanceof InvoiceDuedEvent) {
           return this.dueInvoice(event.data)
         }
-        if (event instanceof PaymentAppendedEvent) {
-          return this.appendPayment(event.data)
+        if (event instanceof PaymentAddedEvent) {
+          return this.addPayment(event.data)
         }
         if (event instanceof PaymentCanceledEvent) {
           return this.cancelPayment(event.data)
@@ -143,7 +143,7 @@ export class InvoiceRepository
     }
   }
 
-  private async appendPayment(data: PaymentAppendedEvent['data']) {
+  private async addPayment(data: PaymentAddedEvent['data']) {
     const { invoiceId: id, status, payment } = data
 
     try {

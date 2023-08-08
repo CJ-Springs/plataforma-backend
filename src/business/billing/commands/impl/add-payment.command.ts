@@ -1,6 +1,6 @@
 import { PaymentMethod } from '@prisma/client'
 
-type AppendPaymentCommandProps = {
+type AddPaymentCommandProps = {
   invoiceId: string
   paymentMethod: PaymentMethod
   amount: number
@@ -14,6 +14,6 @@ type AppendPaymentCommandProps = {
   thirdParty?: boolean
 }
 
-export class AppendPaymentCommand {
-  constructor(public readonly data: AppendPaymentCommandProps) {}
+export class AddPaymentCommand {
+  constructor(public readonly data: AddPaymentCommandProps) {}
 }
