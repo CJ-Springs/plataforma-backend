@@ -24,7 +24,11 @@ export class GenerateInvoiceHandler
   ) {}
 
   async execute(command: GenerateInvoiceCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el GenerateInvoice command handler')
+    this.logger.log(
+      'Billing',
+      'Ejecutando el GenerateInvoice command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -31,7 +31,9 @@ export class PlaceSaleOrderHandler
   ) {}
 
   async execute(command: PlaceSaleOrderCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el PlaceSaleOrder command handler')
+    this.logger.log('Sales', 'Ejecutando el PlaceSaleOrder command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -14,7 +14,9 @@ export class StockAdjustedHandler implements IEventHandler<StockAdjustedEvent> {
   ) {}
 
   handle(event: StockAdjustedEvent) {
-    this.logger.log('Ejecutando el StockAdjusted event handler', 'En springs')
+    this.logger.log('Springs', 'Ejecutando el StockAdjusted event handler', {
+      logType: 'event-handler',
+    })
     const { data } = event
     const { prevStock, updatedStock, ...info } = data
 

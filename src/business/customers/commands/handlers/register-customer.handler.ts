@@ -21,7 +21,11 @@ export class RegisterCustomerHandler
   ) {}
 
   async execute(command: RegisterCustomerCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el RegisterCustomer command handler')
+    this.logger.log(
+      'Customers',
+      'Ejecutando el RegisterCustomer command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -23,8 +23,9 @@ export class IncomeOrderConfirmedHandler
 
   async handle(event: IncomeOrderConfirmedEvent) {
     this.logger.log(
+      'Springs',
       'Ejecutando el IncomeOrderConfirmed event handler',
-      'En springs',
+      { logType: 'event-handler' },
     )
 
     const { data } = event

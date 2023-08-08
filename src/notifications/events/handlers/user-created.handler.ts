@@ -13,8 +13,9 @@ export class UserCreatedHandler implements IEventHandler<UserCreatedEvent> {
 
   handle(event: UserCreatedEvent) {
     this.logger.log(
+      'Notifications',
       'Ejecutando el UserCreated event handler',
-      'En notifications',
+      { logType: 'event-handler' },
     )
 
     const {

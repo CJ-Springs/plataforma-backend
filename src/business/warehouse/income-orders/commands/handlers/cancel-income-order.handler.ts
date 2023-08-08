@@ -22,7 +22,11 @@ export class CancelIncomeOrderHandler
   ) {}
 
   async execute(command: CancelIncomeOrderCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CancelIncomeOrder command handler')
+    this.logger.log(
+      'Income_Orders',
+      'Ejecutando el CancelIncomeOrder command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

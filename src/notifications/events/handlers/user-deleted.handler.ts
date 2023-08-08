@@ -13,8 +13,9 @@ export class UserDeletedHandler implements IEventHandler<UserDeletedEvent> {
 
   handle(event: UserDeletedEvent) {
     this.logger.log(
+      'Notifications',
       'Ejecutando el UserDeleted event handler',
-      'En notifications',
+      { logType: 'event-handler' },
     )
 
     const { data } = event

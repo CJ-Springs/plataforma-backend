@@ -23,7 +23,9 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
   ) {}
 
   async execute(command: CreateUserCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CreateUser command handler')
+    this.logger.log('Users', 'Ejecutando el CreateUser command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

@@ -19,7 +19,9 @@ export class CancelPaymentHandler
   ) {}
 
   async execute(command: CancelPaymentCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CancelPayment command handler')
+    this.logger.log('Billing', 'Ejecutando el CancelPayment command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

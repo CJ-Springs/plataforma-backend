@@ -16,7 +16,11 @@ export class RegisterMovementHandler
   ) {}
 
   async execute(command: RegisterMovementCommand) {
-    this.logger.log('Ejecutando el RegisterMovement command handler')
+    this.logger.log(
+      'Springs',
+      'Ejecutando el RegisterMovement command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

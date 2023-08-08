@@ -20,7 +20,11 @@ export class ManuallyUpdatePriceHandler
   async execute(
     command: ManuallyUpdatePriceCommand,
   ): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el ManuallyUpdatePrice command handler')
+    this.logger.log(
+      'Pricing',
+      'Ejecutando el ManuallyUpdatePrice command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

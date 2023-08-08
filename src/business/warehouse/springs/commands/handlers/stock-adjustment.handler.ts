@@ -19,7 +19,11 @@ export class StockAdjustmentHandler
   ) {}
 
   async execute(command: StockAdjustmentCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el StockAdjustment command handler')
+    this.logger.log(
+      'Springs',
+      'Ejecutando el StockAdjustment command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

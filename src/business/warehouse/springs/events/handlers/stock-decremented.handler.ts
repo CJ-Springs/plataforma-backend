@@ -15,10 +15,9 @@ export class StockDecrementedHandler
   ) {}
 
   handle(event: StockDecrementedEvent) {
-    this.logger.log(
-      'Ejecutando el StockDecremented event handler',
-      'En springs',
-    )
+    this.logger.log('Springs', 'Ejecutando el StockDecremented event handler', {
+      logType: 'event-handler',
+    })
 
     const { data } = event
 

@@ -18,7 +18,9 @@ export class IncreasePriceHandler
   ) {}
 
   async execute(command: IncreasePriceCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el IncreasePrice command handler')
+    this.logger.log('Pricing', 'Ejecutando el IncreasePrice command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

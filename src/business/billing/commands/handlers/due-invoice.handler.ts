@@ -16,7 +16,9 @@ export class DueInvoiceHandler implements ICommandHandler<DueInvoiceCommand> {
   ) {}
 
   async execute(command: DueInvoiceCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el DueInvoice command handler')
+    this.logger.log('Billing', 'Ejecutando el DueInvoice command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

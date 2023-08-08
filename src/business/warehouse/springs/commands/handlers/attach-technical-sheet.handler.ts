@@ -24,7 +24,11 @@ export class AttachTechnicalSheetHandler
   async execute(
     command: AttachTechnicalSheetCommand,
   ): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el AttachTechnicalSheet command handler')
+    this.logger.log(
+      'Springs',
+      'Ejecutando el AttachTechnicalSheet command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

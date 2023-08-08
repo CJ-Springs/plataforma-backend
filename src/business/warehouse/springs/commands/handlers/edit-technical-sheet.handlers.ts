@@ -22,7 +22,11 @@ export class EditTechnicalSheetHandler
   ) {}
 
   async execute(command: EditTechnicalSheetCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el EditTechnicalSheet command handler')
+    this.logger.log(
+      'Springs',
+      'Ejecutando el EditTechnicalSheet command handler',
+      { logType: 'command-handler' },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

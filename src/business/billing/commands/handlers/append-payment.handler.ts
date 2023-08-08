@@ -19,7 +19,9 @@ export class AppendPaymentHandler
   ) {}
 
   async execute(command: AppendPaymentCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el AppendPayment command handler')
+    this.logger.log('Billing', 'Ejecutando el AppendPayment command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {

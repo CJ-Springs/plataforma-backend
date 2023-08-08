@@ -24,7 +24,9 @@ export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
   ) {}
 
   async execute(command: CreateRoleCommand): Promise<StandardResponse> {
-    this.logger.log('Ejecutando el CreateRole command handler')
+    this.logger.log('Roles', 'Ejecutando el CreateRole command handler', {
+      logType: 'command-handler',
+    })
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
