@@ -4,6 +4,7 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
+import { ProductUpdatedEvent } from '../events/impl/product-updated.event'
 import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-incremented.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
@@ -34,6 +35,10 @@ type ProductPropsDTO = {
   price: PricePropsDTO
   spring: SpringPropsDTO
 }
+
+type UpdateProductProps = Partial<
+  Pick<ProductPropsDTO, 'brand' | 'model' | 'description' | 'type' | 'isGnc'>
+>
 
 export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
   private constructor(public props: ProductProps) {
@@ -84,6 +89,27 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
     }
 
     return Result.ok<Product>(product)
+  }
+
+  update(props: UpdateProductProps): Result<Product> {
+    const fields = Object.keys(props)
+
+    for (const field of fields) {
+      const guardResult = Validate.againstNullOrUndefined(props[field], field)
+      if (guardResult.isFailure) {
+        return Result.fail(guardResult.getErrorValue())
+      }
+    }
+
+    this.props = { ...this.props, ...props }
+
+    const event = new ProductUpdatedEvent({
+      code: this.props.code.toValue(),
+      ...props,
+    })
+    this.apply(event)
+
+    return Result.ok<Product>(this)
   }
 
   incrementAmountOfSales(increment: number): Result<Product> {
