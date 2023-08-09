@@ -30,4 +30,5 @@ export enum MovementReason {
   INCOME_ORDER = 'Orden de ingreso',
   WARRANTY_ORDER = 'Orden de garantía',
   SALE_ORDER = 'Orden de venta',
+  CREDIT_NOTE = 'Nota de crédito',
 }

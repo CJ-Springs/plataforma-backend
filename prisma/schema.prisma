@@ -144,6 +144,7 @@ model Product {
   sales SaleOrderItem[]
   incomes IncomeOrderItem[]
   lossesByWarranties WarrantyOrderItem[]
+  incomesByCreditNotes CreditNoteItem[]
 
   spring Spring @relation(fields: [springId], references: [id])
   springId String @map("spring_id")
@@ -251,6 +252,7 @@ model Customer {
   address Address?
   buys SaleOrder[]
   warranties WarrantyOrder[]
+  creditNotes CreditNote[] 
 
   @@index([code], map: "customers_code")
   @@map("customers")
@@ -293,12 +295,41 @@ model WarrantyOrderItem {
   requested Int
   createdAt DateTime @default(now()) @map("created_at") 
 
-  order WarrantyOrder @relation(fields: [orderId], references: [id])
+  order WarrantyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orderId String @map("order_id")
   product Product @relation(fields: [productCode], references: [code])
   productCode String @map("product_code")
 
   @@map("warranty_order_items")
+}
+model CreditNote {
+  id String @id @default(cuid())
+
+  observation String?
+  createdBy String @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  items CreditNoteItem[]
+
+  customer Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int @map("customer_code")
+
+  @@map("credit_notes")
+}
+
+model CreditNoteItem {
+  id String @id @default(cuid())
+
+  returned Int
+  price Float
+  createdAt DateTime @default(now()) @map("created_at") 
+
+  creditNote CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creditNoteId String @map("credit_note_id")
+  product Product @relation(fields: [productCode], references: [code])
+  productCode String @map("product_code")
+
+  @@map("credit_note_items")
 }
 
 model SaleOrder {
