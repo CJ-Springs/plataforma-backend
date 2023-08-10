@@ -5,6 +5,7 @@ import { Product } from '../aggregate/product.aggregate'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
 import { ProductUpdatedEvent } from '../events/impl/product-updated.event'
 import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-incremented.event'
+import { AmountOfSalesDecrementedEvent } from '../events/impl/amount-of-sales-decremented.event'
 import { IFindByUniqueInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -92,6 +93,9 @@ export class ProductRepository
         if (event instanceof AmountOfSalesIncrementedEvent) {
           return this.incremetAmountOfSales(event.data)
         }
+        if (event instanceof AmountOfSalesDecrementedEvent) {
+          return this.decrementAmountOfSales(event.data)
+        }
       }),
     )
   }
@@ -168,6 +172,28 @@ export class ProductRepository
       this.logger.error(
         error,
         `Error al intentar incrementar la cantidad de ventas del producto ${code} en la db`,
+      )
+    }
+  }
+
+  private async decrementAmountOfSales(
+    data: AmountOfSalesDecrementedEvent['data'],
+  ) {
+    const { code, reduction } = data
+
+    try {
+      await this.prisma.product.update({
+        where: { code },
+        data: {
+          amountOfSales: {
+            decrement: reduction,
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar decrementar la cantidad de ventas del producto ${code} en la db`,
       )
     }
   }

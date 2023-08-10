@@ -1,7 +1,8 @@
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs'
+import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { PaymentAddedEvent } from '../impl/payment-added.event'
 import { BillingService } from '../../billing.service'
+import { IncreaseBalanceCommand } from '@/business/customers/commands/impl/increase-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
@@ -10,6 +11,7 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
+    private readonly commandBus: CommandBus,
     private readonly billingService: BillingService,
   ) {}
 
@@ -19,24 +21,31 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     })
 
     const {
-      data: { remaining, ...data },
+      data: { remaining: paymentRemaining, orderId, payment },
     } = event
 
-    if (remaining) {
+    if (paymentRemaining) {
       const order = await this.prisma.saleOrder.findUnique({
-        where: { id: data.orderId },
+        where: { id: orderId },
         select: { customerCode: true },
       })
 
-      await this.billingService.usePaymentRemaining(
+      const { data } = await this.billingService.payBulkInvoices(
         order.customerCode,
-        remaining,
         {
-          createdBy: data.payment.createdBy,
-          paymentMethod: data.payment.paymentMethod,
-          metadata: data.payment.metadata,
+          ...payment,
+          amount: paymentRemaining,
         },
       )
+
+      if (data.remaining) {
+        await this.commandBus.execute(
+          new IncreaseBalanceCommand({
+            code: order.customerCode,
+            increment: data.remaining,
+          }),
+        )
+      }
     }
   }
 }

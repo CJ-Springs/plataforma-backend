@@ -1,15 +1,15 @@
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 
-import { IncrementAmountOfSalesCommand } from '../impl/increment-amount-of-sales.command'
+import { DecrementAmountOfSalesCommand } from '../impl/decrement-amount-of-sales.command'
 import { ProductRepository } from '../../repository/product.repository'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(IncrementAmountOfSalesCommand)
-export class IncrementAmountOfSalesHandler
-  implements ICommandHandler<IncrementAmountOfSalesCommand>
+@CommandHandler(DecrementAmountOfSalesCommand)
+export class DecrementAmountOfSalesHandler
+  implements ICommandHandler<DecrementAmountOfSalesCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -18,11 +18,11 @@ export class IncrementAmountOfSalesHandler
   ) {}
 
   async execute(
-    command: IncrementAmountOfSalesCommand,
+    command: DecrementAmountOfSalesCommand,
   ): Promise<StandardResponse> {
     this.logger.log(
       'Products',
-      'Ejecutando el IncrementAmountOfSales command handler',
+      'Ejecutando el DecrementAmountOfSales command handler',
       { logType: 'command-handler' },
     )
 
@@ -42,8 +42,8 @@ export class IncrementAmountOfSalesHandler
     }
     const product = productOrNull.getValue()
 
-    const incrementAmountOFSalesResult = product.incrementAmountOfSales(
-      data.increment,
+    const incrementAmountOFSalesResult = product.decrementAmountOfSales(
+      data.reduction,
     )
     if (incrementAmountOFSalesResult.isFailure) {
       throw new BadRequestException(
@@ -57,15 +57,15 @@ export class IncrementAmountOfSalesHandler
     return {
       success: true,
       status: 200,
-      message: `El producto ${code} ha aumentado en ${data.increment} su número de ventas`,
+      message: `El producto ${code} ha disminuido en ${data.reduction} su número de ventas`,
       data: product.toDTO(),
     }
   }
 
-  validate(command: IncrementAmountOfSalesCommand) {
+  validate(command: DecrementAmountOfSalesCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.code, argumentName: 'code' },
-      { argument: command.data.increment, argumentName: 'increment' },
+      { argument: command.data.reduction, argumentName: 'reduction' },
     ])
 
     if (!validation.success) {

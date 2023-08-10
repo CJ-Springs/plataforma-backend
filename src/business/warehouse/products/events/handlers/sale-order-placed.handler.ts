@@ -20,8 +20,8 @@ export class SaleOrderPlacedHandler
 
     const { data } = event
 
-    for (const item of data.items) {
-      this.commandBus.execute(
+    for await (const item of data.items) {
+      await this.commandBus.execute(
         new IncrementAmountOfSalesCommand({
           code: item.productCode,
           increment: item.requested,
