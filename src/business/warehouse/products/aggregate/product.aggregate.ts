@@ -6,6 +6,7 @@ import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
 import { ProductUpdatedEvent } from '../events/impl/product-updated.event'
 import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-incremented.event'
+import { AmountOfSalesDecrementedEvent } from '../events/impl/amount-of-sales-decremented.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Result, Validate } from '@/.shared/helpers'
@@ -118,14 +119,35 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       return Result.fail(validateIncrement.getErrorValue())
     }
 
-    const prevAmount = this.props.amountOfSales
     this.props.amountOfSales += increment
 
     const event = new AmountOfSalesIncrementedEvent({
       code: this.props.code.toString(),
-      prevAmount,
       increment,
-      currentAmount: this.props.amountOfSales,
+      amountOfSales: this.props.amountOfSales,
+    })
+    this.apply(event)
+
+    return Result.ok<Product>(this)
+  }
+
+  decrementAmountOfSales(reduction: number): Result<Product> {
+    const validateReduction = Validate.inRange(
+      reduction,
+      0,
+      this.props.amountOfSales,
+      'reduction',
+    )
+    if (validateReduction.isFailure) {
+      return Result.fail(validateReduction.getErrorValue())
+    }
+
+    this.props.amountOfSales -= reduction
+
+    const event = new AmountOfSalesDecrementedEvent({
+      code: this.props.code.toString(),
+      reduction,
+      amountOfSales: this.props.amountOfSales,
     })
     this.apply(event)
 

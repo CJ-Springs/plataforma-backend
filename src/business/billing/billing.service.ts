@@ -56,7 +56,7 @@ export class BillingService {
 
   async enterDeposit(
     customerCode: number,
-    deposit: EnterDepositDto,
+    { amount, paymentMethod, ...metadata }: EnterDepositDto,
     createdBy: string,
   ): Promise<StandardResponse> {
     this.logger.log('Billing', 'Ejecutando el método enterDeposit', {
@@ -73,7 +73,50 @@ export class BillingService {
       )
     }
 
-    let paymentAmount = deposit.amount
+    const { data } = await this.payBulkInvoices(customerCode, {
+      amount,
+      createdBy,
+      paymentMethod,
+      metadata,
+    })
+
+    if (data.remaining) {
+      await this.commandBus.execute(
+        new IncreaseBalanceCommand({
+          code: customerCode,
+          increment: data.remaining,
+        }),
+      )
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: `Depósito del cliente ${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
+        .split('_')
+        .join()
+        .toLowerCase()}. Sobrante: $${data.remaining ?? 0}`,
+    }
+  }
+
+  async payBulkInvoices(
+    customerCode: number,
+    paymentInfo: {
+      amount: number
+      paymentMethod: PaymentMethod
+      createdBy: string
+      metadata?: Record<string, any>
+    },
+  ): Promise<StandardResponse<{ remaining: number | null }>> {
+    this.logger.log('Billing', 'Ejecutando el método payBulkInvoices', {
+      logType: 'service',
+    })
+
+    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
+      customerCode,
+    )
+
+    let paymentAmount = paymentInfo.amount
 
     for await (const invoice of pendingInvoices) {
       if (paymentAmount === 0) {
@@ -85,10 +128,11 @@ export class BillingService {
       if (paymentAmount >= leftToPay) {
         await this.commandBus.execute(
           new AddPaymentCommand({
-            ...deposit,
             amount: leftToPay,
             invoiceId: invoice.id,
-            createdBy,
+            paymentMethod: paymentInfo.paymentMethod,
+            createdBy: paymentInfo.createdBy,
+            ...paymentInfo.metadata,
           }),
         )
 
@@ -96,10 +140,11 @@ export class BillingService {
       } else {
         await this.commandBus.execute(
           new AddPaymentCommand({
-            ...deposit,
             amount: paymentAmount,
             invoiceId: invoice.id,
-            createdBy,
+            paymentMethod: paymentInfo.paymentMethod,
+            createdBy: paymentInfo.createdBy,
+            ...paymentInfo.metadata,
           }),
         )
 
@@ -107,94 +152,13 @@ export class BillingService {
       }
     }
 
-    if (paymentAmount > 0) {
-      await this.commandBus.execute(
-        new IncreaseBalanceCommand({
-          code: customerCode,
-          increment: paymentAmount,
-        }),
-      )
-    }
-
     return {
       success: true,
       status: 200,
-      message: `Depósito del cliente ${customerCode} realizado correctamente. Monto abonado: $${
-        deposit.amount
-      }. Método de pago: ${deposit.paymentMethod
-        .split('_')
-        .join()
-        .toLowerCase()}`,
-    }
-  }
-
-  async usePaymentRemaining(
-    customerCode: number,
-    remaining: number,
-    paymentInfo: {
-      paymentMethod: PaymentMethod
-      createdBy: string
-      metadata?: Record<string, any>
-    },
-  ): Promise<StandardResponse> {
-    this.logger.log('Billing', 'Ejecutando el método usePaymentRemaining', {
-      logType: 'service',
-    })
-
-    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
-      customerCode,
-    )
-
-    for await (const invoice of pendingInvoices) {
-      if (remaining === 0) {
-        break
-      }
-
-      const leftToPay = invoice.total - invoice.deposited
-
-      if (remaining >= leftToPay) {
-        await this.commandBus.execute(
-          new AddPaymentCommand({
-            amount: leftToPay,
-            invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            ...paymentInfo.metadata,
-          }),
-        )
-
-        remaining -= leftToPay
-      } else {
-        await this.commandBus.execute(
-          new AddPaymentCommand({
-            amount: remaining,
-            invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            ...paymentInfo.metadata,
-          }),
-        )
-
-        remaining = 0
-      }
-    }
-
-    if (remaining > 0) {
-      await this.commandBus.execute(
-        new IncreaseBalanceCommand({
-          code: customerCode,
-          increment: remaining,
-        }),
-      )
-    }
-
-    return {
-      success: true,
-      status: 200,
-      message: `Sobrante de monto $${remaining} de un pago realizado con ${paymentInfo.paymentMethod
-        .split('_')
-        .join()
-        .toLowerCase()} utilizado para saldar facturas pendientes o incrementar el balance del usuario`,
+      message: '',
+      data: {
+        remaining: paymentAmount > 0 ? paymentAmount : null,
+      },
     }
   }
 

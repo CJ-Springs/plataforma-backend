@@ -1,8 +1,7 @@
 type AmountOfSalesIncrementedEventProps = {
   code: string
-  prevAmount: number
   increment: number
-  currentAmount: number
+  amountOfSales: number
 }
 
 export class AmountOfSalesIncrementedEvent {
