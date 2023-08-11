@@ -1,10 +1,12 @@
 import { AppRole } from '@prisma/client'
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsPhoneNumber,
   IsString,
+  Min,
   Validate,
 } from 'class-validator'
 import { RequireEmail, RequireValueForEnum } from '@/.shared/utils'
@@ -42,9 +44,13 @@ export class CreateUserDto {
     message: "Debe enviar el campo 'document'",
   })
   @IsInt({ message: "El campo 'document' debe ser un número entero" })
+  @Min(1_000_000, {
+    message: 'El número de documento debe ser mayor a 1 millón',
+  })
   document: number
 
-  @IsOptional()
-  @Validate(RequireValueForEnum, [AppRole])
-  role?: AppRole
+  @IsArray({ message: "El campo 'roles' debe ser un array" })
+  @ArrayNotEmpty({ message: "El campo 'roles' no puede ser un array vacío" })
+  @Validate(RequireValueForEnum, [AppRole], { each: true })
+  roles: AppRole[]
 }

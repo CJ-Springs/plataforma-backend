@@ -1,3 +1,4 @@
+import { Role, User } from '@prisma/client'
 import {
   ExecutionContext,
   Injectable,
@@ -5,7 +6,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { User } from '@prisma/client'
 
 import { PERMISSIONS_KEY } from './permission.decorator'
 import { RoleRepository } from '../roles/repository/role.repository'
@@ -26,7 +26,9 @@ export class PermissionGuard {
     )
 
     const request = ctx.switchToHttp().getRequest()
-    const user = request.user as User
+    const user = request.user as User & {
+      roles: Role[]
+    }
     if (!user) {
       this.logger.error(
         'El PermissionGuard no puede usarse en un endpoint público',
@@ -36,17 +38,33 @@ export class PermissionGuard {
       // TODO hacer un unexpected exception
     }
 
-    const roleOrNull = await this.roleRepository.findOneById(user.roleId)
-    if (!roleOrNull) {
-      throw new NotFoundException(
-        `No se ha encontrado el rol con id ${user.roleId}`,
-      )
-    }
-    const role = roleOrNull.getValue()
+    const canAccess = await new Promise(async (resolve) => {
+      if (!user.roles.length) return resolve(false)
 
-    const canAccess = requiredPermissions
-      .map((permission) => role.hasPermission(permission))
-      .every(Boolean)
+      for await (const _role of user.roles) {
+        const roleOrNull = await this.roleRepository.findOneByUniqueInput({
+          code: _role.code,
+        })
+        if (!roleOrNull) {
+          throw new NotFoundException(
+            `No se ha encontrado el rol ${_role.code}`,
+          )
+        }
+        const role = roleOrNull.getValue()
+
+        // Valida que, al menos 1 de los roles del usuario, tenga alguno de los permisos requeridos
+
+        const canAccess = requiredPermissions
+          .map((permission) => role.hasPermission(permission))
+          .some(Boolean)
+
+        if (canAccess) {
+          return resolve(true)
+        }
+      }
+
+      return resolve(false)
+    }).then((canAccess) => !!canAccess)
 
     if (!canAccess) {
       throw new UnauthorizedException(

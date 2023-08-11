@@ -4,6 +4,7 @@ type CreateRoleCommandProps = {
   code: AppRole
   name: string
   permissions?: string[]
+  allPermissions?: boolean
 }
 
 export class CreateRoleCommand {

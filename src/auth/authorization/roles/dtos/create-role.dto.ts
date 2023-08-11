@@ -1,6 +1,7 @@
 import { AppRole } from '@prisma/client'
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -24,4 +25,10 @@ export class CreateRoleDto {
       "El campo 'permissions' debe ser un array que contenga los nombres de los permisos que se quieren agregar al rol",
   })
   permissions?: string[]
+
+  @IsOptional()
+  @IsBoolean({
+    message: "El campo 'allPermissions' debe ser un boolean",
+  })
+  allPermissions?: boolean
 }

@@ -23,7 +23,7 @@ export class UserRepository implements IRepository<User> {
         include: {
           password: true,
           profile: true,
-          role: { select: { code: true } },
+          roles: { select: { code: true } },
         },
       })
 
@@ -31,7 +31,7 @@ export class UserRepository implements IRepository<User> {
         return null
       }
 
-      const { password, role } = user
+      const { password, roles } = user
 
       return User.create({
         ...user,
@@ -39,7 +39,7 @@ export class UserRepository implements IRepository<User> {
         profile: {
           ...user.profile,
         },
-        role: role.code,
+        roles: roles.map((rol) => rol.code),
       })
     } catch (error) {
       this.logger.error(
@@ -69,7 +69,7 @@ export class UserRepository implements IRepository<User> {
   }
 
   private async createUser(newUser: UserCreatedEvent['data']) {
-    const { password, profile, role, ...user } = newUser
+    const { password, profile, roles, ...user } = newUser
     const passwordHash = await this.useHash(password)
 
     try {
@@ -86,10 +86,8 @@ export class UserRepository implements IRepository<User> {
               ...profile,
             },
           },
-          role: {
-            connect: {
-              code: role,
-            },
+          roles: {
+            connect: roles.map((rol) => ({ code: rol })),
           },
         },
       })

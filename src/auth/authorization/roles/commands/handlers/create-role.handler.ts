@@ -44,12 +44,12 @@ export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
       throw new ConflictException(`El rol ${code} ya ha sido creado`)
     }
 
-    const uniquePermissions = getUniqueValues<typeof data.permissions>(
+    let permissions = getUniqueValues<typeof data.permissions>(
       data.permissions ?? [],
     )
 
-    if (uniquePermissions.length) {
-      for await (const permission of uniquePermissions) {
+    if (permissions.length) {
+      for await (const permission of permissions) {
         const _permission = await this.prisma.permission.findUnique({
           where: { name: permission },
           select: { id: true },
@@ -61,10 +61,18 @@ export class CreateRoleHandler implements ICommandHandler<CreateRoleCommand> {
       }
     }
 
+    if (data.allPermissions) {
+      permissions = await this.prisma.permission
+        .findMany({
+          select: { name: true },
+        })
+        .then((permissions) => permissions.map((permission) => permission.name))
+    }
+
     const roleOrError = Role.create({
       code,
       name: data.name,
-      permissions: uniquePermissions,
+      permissions,
     })
     if (roleOrError.isFailure) {
       throw new BadRequestException(roleOrError.getErrorValue())

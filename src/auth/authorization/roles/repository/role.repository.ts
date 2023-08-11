@@ -39,10 +39,7 @@ export class RoleRepository
         permissions: role.permissions.map((permission) => permission.name),
       })
     } catch (error) {
-      this.logger.error(
-        error,
-        `Error al intentar encontrar el rol ${id} en la db`,
-      )
+      this.logger.error(error, `Error al intentar buscar el rol ${id} en la db`)
 
       return null
     }
@@ -66,7 +63,7 @@ export class RoleRepository
         permissions: role.permissions.map((permission) => permission.name),
       })
     } catch (error) {
-      this.logger.error(error, `Error al intentar encontrar el rol en la db`)
+      this.logger.error(error, `Error al intentar buscar el rol en la db`)
 
       return null
     }

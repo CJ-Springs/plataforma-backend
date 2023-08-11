@@ -49,14 +49,14 @@ export class AssignPermissionHandler
     }
     const role = roleOrNull.getValue()
 
-    const permissionAddedResult = role.addPermission({
+    const addPermissionResult = role.addPermission({
       permission: data.permission,
     })
-    if (permissionAddedResult.isFailure) {
-      throw new BadRequestException(permissionAddedResult.getErrorValue())
+    if (addPermissionResult.isFailure) {
+      throw new BadRequestException(addPermissionResult.getErrorValue())
     }
 
-    await this.roleRepository.save(permissionAddedResult.getValue())
+    await this.roleRepository.save(role)
     this.publisher.mergeObjectContext(role).commit()
 
     return {

@@ -29,9 +29,9 @@ export class UsersController {
   @UseGuards(PermissionGuard)
   @Post()
   async createUser(@Body() newUser: CreateUserDto) {
-    const { email, role, ...profile } = newUser
+    const { email, roles, ...profile } = newUser
     return await this.commandBus.execute(
-      new CreateUserCommand({ email, role, profile }),
+      new CreateUserCommand({ email, roles, profile }),
     )
   }
 
