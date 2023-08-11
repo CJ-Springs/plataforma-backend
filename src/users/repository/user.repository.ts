@@ -5,6 +5,7 @@ import { User } from '../aggregate/user.aggregate'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
 import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
+import { UserRolesUpdatedEvent } from '../events/impl/user-roles-updated.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -64,6 +65,9 @@ export class UserRepository implements IRepository<User> {
         if (event instanceof UserPasswordChangedEvent) {
           return this.changeUserPassword(event.data)
         }
+        if (event instanceof UserRolesUpdatedEvent) {
+          return this.updateUserRoles(event.data)
+        }
       }),
     )
   }
@@ -112,7 +116,7 @@ export class UserRepository implements IRepository<User> {
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar cambiar el estado del usuario con id ${id} en la db`,
+        `Error al intentar cambiar el estado del usuario ${id} en la db`,
       )
     }
   }
@@ -135,7 +139,28 @@ export class UserRepository implements IRepository<User> {
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar cambiar la contraseña del usuario con id ${id} en la db`,
+        `Error al intentar cambiar la contraseña del usuario ${id} en la db`,
+      )
+    }
+  }
+
+  private async updateUserRoles(data: UserRolesUpdatedEvent['data']) {
+    const { userId, newRoles, removedRoles } = data
+
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          roles: {
+            connect: newRoles.map((role) => ({ code: role })),
+            disconnect: removedRoles.map((role) => ({ code: role })),
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar actualizar los roles del usuario ${userId} en la db`,
       )
     }
   }

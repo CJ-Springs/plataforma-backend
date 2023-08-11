@@ -6,6 +6,7 @@ import { Password } from './value-objects/password.value-object'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
 import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
+import { UserRolesUpdatedEvent } from '../events/impl/user-roles-updated.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -114,6 +115,40 @@ export class User
     this.apply(event)
 
     return Result.ok(this)
+  }
+
+  hasRole(role: AppRole): boolean {
+    return this.props.roles.some((_role) => _role.equals(new UniqueField(role)))
+  }
+
+  updateRoles(roles: AppRole[]): Result<User> {
+    if (this.props.deleted) {
+      return Result.fail(
+        `No se puede actualizar los roles de un usuario eliminado`,
+      )
+    }
+    if (this.hasRole(AppRole.SUPER_ADMIN)) {
+      return Result.fail(
+        `No se puede actualizar los roles de un usuario ${AppRole.SUPER_ADMIN}`,
+      )
+    }
+
+    const removedRoles = this.props.roles
+      .filter((role) => !roles.includes(role.toValue()))
+      .map((role) => role.toValue())
+    const newRoles = roles.filter((role) => !this.hasRole(role))
+
+    this.props.roles = roles.map((role) => new UniqueField(role))
+
+    const event = new UserRolesUpdatedEvent({
+      userId: this.props.id.toString(),
+      removedRoles,
+      newRoles,
+      roles: this.props.roles.map((role) => role.toValue()),
+    })
+    this.apply(event)
+
+    return Result.ok<User>(this)
   }
 
   toDTO(): UserPropsDTOWithoutPassword {
