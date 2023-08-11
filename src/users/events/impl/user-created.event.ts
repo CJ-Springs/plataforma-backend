@@ -12,7 +12,7 @@ type UserCreatedEventProps = {
     phone: string
     document: number
   }
-  role: AppRole
+  roles: AppRole[]
 }
 
 export class UserCreatedEvent {

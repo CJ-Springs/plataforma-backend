@@ -28,6 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.prisma.user.findUnique({
       where: { id },
+      include: { roles: true },
     })
     if (!user) {
       throw new NotFoundException(`Usuario con id ${id} no encontrado`)

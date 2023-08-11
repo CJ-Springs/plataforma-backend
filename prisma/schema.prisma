@@ -10,9 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// TODO: 
-// 1. Las tablas de los diferentes métodos de pago
-
 model User {
   id String @id @default(cuid())
 
@@ -27,9 +24,7 @@ model User {
   profile Profile?
   codes Code[]
   incomeOrders IncomeOrder[]
-
-  role Role @relation(fields: [roleId], references: [id])
-  roleId String @map("role_id")
+  roles Role[]  @relation("roles_users")
 
   @@index([email, id], map: "users_id_email")
   @@map("users")
@@ -76,12 +71,12 @@ model Code {
 model Role {
   id String @id @default(cuid())
 
-  code AppRole @default(USER) @unique 
-  name String @default("User")
+  code AppRole  @unique 
+  name String 
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
-  users User[]
+  users User[] @relation("roles_users")
   permissions Permission[] @relation("roles_permissions")
 
   @@index([code], map: "roles_code")
@@ -402,8 +397,9 @@ model Payment {
 
 
 enum AppRole {
-  ADMIN
-  USER
+  SUPER_ADMIN
+  ADMINISTRATIVO
+  DEPOSITO
 }
 
 enum IncomeOrderStatus {

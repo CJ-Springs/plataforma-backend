@@ -2,7 +2,7 @@ import { AppRole } from '@prisma/client'
 
 type CreateUserCommandProps = {
   email: string
-  role?: AppRole
+  roles: AppRole[]
   profile: {
     firstname: string
     lastname: string

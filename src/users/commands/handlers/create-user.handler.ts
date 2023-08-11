@@ -1,4 +1,3 @@
-import { AppRole } from '@prisma/client'
 import {
   BadRequestException,
   ConflictException,
@@ -45,13 +44,12 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       throw new ConflictException(`Ya existe un usuario con el email ${email}`)
     }
 
-    if (data?.role) {
-      const existRole = await this.prisma.role.findUnique({
-        where: { code: data.role },
-      })
-      if (!existRole) {
-        throw new NotFoundException(`El rol ${data.role} no ha sido creado`)
-      }
+    for await (const role of data.roles) {
+      await this.prisma.role
+        .findUniqueOrThrow({ where: { code: role } })
+        .catch(() => {
+          throw new NotFoundException(`No se ha encontrado el rol ${role}`)
+        })
     }
 
     const password = `${document}${firstname[0].toUpperCase()}${lastname[0].toLowerCase()}`
@@ -60,7 +58,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       ...data,
       isSuspended: false,
       deleted: false,
-      role: data?.role ?? AppRole.USER,
+      roles: data.roles,
       password,
     })
     if (userOrError.isFailure) {
@@ -74,7 +72,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     return {
       success: true,
       status: 201,
-      message: 'Usuario creado correctamente',
+      message: `Usuario registrado con el email ${email}`,
       data: user.toDTO(),
     }
   }
@@ -82,6 +80,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
   validate(command: CreateUserCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.email, argumentName: 'email' },
+      { argument: command.data.roles, argumentName: 'roles' },
       { argument: command.data.profile, argumentName: 'profile' },
     ])
 

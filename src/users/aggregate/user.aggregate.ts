@@ -17,7 +17,7 @@ export type UserProps = {
   isSuspended: boolean
   deleted: boolean
   profile: Profile
-  role: UniqueField<AppRole>
+  roles: UniqueField<AppRole>[]
 }
 
 export type UserPropsDTO = {
@@ -27,7 +27,7 @@ export type UserPropsDTO = {
   isSuspended: boolean
   deleted: boolean
   profile: Profile['props']
-  role: AppRole
+  roles: AppRole[]
 }
 
 export type UserPropsDTOWithoutPassword = Omit<UserPropsDTO, 'password'>
@@ -44,7 +44,7 @@ export class User
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.isSuspended, argumentName: 'isSuspended' },
       { argument: props.deleted, argumentName: 'deleted' },
-      { argument: props.role, argumentName: 'role' },
+      { argument: props.roles, argumentName: 'roles' },
       { argument: props.profile, argumentName: 'profile' },
     ])
     if (guardResult.isFailure) {
@@ -70,7 +70,7 @@ export class User
       id: new UniqueEntityID(props?.id),
       isSuspended: props.isSuspended,
       deleted: props.deleted,
-      role: new UniqueField(props.role),
+      roles: props.roles.map((rol) => new UniqueField(rol)),
       email: emailResult.getValue(),
       password: passwordResult.getValue(),
       profile: profileResult.getValue(),
@@ -125,7 +125,7 @@ export class User
       id: props.id.toString(),
       email: props.email.getValue(),
       profile: props.profile.getValue(),
-      role: props.role.toValue(),
+      roles: props.roles.map((rol) => rol.toValue()),
     }
   }
 }

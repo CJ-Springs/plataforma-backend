@@ -34,7 +34,11 @@ export class AuthenticationService {
     const existUser = await this.prisma.user
       .findUniqueOrThrow({
         where: { email },
-        include: { password: true, profile: true, role: true },
+        include: {
+          password: true,
+          profile: true,
+          roles: { select: { code: true, name: true } },
+        },
       })
       .catch(() => {
         throw new NotFoundException(
@@ -42,35 +46,33 @@ export class AuthenticationService {
         )
       })
 
-    if (existUser) {
-      if (existUser.deleted) {
-        throw new BadRequestException(`El usuario ${email} ha sido eliminado`)
-      }
+    if (existUser.deleted) {
+      throw new BadRequestException(`El usuario ${email} ha sido eliminado`)
+    }
 
-      const match = await compare(password, existUser.password.passwordHash)
+    const match = await compare(password, existUser.password.passwordHash)
 
-      if (!match) {
-        throw new BadRequestException('Las credenciales son inválidas')
-      }
+    if (!match) {
+      throw new BadRequestException('Las credenciales son inválidas')
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _password, ...user } = existUser
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...user } = existUser
 
-      const token = this.jwtService.sign({
-        id: user.id,
-        firstname: user.profile.firstname,
-        lastname: user.profile.lastname,
-      } as JwtPayload)
+    const token = this.jwtService.sign({
+      id: user.id,
+      firstname: user.profile.firstname,
+      lastname: user.profile.lastname,
+    } as JwtPayload)
 
-      return {
-        success: true,
-        status: 200,
-        message: 'Usuario logeado correctamente',
-        data: {
-          ...user,
-          token,
-        },
-      }
+    return {
+      success: true,
+      status: 200,
+      message: 'Usuario logeado correctamente',
+      data: {
+        ...user,
+        token,
+      },
     }
   }
 
