@@ -3,9 +3,10 @@ import { genSalt, hash } from 'bcrypt'
 
 import { User } from '../aggregate/user.aggregate'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
-import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
 import { UserRolesUpdatedEvent } from '../events/impl/user-roles-updated.event'
+import { UserActivatedEvent } from '../events/impl/user-activated.event'
+import { UserSuspendedEvent } from '../events/impl/user-suspended.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -59,8 +60,11 @@ export class UserRepository implements IRepository<User> {
         if (event instanceof UserCreatedEvent) {
           return this.createUser(event.data)
         }
-        if (event instanceof UserStatusChangedEvent) {
-          return this.changeUserStatus(event.data)
+        if (event instanceof UserActivatedEvent) {
+          return this.activateUser(event.data)
+        }
+        if (event instanceof UserSuspendedEvent) {
+          return this.suspendUser(event.data)
         }
         if (event instanceof UserPasswordChangedEvent) {
           return this.changeUserPassword(event.data)
@@ -103,20 +107,38 @@ export class UserRepository implements IRepository<User> {
     }
   }
 
-  private async changeUserStatus(data: UserStatusChangedEvent['data']) {
-    const { id, isSuspended } = data
+  private async activateUser(data: UserActivatedEvent['data']) {
+    const { userId } = data
 
     try {
       await this.prisma.user.update({
-        where: { id },
+        where: { id: userId },
         data: {
-          isSuspended,
+          isSuspended: false,
         },
       })
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar cambiar el estado del usuario ${id} en la db`,
+        `Error al intentar activar el usuario ${userId} en la db`,
+      )
+    }
+  }
+
+  private async suspendUser(data: UserSuspendedEvent['data']) {
+    const { userId } = data
+
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          isSuspended: true,
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar suspender el usuario ${userId} en la db`,
       )
     }
   }

@@ -12,7 +12,8 @@ import { CommandBus } from '@nestjs/cqrs'
 import { CreateUserDto, UpdateUserRolesDto } from './dtos'
 import { UsersService } from './users.service'
 import { CreateUserCommand } from './commands/impl/create-user.command'
-import { ChangeUserStatusCommand } from './commands/impl/change-user-status.command'
+import { ActivateUserCommand } from './commands/impl/activate-user.command'
+import { SuspendUserCommand } from './commands/impl/suspend-user.command'
 import { UpdateUserRolesCommand } from './commands/impl/update-user-roles.command'
 import {
   PermissionGuard,
@@ -38,9 +39,16 @@ export class UsersController {
 
   @RequiredPermissions('backoffice::cambiar-estado-usuario')
   @UseGuards(PermissionGuard)
-  @Patch(':ID/cambiar-estado')
-  async changeUserStatus(@Param('ID') id: string) {
-    return await this.commandBus.execute(new ChangeUserStatusCommand({ id }))
+  @Patch(':userId/activar')
+  async activeUser(@Param('userId') userId: string) {
+    return await this.commandBus.execute(new ActivateUserCommand({ userId }))
+  }
+
+  @RequiredPermissions('backoffice::cambiar-estado-usuario')
+  @UseGuards(PermissionGuard)
+  @Patch(':userId/suspender')
+  async suspendUser(@Param('userId') userId: string) {
+    return await this.commandBus.execute(new SuspendUserCommand({ userId }))
   }
 
   @RequiredPermissions('backoffice::actualizar-roles-usuario')
