@@ -1,7 +1,9 @@
 import { IsOptional, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
 import { PartialType, OmitType } from '@nestjs/swagger'
-import { PartialAddressDto, RegisterCustomerDto } from './register-customer.dto'
+
+import { RegisterCustomerDto } from './register-customer.dto'
+import { PartialAddressDto } from './address.dto'
 
 export class UpdateCustomerDto extends PartialType(
   OmitType(RegisterCustomerDto, ['code', 'email', 'address']),

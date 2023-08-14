@@ -49,8 +49,13 @@ export class UsersService {
         message: `Usuario ${existingUser.email} eliminado`,
       }
     } catch (error) {
-      this.logger.error(error, 'Error al intentar eliminar un usuario de la db')
-      // TODO Unexpected error
+      this.logger.error(
+        error,
+        `Error al intentar eliminar el usuario ${existingUser.email} de la db`,
+      )
+      throw new BadRequestException(
+        `Error al intentar eliminar el usuario ${existingUser.email} de la db`,
+      )
     }
   }
 }

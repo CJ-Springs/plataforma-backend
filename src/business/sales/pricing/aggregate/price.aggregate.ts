@@ -2,6 +2,7 @@ import { AllowedCurrency } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { PriceIncreasedEvent } from '../events/impl/price-increased.event'
+import { PriceReducedEvent } from '../events/impl/price-reduced.event'
 import { PriceManuallyUpdatedEvent } from '../events/impl/price-manually-updated.event'
 import { Currency, Result, Validate, ValidateResult } from '@/.shared/helpers'
 import { IToDTO } from '@/.shared/types'
@@ -82,12 +83,11 @@ export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
 
     this.props.price = rounded
 
-    // TODO: Do event
-    // const event = new PriceUpdatedEvent({
-    //   price: this.props.price,
-    //   code: this.props.productCode.toString(),
-    // })
-    // this.apply(event)
+    const event = new PriceReducedEvent({
+      price: this.props.price,
+      code: this.props.productCode.toString(),
+    })
+    this.apply(event)
 
     return Result.ok<Price>(this)
   }

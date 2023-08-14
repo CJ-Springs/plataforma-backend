@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common'
 import { Price } from '../aggregate/price.aggregate'
 import { PriceIncreasedEvent } from '../events/impl/price-increased.event'
 import { PriceManuallyUpdatedEvent } from '../events/impl/price-manually-updated.event'
+import { PriceReducedEvent } from '../events/impl/price-reduced.event'
 import { IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -40,6 +41,9 @@ export class PricingRepository implements IRepository<Price> {
     await Promise.all(
       events.map((event) => {
         if (event instanceof PriceIncreasedEvent) {
+          return this.updatePrice(event.data)
+        }
+        if (event instanceof PriceReducedEvent) {
           return this.updatePrice(event.data)
         }
         if (event instanceof PriceManuallyUpdatedEvent) {

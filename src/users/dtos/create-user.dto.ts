@@ -7,6 +7,7 @@ import {
   IsPhoneNumber,
   IsString,
   Min,
+  MinLength,
   Validate,
 } from 'class-validator'
 import { RequireEmail, RequireValueForEnum } from '@/.shared/utils'
@@ -21,6 +22,9 @@ export class CreateUserDto {
   @IsString({
     message: "El campo 'firstname' debe ser un string",
   })
+  @MinLength(3, {
+    message: "El campo 'firstname' debe contar con, al menos, 3 letras",
+  })
   firstname: string
 
   @IsNotEmpty({
@@ -28,6 +32,9 @@ export class CreateUserDto {
   })
   @IsString({
     message: "El campo 'lastname' debe ser un string",
+  })
+  @MinLength(3, {
+    message: "El campo 'lastname' debe contar con, al menos, 3 letras",
   })
   lastname: string
 
