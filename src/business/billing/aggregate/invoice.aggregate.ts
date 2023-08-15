@@ -14,7 +14,7 @@ type InvoiceProps = {
   id: UniqueEntityID
   total: number
   deposited: number
-  dueDate: Date
+  dueDate: DateTime
   status: InvoiceStatus
   orderId: UniqueEntityID
   payments: Payment[]
@@ -65,7 +65,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       id: new UniqueEntityID(props?.id),
       total: props.total,
       deposited: props.deposited,
-      dueDate: props.dueDate,
+      dueDate: DateTime.createFromDate(props.dueDate, false),
       status: props.status,
       orderId: new UniqueEntityID(props.orderId),
       payments,
@@ -89,7 +89,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail('La factura ya fue marcada como deuda')
     }
 
-    if (this.props.dueDate > new Date()) {
+    if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {
       return Result.fail(
         'La factura todavía no ha cumplido su fecha de vencimiento',
       )
@@ -160,14 +160,8 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
 
     this.props.deposited -= payment.props.amount
 
-    console.log({ today: DateTime.today().date })
-    console.log({ now: DateTime.now().date })
-
-    const dueDate = DateTime.createFromDate(this.props.dueDate, false)
-    console.log({ dueDate })
-
     if (this.props.status === InvoiceStatus.PAGADA) {
-      if (dueDate.greaterThanOrEqual(DateTime.today())) {
+      if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {
         this.props.status = InvoiceStatus.POR_PAGAR
       } else {
         this.props.status = InvoiceStatus.DEUDA
@@ -193,6 +187,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return {
       ...this.props,
       id: this.props.id.toString(),
+      dueDate: this.props.dueDate.getDate(),
       orderId: this.props.orderId.toString(),
       payments: this.props.payments.map((payment) => payment.toDTO()),
     }

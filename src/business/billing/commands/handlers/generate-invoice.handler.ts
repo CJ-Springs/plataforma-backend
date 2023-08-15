@@ -7,10 +7,9 @@ import { PaymentPropsDTO } from '../../aggregate/entities/payment.entity'
 import { InvoiceRepository } from '../../repository/invoice.repository'
 import { GenerateInvoiceCommand } from '../impl/generate-invoice.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
-import { Result, Validate } from '@/.shared/helpers'
+import { DateTime, Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
-import { getTimeZone } from '@/.shared/utils'
 
 @CommandHandler(GenerateInvoiceCommand)
 export class GenerateInvoiceHandler
@@ -81,13 +80,14 @@ export class GenerateInvoiceHandler
       }
     }
 
-    const dueDate = getTimeZone()
-    dueDate.setDate(dueDate.getDate() + existingOrder.customer.paymentDeadline)
+    const dueDate = DateTime.today().addDays(
+      existingOrder.customer.paymentDeadline,
+    )
 
     const invoiceOrError = Invoice.create({
       orderId,
       deposited,
-      dueDate,
+      dueDate: dueDate.getDate(),
       status,
       total: roundedTotal,
       payments,

@@ -171,11 +171,14 @@ export class BillingService {
       logType: 'schedule-task',
     })
 
+    const today = DateTime.today()
+    console.log(`Running on ${today.getDate()}`)
+
     const unpaidAndExpiredInvoices = await this.prisma.invoice.findMany({
       where: {
         AND: [
           { status: { equals: InvoiceStatus.POR_PAGAR } },
-          { dueDate: { lt: new Date() } },
+          { dueDate: { lt: today.getDate() } },
         ],
       },
     })
@@ -197,13 +200,13 @@ export class BillingService {
     })
 
     const today = DateTime.today()
-    console.log({ today })
+    console.log(`Running on ${today.getDate()}`)
 
     const invoicesThatDueToday = await this.prisma.invoice.findMany({
       where: {
         AND: [
           { status: { equals: InvoiceStatus.POR_PAGAR } },
-          { dueDate: { equals: today.date } },
+          { dueDate: { equals: today.getDate() } },
         ],
       },
       select: {

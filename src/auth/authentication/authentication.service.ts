@@ -14,7 +14,7 @@ import { PrismaService } from '@/.shared/infra/prisma.service'
 import { JwtPayload, StandardResponse } from '@/.shared/types'
 import { ONE_MINUTE, getNumericCode } from '@/.shared/utils'
 import { ChangeUserPasswordCommand } from '@/users/commands/impl/change-user-password.command'
-import { LoggerService } from '@/.shared/helpers'
+import { DateTime, LoggerService } from '@/.shared/helpers'
 
 @Injectable()
 export class AuthenticationService {
@@ -95,7 +95,7 @@ export class AuthenticationService {
       throw new BadRequestException(`El usuario ${email} ha sido eliminado`)
     }
 
-    const expiresAt = new Date().getTime() + ONE_MINUTE * 15
+    const expiresAt = DateTime.utcNow().getDate().getTime() + ONE_MINUTE * 15
     const generatedCode = getNumericCode()
 
     const code = await this.prisma.code.create({
@@ -155,7 +155,11 @@ export class AuthenticationService {
         'Primero genere un código de recuperación de contraseña',
       )
     }
-    if (existingCode.expiresAt < new Date()) {
+    if (
+      DateTime.createFromDate(existingCode.expiresAt, false).lowerThan(
+        DateTime.utcNow(),
+      )
+    ) {
       throw new BadRequestException(
         'El código ha expirado. Por favor, genere uno nuevo',
       )
@@ -205,7 +209,11 @@ export class AuthenticationService {
         'Primero genere un código de recuperación de contraseña',
       )
     }
-    if (existingCode.expiresAt < new Date()) {
+    if (
+      DateTime.createFromDate(existingCode.expiresAt, false).lowerThan(
+        DateTime.utcNow(),
+      )
+    ) {
       throw new BadRequestException(
         'El código ha expirado. Por favor, genere uno nuevo',
       )
@@ -235,10 +243,13 @@ export class AuthenticationService {
       logType: 'schedule-task',
     })
 
+    const today = DateTime.today()
+    console.log(`Running on ${today.getDate()}`)
+
     try {
       const { count } = await this.prisma.code.deleteMany({
         where: {
-          OR: [{ used: true }, { expiresAt: { lt: new Date() } }],
+          OR: [{ used: true }, { expiresAt: { lt: today.getDate() } }],
         },
       })
 
