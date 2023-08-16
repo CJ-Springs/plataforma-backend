@@ -1,13 +1,13 @@
-import { AllowedCurrency } from '@prisma/client'
+import { Currencies } from '@prisma/client'
 
 export class Currency {
-  private type: AllowedCurrency
+  private type: Currencies
 
-  private constructor(type: AllowedCurrency = AllowedCurrency.ARS) {
+  private constructor(type: Currencies = Currencies.ARS) {
     this.type = type
   }
 
-  static create(type?: AllowedCurrency): Currency {
+  static create(type?: Currencies): Currency {
     return new Currency(type)
   }
 
@@ -19,7 +19,7 @@ export class Currency {
     return this.type.toString()
   }
 
-  getValue(): AllowedCurrency {
+  getValue(): Currencies {
     return this.type
   }
 }

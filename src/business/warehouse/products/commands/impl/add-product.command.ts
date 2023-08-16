@@ -1,4 +1,4 @@
-import { AllowedCurrency, ProductType } from '@prisma/client'
+import { Currencies, ProductType } from '@prisma/client'
 
 type AddProductCommandProps = {
   code: string
@@ -8,9 +8,9 @@ type AddProductCommandProps = {
   type: ProductType
   isGnc: boolean
   price: number
-  currency?: AllowedCurrency
+  currency?: Currencies
   spring: {
-    associateToAnExistingSpring?: boolean
+    associateToAnExistingSpring: boolean
     code?: string
     canAssociate?: boolean
     minQuantity?: number

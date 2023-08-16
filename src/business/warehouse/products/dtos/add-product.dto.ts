@@ -1,4 +1,4 @@
-import { ProductType, AllowedCurrency } from '@prisma/client'
+import { ProductType, Currencies } from '@prisma/client'
 import { Type } from 'class-transformer'
 import {
   IsBoolean,
@@ -16,7 +16,7 @@ import {
 import { RequireValueForEnum } from '@/.shared/utils'
 
 class ProductSpringDto {
-  @IsOptional()
+  @IsDefined({ message: "Debe enviar el campo 'associateToAnExistingSpring'" })
   @IsBoolean({
     message: "El campo 'associateToAnExistingSpring' debe ser un booleano",
   })
@@ -78,8 +78,8 @@ export class AddProductDto {
   price: number
 
   @IsOptional()
-  @Validate(RequireValueForEnum, [AllowedCurrency])
-  currency?: AllowedCurrency
+  @Validate(RequireValueForEnum, [Currencies])
+  currency?: Currencies
 
   @IsDefined({ message: "Debe enviar el campo 'spring" })
   @Type(() => ProductSpringDto)

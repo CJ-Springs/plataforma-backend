@@ -57,7 +57,9 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
       message: `Pago con ${paymentMethod
         .split('_')
         .join(' ')
-        .toLowerCase()} de monto $${amount} registrado a la factura ${invoiceId}`,
+        .toLowerCase()} de monto ${invoice.props.payments
+        .at(-1)
+        .props.amount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
       data: invoice.toDTO(),
     }
   }

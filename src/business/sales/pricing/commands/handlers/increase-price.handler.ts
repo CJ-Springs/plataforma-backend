@@ -32,7 +32,7 @@ export class IncreasePriceHandler
     const priceOrNull = await this.pricingRepository.findOneById(data.code)
     if (!priceOrNull) {
       throw new NotFoundException(
-        `No se ha encontrado el producto con el código ${data.code}`,
+        `No se ha encontrado el producto con el código #${data.code}`,
       )
     }
     const price = priceOrNull.getValue()
@@ -45,7 +45,7 @@ export class IncreasePriceHandler
     return {
       success: true,
       status: 200,
-      message: `Precio del producto ${data.code} aumentado un ${data.percentage}%`,
+      message: `Precio del producto #${data.code} aumentado un ${data.percentage}%`,
       data: price.toDTO(),
     }
   }

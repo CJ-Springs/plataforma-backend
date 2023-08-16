@@ -1,12 +1,12 @@
-import { PaymentMethod, PaymentStatus } from '@prisma/client'
+import { Currencies, PaymentMethod, PaymentStatus } from '@prisma/client'
 
 import { Entity, UniqueEntityID } from '@/.shared/domain'
-import { Result, Validate } from '@/.shared/helpers'
+import { Currency, Money, Result, Validate } from '@/.shared/helpers'
 import { IToDTO } from '@/.shared/types'
 
 type PaymentProps = {
   paymentMethod: PaymentMethod
-  amount: number
+  amount: Money
   createdBy: string
   canceledBy?: string
   status: PaymentStatus
@@ -32,23 +32,28 @@ export class Payment
   }
 
   static create(props: Partial<PaymentPropsDTO>): Result<Payment> {
-    const guardResult = Validate.combine([
-      Validate.againstNullOrUndefinedBulk([
-        { argument: props.paymentMethod, argumentName: 'paymentMethod' },
-        { argument: props.amount, argumentName: 'amount' },
-        { argument: props.createdBy, argumentName: 'createdBy' },
-        { argument: props.status, argumentName: 'status' },
-      ]),
-      Validate.isGreaterThan(props.amount, 0, 'amount'),
+    const guardResult = Validate.againstNullOrUndefinedBulk([
+      { argument: props.paymentMethod, argumentName: 'paymentMethod' },
+      { argument: props.amount, argumentName: 'amount' },
+      { argument: props.createdBy, argumentName: 'createdBy' },
+      { argument: props.status, argumentName: 'status' },
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
     }
 
+    const validateAmount = Money.validate(props.amount, 'paymentAmount')
+    if (validateAmount.isFailure) {
+      return Result.fail(validateAmount.getErrorValue())
+    }
+
     const payment = new Payment(
       {
         paymentMethod: props.paymentMethod,
-        amount: props.amount,
+        amount: Money.fromString(
+          String(props.amount),
+          Currency.create(Currencies.ARS),
+        ),
         createdBy: props.createdBy,
         canceledBy: props?.canceledBy,
         status: props.status,
@@ -61,17 +66,20 @@ export class Payment
   }
 
   reduceAmount(reduction: number): Result<Payment> {
-    const validateReduction = Validate.inRange(
-      reduction,
-      0,
-      this.props.amount,
-      'reduction',
-    )
+    const validateReduction = Money.validate(reduction, 'reduction')
     if (validateReduction.isFailure) {
       return Result.fail(validateReduction.getErrorValue())
     }
 
-    this.props.amount -= reduction
+    const substractionResult = this.props.amount.substract(
+      Money.fromString(String(reduction), Currency.create(Currencies.ARS)),
+    )
+    if (substractionResult.isFailure) {
+      return Result.fail(substractionResult.getErrorValue())
+    }
+
+    this.props.amount = substractionResult.getValue()
+
     return Result.ok<Payment>(this)
   }
 
@@ -94,6 +102,7 @@ export class Payment
     return {
       id: this._id.toString(),
       ...this.props,
+      amount: this.props.amount.getValue(),
     }
   }
 }

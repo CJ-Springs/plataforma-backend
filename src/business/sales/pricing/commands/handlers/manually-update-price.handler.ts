@@ -52,7 +52,9 @@ export class ManuallyUpdatePriceHandler
     return {
       success: true,
       status: 200,
-      message: `Precio del producto ${data.code} actualizado a ${data.update}`,
+      message: `Precio del producto #${
+        data.code
+      } actualizado a ${price.props.price.getFormattedMoney()}`,
       data: price.toDTO(),
     }
   }

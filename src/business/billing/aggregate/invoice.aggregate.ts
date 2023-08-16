@@ -1,4 +1,4 @@
-import { InvoiceStatus } from '@prisma/client'
+import { Currencies, InvoiceStatus } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Payment, PaymentPropsDTO } from './entities/payment.entity'
@@ -8,12 +8,12 @@ import { PaymentAddedEvent } from '../events/impl/payment-added.event'
 import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
-import { Result, Validate, DateTime } from '@/.shared/helpers'
+import { Result, Validate, DateTime, Money, Currency } from '@/.shared/helpers'
 
 type InvoiceProps = {
   id: UniqueEntityID
-  total: number
-  deposited: number
+  total: Money
+  deposited: Money
   dueDate: DateTime
   status: InvoiceStatus
   orderId: UniqueEntityID
@@ -51,6 +51,15 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(guardResult.getErrorValue())
     }
 
+    const validateTotal = Money.validate(props.total, 'total')
+    if (validateTotal.isFailure) {
+      return Result.fail(validateTotal.getErrorValue())
+    }
+    const validateDeposited = Money.validate(props.deposited, 'deposited')
+    if (validateDeposited.isFailure) {
+      return Result.fail(validateDeposited.getErrorValue())
+    }
+
     const payments: Payment[] = []
 
     for (const payment of props.payments) {
@@ -63,8 +72,14 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
 
     const invoice = new Invoice({
       id: new UniqueEntityID(props?.id),
-      total: props.total,
-      deposited: props.deposited,
+      total: Money.fromString(
+        String(props.total),
+        Currency.create(Currencies.ARS),
+      ),
+      deposited: Money.fromString(
+        String(props.deposited),
+        Currency.create(Currencies.ARS),
+      ),
       dueDate: DateTime.createFromDate(props.dueDate, false),
       status: props.status,
       orderId: new UniqueEntityID(props.orderId),
@@ -115,15 +130,16 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     const payment = paymentOrError.getValue()
 
     const remaining =
-      payment.props.amount - (this.props.total - this.props.deposited)
+      payment.props.amount.getValue() -
+      (this.props.total.getValue() - this.props.deposited.getValue())
     if (remaining > 0) {
       payment.reduceAmount(remaining)
     }
 
     this.props.payments.push(payment)
-    this.props.deposited += payment.props.amount
+    this.props.deposited = this.props.deposited.add(payment.props.amount)
 
-    if (this.props.deposited === this.props.total) {
+    if (this.props.deposited.getValue() === this.props.total.getValue()) {
       this.props.status = InvoiceStatus.PAGADA
     }
 
@@ -158,7 +174,13 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(cancelPaymentResult.getErrorValue())
     }
 
-    this.props.deposited -= payment.props.amount
+    const substractionResult = this.props.deposited.substract(
+      payment.props.amount,
+    )
+    if (substractionResult.isFailure) {
+      return Result.fail(substractionResult.getErrorValue())
+    }
+    this.props.deposited = substractionResult.getValue()
 
     if (this.props.status === InvoiceStatus.PAGADA) {
       if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {
@@ -174,7 +196,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       status: this.props.status,
       payment: {
         id: payment.toDTO().id,
-        amount: payment.props.amount,
+        amount: payment.props.amount.getValue(),
         canceledBy: payment.props.canceledBy,
       },
     })
@@ -187,6 +209,8 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return {
       ...this.props,
       id: this.props.id.toString(),
+      total: this.props.total.getValue(),
+      deposited: this.props.deposited.getValue(),
       dueDate: this.props.dueDate.getDate(),
       orderId: this.props.orderId.toString(),
       payments: this.props.payments.map((payment) => payment.toDTO()),

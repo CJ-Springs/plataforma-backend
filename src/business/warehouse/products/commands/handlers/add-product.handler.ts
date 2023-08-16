@@ -41,7 +41,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
     })
     if (productAlreadyExist) {
       throw new ConflictException(
-        `Ya existe un producto con el código ${data.code}`,
+        `Ya existe un producto con el código #${data.code}`,
       )
     }
 
@@ -55,12 +55,12 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
       })
       if (!existingSpring) {
         throw new NotFoundException(
-          `El espiral con el código ${_spring.code} no existe`,
+          `El espiral con el código #${_spring.code} no existe`,
         )
       }
       if (!existingSpring.canAssociate) {
         throw new ConflictException(
-          `El espiral con el código ${_spring.code} no es asociable`,
+          `El espiral con el código #${_spring.code} no es asociable`,
         )
       }
 
@@ -101,7 +101,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
     return {
       success: true,
       status: 201,
-      message: 'Nuevo producto añadido correctamente',
+      message: `Producto #${data.code} (${data.brand} ${data.model}) añadido correctamente`,
       data: product.toDTO(),
     }
   }
@@ -121,7 +121,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
       return Result.fail<string>(validation.message)
     }
 
-    if (!command.data.spring?.associateToAnExistingSpring) {
+    if (!command.data.spring.associateToAnExistingSpring) {
       const validateSpring = Validate.isRequiredBulk([
         {
           argument: command.data.spring.canAssociate,
