@@ -29,7 +29,7 @@ export class Profile extends ValueObject<ProfileProps> {
     const propsResult = Validate.combine([
       Validate.againstAtLeast(3, props.firstname, 'firstname'),
       Validate.againstAtLeast(3, props.lastname, 'lastname'),
-      Validate.isGreaterOrEqualThan(1_000_000, props.document, 'document'),
+      Validate.isGreaterOrEqualThan(props.document, 1_000_000, 'document'),
     ])
     if (propsResult.isFailure) {
       return Result.fail(propsResult.getErrorValue())

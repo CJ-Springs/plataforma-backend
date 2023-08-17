@@ -105,6 +105,11 @@ export class User
   }
 
   suspend(): Result<User> {
+    if (this.hasRole(AppRole.SUPER_ADMIN)) {
+      return Result.fail(
+        `No se puede suspender a un usuario ${AppRole.SUPER_ADMIN}`,
+      )
+    }
     if (this.props.isSuspended) {
       return Result.fail('El usuario ya se encuentra suspendido')
     }
@@ -136,16 +141,7 @@ export class User
     return Result.ok(this)
   }
 
-  hasRole(role: AppRole): boolean {
-    return this.props.roles.some((_role) => _role.equals(new UniqueField(role)))
-  }
-
   updateRoles(roles: AppRole[]): Result<User> {
-    if (this.props.deleted) {
-      return Result.fail(
-        `No se puede actualizar los roles de un usuario eliminado`,
-      )
-    }
     if (this.hasRole(AppRole.SUPER_ADMIN)) {
       return Result.fail(
         `No se puede actualizar los roles de un usuario ${AppRole.SUPER_ADMIN}`,
@@ -170,6 +166,10 @@ export class User
     return Result.ok<User>(this)
   }
 
+  private hasRole(role: AppRole): boolean {
+    return this.props.roles.some((_role) => _role.equals(new UniqueField(role)))
+  }
+
   toDTO(): UserPropsDTOWithoutPassword {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...props } = this.props
@@ -179,7 +179,7 @@ export class User
       id: props.id.toString(),
       email: props.email.getValue(),
       profile: props.profile.getValue(),
-      roles: props.roles.map((rol) => rol.toValue()),
+      roles: props.roles.map((role) => role.toValue()),
     }
   }
 }

@@ -32,6 +32,9 @@ export class UserRepository implements IRepository<User> {
       if (!user) {
         return null
       }
+      if (user.deleted) {
+        return null
+      }
 
       const { password, roles } = user
 
