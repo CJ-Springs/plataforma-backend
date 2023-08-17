@@ -19,6 +19,7 @@ import {
   InvoicesDueTodayNotificationPayload,
   NovuEvent,
 } from '@/notifications/novu-events.types'
+import { formatMoney } from '@/.shared/utils'
 
 @Injectable()
 export class BillingService {
@@ -172,7 +173,6 @@ export class BillingService {
     })
 
     const today = DateTime.today()
-    console.log(`Running on ${today.getDate()}`)
 
     const unpaidAndExpiredInvoices = await this.prisma.invoice.findMany({
       where: {
@@ -200,7 +200,6 @@ export class BillingService {
     })
 
     const today = DateTime.today()
-    console.log(`Running on ${today.getDate()}`)
 
     const invoicesThatDueToday = await this.prisma.invoice.findMany({
       where: {
@@ -253,11 +252,14 @@ export class BillingService {
             invoices: [
               ...customerInvoices.invoices,
               {
-                deposited: invoice.deposited,
-                total: invoice.total,
-                toPay: invoice.total - invoice.deposited,
+                order: `${customerInvoices.invoices.length + 1})`,
+                deposited: formatMoney(invoice.deposited),
+                total: formatMoney(invoice.total),
+                toPay: formatMoney(invoice.total - invoice.deposited),
                 items: order.items.map((item) => ({
                   ...item,
+                  price: formatMoney(item.price),
+                  salePrice: formatMoney(item.salePrice),
                   productName: `${item.product.brand} ${item.product.model}`,
                 })),
               },
@@ -271,11 +273,14 @@ export class BillingService {
           customerName: customer.name,
           invoices: [
             {
-              deposited: invoice.deposited,
-              total: invoice.total,
-              toPay: invoice.total - invoice.deposited,
+              order: '1)',
+              deposited: formatMoney(invoice.deposited),
+              total: formatMoney(invoice.total),
+              toPay: formatMoney(invoice.total - invoice.deposited),
               items: order.items.map((item) => ({
                 ...item,
+                price: formatMoney(item.price),
+                salePrice: formatMoney(item.salePrice),
                 productName: `${item.product.brand} ${item.product.model}`,
               })),
             },

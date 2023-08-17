@@ -73,7 +73,7 @@ export class Money {
   ): Result<ValidateResult> {
     const parseMoney = Number(money)
 
-    if (!money || isNaN(parseMoney)) {
+    if (isNaN(parseMoney)) {
       return Result.fail({
         success: false,
         message: `Invalid ${argumentName} => ${money} is not a number`,

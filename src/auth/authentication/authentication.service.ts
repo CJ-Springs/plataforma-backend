@@ -244,7 +244,6 @@ export class AuthenticationService {
     })
 
     const today = DateTime.today()
-    console.log(`Running on ${today.getDate()}`)
 
     try {
       const { count } = await this.prisma.code.deleteMany({
