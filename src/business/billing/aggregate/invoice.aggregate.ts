@@ -51,11 +51,16 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const validateTotal = Money.validate(props.total, 'total')
+    const validateTotal = Money.validate(props.total, 'total', {
+      validateIsGreaterThanZero: true,
+    })
     if (validateTotal.isFailure) {
       return Result.fail(validateTotal.getErrorValue())
     }
-    const validateDeposited = Money.validate(props.deposited, 'deposited')
+
+    const validateDeposited = Money.validate(props.deposited, 'deposited', {
+      validateIsGreaterOrEqualThanZero: true,
+    })
     if (validateDeposited.isFailure) {
       return Result.fail(validateDeposited.getErrorValue())
     }
@@ -174,13 +179,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(cancelPaymentResult.getErrorValue())
     }
 
-    const substractionResult = this.props.deposited.substract(
-      payment.props.amount,
-    )
-    if (substractionResult.isFailure) {
-      return Result.fail(substractionResult.getErrorValue())
-    }
-    this.props.deposited = substractionResult.getValue()
+    this.props.deposited = this.props.deposited.substract(payment.props.amount)
 
     if (this.props.status === InvoiceStatus.PAGADA) {
       if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {

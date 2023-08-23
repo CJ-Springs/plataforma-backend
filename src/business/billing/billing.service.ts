@@ -93,7 +93,7 @@ export class BillingService {
     return {
       success: true,
       status: 200,
-      message: `Depósito del cliente ${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
+      message: `Depósito del cliente #${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
         .split('_')
         .join()
         .toLowerCase()}. Sobrante: $${data.remaining ?? 0}`,

@@ -42,7 +42,9 @@ export class Payment
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const validateAmount = Money.validate(props.amount, 'paymentAmount')
+    const validateAmount = Money.validate(props.amount, 'paymentAmount', {
+      validateIsGreaterThanZero: true,
+    })
     if (validateAmount.isFailure) {
       return Result.fail(validateAmount.getErrorValue())
     }
@@ -66,19 +68,16 @@ export class Payment
   }
 
   reduceAmount(reduction: number): Result<Payment> {
-    const validateReduction = Money.validate(reduction, 'reduction')
+    const validateReduction = Money.validate(reduction, 'reduction', {
+      validateInRange: { min: 0, max: this.props.amount.getValue() },
+    })
     if (validateReduction.isFailure) {
       return Result.fail(validateReduction.getErrorValue())
     }
 
-    const substractionResult = this.props.amount.substract(
+    this.props.amount = this.props.amount.substract(
       Money.fromString(String(reduction), Currency.create(Currencies.ARS)),
     )
-    if (substractionResult.isFailure) {
-      return Result.fail(substractionResult.getErrorValue())
-    }
-
-    this.props.amount = substractionResult.getValue()
 
     return Result.ok<Payment>(this)
   }

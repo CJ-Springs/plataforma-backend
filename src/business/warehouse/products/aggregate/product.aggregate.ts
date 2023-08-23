@@ -65,7 +65,9 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       return Result.fail(springResult.getErrorValue())
     }
 
-    const validatePrice = Money.validate(props.price.price, 'price')
+    const validatePrice = Money.validate(props.price.price, 'price', {
+      validateIsGreaterThanZero: true,
+    })
     if (validatePrice.isFailure) {
       return Result.fail(validatePrice.getErrorValue())
     }

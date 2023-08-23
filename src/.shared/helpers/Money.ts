@@ -20,7 +20,7 @@ export class Money {
     return new Money(cents, currency)
   }
 
-  add(money: Money) {
+  add(money: Money): Money {
     if (!this.currency.equals(money.currency)) {
       throw new CurrenciesDontMatch(
         this.currency.toString(),
@@ -30,7 +30,7 @@ export class Money {
     return new Money(this.cents + money.cents, this.currency)
   }
 
-  substract(money: Money): Result<Money> {
+  substract(money: Money): Money {
     if (!this.currency.equals(money.currency)) {
       throw new CurrenciesDontMatch(
         this.currency.toString(),
@@ -38,17 +38,7 @@ export class Money {
       )
     }
 
-    const guardResult = Validate.inRange(
-      money.cents,
-      0,
-      this.cents,
-      'substract',
-    )
-    if (guardResult.isFailure) {
-      return Result.fail(guardResult.getErrorValue())
-    }
-
-    return Result.ok(new Money(this.cents - money.cents, this.currency))
+    return new Money(this.cents - money.cents, this.currency)
   }
 
   increaseByPercentage(percentage: number) {
@@ -70,6 +60,11 @@ export class Money {
   static validate(
     money: number | string,
     argumentName: string,
+    options?: Partial<{
+      validateIsGreaterOrEqualThanZero: boolean
+      validateIsGreaterThanZero: boolean
+      validateInRange: { min: number; max: number }
+    }>,
   ): Result<ValidateResult> {
     const parseMoney = Number(money)
 
@@ -80,10 +75,22 @@ export class Money {
       })
     }
 
-    return Result.combine([
-      Validate.againstNullOrUndefined(parseMoney, argumentName),
-      Validate.isGreaterOrEqualThan(parseMoney, 0, argumentName),
-    ])
+    return Validate.combine(
+      [
+        Validate.againstNullOrUndefined(parseMoney, argumentName),
+        options?.validateIsGreaterOrEqualThanZero &&
+          Validate.isGreaterOrEqualThan(parseMoney, 0, argumentName),
+        options?.validateIsGreaterThanZero &&
+          Validate.isGreaterThan(parseMoney, 0, argumentName),
+        options?.validateInRange &&
+          Validate.inRange(
+            parseMoney,
+            options.validateInRange.min,
+            options.validateInRange.max,
+            argumentName,
+          ),
+      ].filter(Boolean),
+    )
   }
 
   getCurrency() {

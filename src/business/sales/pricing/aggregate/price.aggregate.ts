@@ -27,7 +27,7 @@ export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
   static create(props: PricePropsDTO): Result<Price> {
     const guardResult = Validate.combine([
       Validate.againstNullOrUndefined(props.productCode, 'productCode'),
-      Money.validate(props.price, 'price'),
+      Money.validate(props.price, 'price', { validateIsGreaterThanZero: true }),
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
@@ -45,7 +45,9 @@ export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
   }
 
   manuallyUpdatePrice(newPrice: number): Result<Price> {
-    const guardResult = Money.validate(newPrice, 'price')
+    const guardResult = Money.validate(newPrice, 'price', {
+      validateIsGreaterThanZero: true,
+    })
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue().message)
     }

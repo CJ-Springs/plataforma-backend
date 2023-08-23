@@ -154,7 +154,7 @@ export class PlaceSaleOrderHandler
     return {
       success: true,
       status: 201,
-      message: `Orden de venta creada (cliente ${data.customerCode})`,
+      message: `Orden de venta creada (cliente #${data.customerCode})`,
       data: order.toDTO(),
     }
   }
