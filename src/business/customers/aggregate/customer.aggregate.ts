@@ -1,3 +1,4 @@
+import { Currencies } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Address, AddressPropsDTO } from './value-objects/address.value-object'
@@ -5,7 +6,7 @@ import { CustomerRegisteredEvent } from '../events/impl/customer-registered.even
 import { CustomerUpdatedEvent } from '../events/impl/customer-updated.event'
 import { BalanceReducedEvent } from '../events/impl/balance-reduced.event'
 import { BalanceIncreasedEvent } from '../events/impl/balance-increased.event'
-import { Email, Result, Validate } from '@/.shared/helpers'
+import { Currency, Email, Money, Result, Validate } from '@/.shared/helpers'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 
@@ -16,7 +17,7 @@ type CustomerProps = {
   name: string
   phone: string
   cuil: string
-  balance: number
+  balance: Money
   paymentDeadline: number
   discount?: number
   address: Address
@@ -53,7 +54,6 @@ export class Customer
       { argument: props.name, argumentName: 'name' },
       { argument: props.phone, argumentName: 'phone' },
       { argument: props.cuil, argumentName: 'cuil' },
-      { argument: props.balance, argumentName: 'balance' },
       { argument: props.paymentDeadline, argumentName: 'paymentDeadline' },
       { argument: props.address, argumentName: 'address' },
     ])
@@ -64,6 +64,11 @@ export class Customer
     const emailResult = Email.create({ email: props.email })
     if (emailResult.isFailure) {
       return Result.fail(emailResult.getErrorValue())
+    }
+
+    const validateBalance = Money.validate(props.balance, 'balance')
+    if (validateBalance.isFailure) {
+      return Result.fail(validateBalance.getErrorValue())
     }
 
     const addressResult = Address.create(props.address)
@@ -77,7 +82,10 @@ export class Customer
       email: emailResult.getValue(),
       name: props.name,
       phone: props.phone,
-      balance: props.balance,
+      balance: Money.fromString(
+        String(props.balance),
+        Currency.create(Currencies.ARS),
+      ),
       paymentDeadline: props.paymentDeadline,
       cuil: props.cuil,
       discount: props?.discount,
@@ -130,17 +138,21 @@ export class Customer
   }
 
   reduceBalance(reduction: number): Result<Customer> {
-    const validateReduction = Validate.isGreaterThan(reduction, 0, 'reduction')
+    const validateReduction = Money.validate(reduction, 'reduction', {
+      validateIsGreaterThanZero: true,
+    })
     if (validateReduction.isFailure) {
       return Result.fail(validateReduction.getErrorValue())
     }
 
-    this.props.balance -= reduction
+    this.props.balance = this.props.balance.substract(
+      Money.fromString(String(reduction), Currency.create(Currencies.ARS)),
+    )
 
     const event = new BalanceReducedEvent({
       code: this.props.code.toValue(),
       reduction,
-      balance: this.props.balance,
+      balance: this.props.balance.getValue(),
     })
     this.apply(event)
 
@@ -148,17 +160,21 @@ export class Customer
   }
 
   increaseBalance(increment: number): Result<Customer> {
-    const validateIncrement = Validate.isGreaterThan(increment, 0, 'increment')
+    const validateIncrement = Money.validate(increment, 'increment', {
+      validateIsGreaterThanZero: true,
+    })
     if (validateIncrement.isFailure) {
       return Result.fail(validateIncrement.getErrorValue())
     }
 
-    this.props.balance += increment
+    this.props.balance = this.props.balance.add(
+      Money.fromString(String(increment), Currency.create(Currencies.ARS)),
+    )
 
     const event = new BalanceIncreasedEvent({
       code: this.props.code.toValue(),
       increment,
-      balance: this.props.balance,
+      balance: this.props.balance.getValue(),
     })
     this.apply(event)
 
@@ -169,6 +185,7 @@ export class Customer
     return {
       ...this.props,
       id: this.props.id.toString(),
+      balance: this.props.balance.getValue(),
       code: this.props.code.toValue(),
       email: this.props.email.getValue(),
       address: this.props.address.toDTO(),

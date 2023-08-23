@@ -2,6 +2,7 @@ import { Role, User } from '@prisma/client'
 import {
   ExecutionContext,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -35,7 +36,9 @@ export class PermissionGuard {
         'Al validar el acceso en PermissionGuard',
       )
 
-      // TODO hacer un unexpected exception
+      throw new InternalServerErrorException(
+        'El PermissionGuard no puede usarse en un endpoint público',
+      )
     }
 
     const canAccess = await new Promise(async (resolve) => {

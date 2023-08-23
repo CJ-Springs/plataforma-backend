@@ -41,7 +41,15 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       where: { email },
     })
     if (existUser) {
-      throw new ConflictException(`Ya existe un usuario con el email ${email}`)
+      if (existUser.deleted) {
+        throw new ConflictException(
+          `El email ${email} pertenece a una cuenta eliminada`,
+        )
+      } else {
+        throw new ConflictException(
+          `Ya existe un usuario con el email ${email}`,
+        )
+      }
     }
 
     for await (const role of data.roles) {

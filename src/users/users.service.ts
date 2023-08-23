@@ -1,3 +1,4 @@
+import { AppRole } from '@prisma/client'
 import {
   BadRequestException,
   Injectable,
@@ -19,7 +20,7 @@ export class UsersService {
 
   private async findUserOrThrow(id: string) {
     return await this.prisma.user
-      .findUniqueOrThrow({ where: { id } })
+      .findUniqueOrThrow({ where: { id }, include: { roles: true } })
       .catch(() => {
         throw new NotFoundException(`Usuario con id ${id} no encontrado`)
       })
@@ -37,6 +38,11 @@ export class UsersService {
         `El usuario con id ${id} ya ha sido eliminado`,
       )
     }
+    if (existingUser.roles.some((role) => role.code === AppRole.SUPER_ADMIN)) {
+      throw new BadRequestException(
+        `No se puede eliminar a un usuario ${AppRole.SUPER_ADMIN}`,
+      )
+    }
 
     try {
       await this.prisma.user.delete({ where: { id } })
@@ -49,8 +55,13 @@ export class UsersService {
         message: `Usuario ${existingUser.email} eliminado`,
       }
     } catch (error) {
-      this.logger.error(error, 'Error al intentar eliminar un usuario de la db')
-      // TODO Unexpected error
+      this.logger.error(
+        error,
+        `Error al intentar eliminar el usuario ${existingUser.email} de la db`,
+      )
+      throw new BadRequestException(
+        `Error al intentar eliminar el usuario ${existingUser.email} de la db`,
+      )
     }
   }
 }

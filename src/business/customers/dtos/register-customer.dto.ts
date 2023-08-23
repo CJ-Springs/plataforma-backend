@@ -8,48 +8,12 @@ import {
   IsPositive,
   IsString,
   Validate,
-  ValidateIf,
   ValidateNested,
 } from 'class-validator'
 import { Type } from 'class-transformer'
-import { PartialType } from '@nestjs/swagger'
+
 import { RequireEmail } from '@/.shared/utils'
-
-export class AddressDto {
-  @IsOptional()
-  @IsString({ message: "El campo 'country' debe ser un string" })
-  country?: string
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'province'" })
-  @IsString({ message: "El campo 'province' debe ser un string" })
-  province: string
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'city'" })
-  @IsString({ message: "El campo 'city' debe ser un string" })
-  city: string
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'locality'" })
-  @IsString({ message: "El campo 'locality' debe ser un string" })
-  locality: string
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'address'" })
-  @IsString({ message: "El campo 'address' debe ser un string" })
-  address: string
-}
-
-export class PartialAddressDto extends PartialType(AddressDto) {
-  @ValidateIf((o) => o.province !== undefined)
-  province?: string
-
-  @ValidateIf((o) => o.locality !== undefined)
-  locality?: string
-
-  @ValidateIf((o) => o.city !== undefined)
-  city?: string
-
-  @ValidateIf((o) => o.address !== undefined)
-  address?: string
-}
+import { AddressDto } from './address.dto'
 
 export class RegisterCustomerDto {
   @IsNotEmpty({ message: "Debe enviar el campo 'name'" })

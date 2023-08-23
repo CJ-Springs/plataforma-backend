@@ -1,7 +1,6 @@
-import { ProductType } from '@prisma/client'
+import { Currencies, ProductType } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
-import { Price, PricePropsDTO } from './value-objects/price.value-object'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
 import { ProductUpdatedEvent } from '../events/impl/product-updated.event'
@@ -9,7 +8,7 @@ import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-in
 import { AmountOfSalesDecrementedEvent } from '../events/impl/amount-of-sales-decremented.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
-import { Result, Validate } from '@/.shared/helpers'
+import { Currency, Money, Result, Validate } from '@/.shared/helpers'
 
 type ProductProps = {
   id: UniqueEntityID
@@ -20,7 +19,7 @@ type ProductProps = {
   description?: string
   isGnc: boolean
   amountOfSales: number
-  price: Price
+  price: Money
   spring: Spring
 }
 
@@ -33,7 +32,7 @@ type ProductPropsDTO = {
   description?: string
   isGnc: boolean
   amountOfSales: number
-  price: PricePropsDTO
+  price: { price: number; currency: Currencies }
   spring: SpringPropsDTO
 }
 
@@ -61,14 +60,16 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const priceResult = Price.create(props.price)
-    if (priceResult.isFailure) {
-      return Result.fail(priceResult.getErrorValue())
-    }
-
     const springResult = Spring.create(props.spring)
     if (springResult.isFailure) {
       return Result.fail(springResult.getErrorValue())
+    }
+
+    const validatePrice = Money.validate(props.price.price, 'price', {
+      validateIsGreaterThanZero: true,
+    })
+    if (validatePrice.isFailure) {
+      return Result.fail(validatePrice.getErrorValue())
     }
 
     const product = new Product({
@@ -80,7 +81,10 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       isGnc: props.isGnc,
       amountOfSales: props.amountOfSales,
       description: props?.description,
-      price: priceResult.getValue(),
+      price: Money.fromString(
+        String(props.price.price),
+        Currency.create(props.price.currency ?? Currencies.ARS),
+      ),
       spring: springResult.getValue(),
     })
 
@@ -159,7 +163,10 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       ...this.props,
       id: this.props.id.toString(),
       code: this.props.code.toString(),
-      price: this.props.price.toDTO(),
+      price: {
+        price: this.props.price.getValue(),
+        currency: this.props.price.getCurrency().getValue(),
+      },
       spring: this.props.spring.toDTO(),
     }
   }

@@ -150,7 +150,7 @@ model Product {
 
 model ProductPricing {
   price Float
-  currency AllowedCurrency @default(ARS)
+  currency Currencies @default(ARS)
   createdAt DateTime @default(now()) @map("created_at") 
   updatedAt DateTime @updatedAt @map("updated_at") 
 
@@ -449,7 +449,7 @@ enum PaymentMethod {
   SALDO_A_FAVOR
 }
 
-enum AllowedCurrency {
+enum Currencies {
   ARS
   USD
 }

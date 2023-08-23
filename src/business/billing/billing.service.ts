@@ -19,6 +19,7 @@ import {
   InvoicesDueTodayNotificationPayload,
   NovuEvent,
 } from '@/notifications/novu-events.types'
+import { formatMoney } from '@/.shared/utils'
 
 @Injectable()
 export class BillingService {
@@ -92,7 +93,7 @@ export class BillingService {
     return {
       success: true,
       status: 200,
-      message: `Depósito del cliente ${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
+      message: `Depósito del cliente #${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
         .split('_')
         .join()
         .toLowerCase()}. Sobrante: $${data.remaining ?? 0}`,
@@ -171,11 +172,13 @@ export class BillingService {
       logType: 'schedule-task',
     })
 
+    const today = DateTime.today()
+
     const unpaidAndExpiredInvoices = await this.prisma.invoice.findMany({
       where: {
         AND: [
           { status: { equals: InvoiceStatus.POR_PAGAR } },
-          { dueDate: { lt: new Date() } },
+          { dueDate: { lt: today.getDate() } },
         ],
       },
     })
@@ -197,13 +200,12 @@ export class BillingService {
     })
 
     const today = DateTime.today()
-    console.log({ today })
 
     const invoicesThatDueToday = await this.prisma.invoice.findMany({
       where: {
         AND: [
           { status: { equals: InvoiceStatus.POR_PAGAR } },
-          { dueDate: { equals: today.date } },
+          { dueDate: { equals: today.getDate() } },
         ],
       },
       select: {
@@ -250,11 +252,14 @@ export class BillingService {
             invoices: [
               ...customerInvoices.invoices,
               {
-                deposited: invoice.deposited,
-                total: invoice.total,
-                toPay: invoice.total - invoice.deposited,
+                order: `${customerInvoices.invoices.length + 1})`,
+                deposited: formatMoney(invoice.deposited),
+                total: formatMoney(invoice.total),
+                toPay: formatMoney(invoice.total - invoice.deposited),
                 items: order.items.map((item) => ({
                   ...item,
+                  price: formatMoney(item.price),
+                  salePrice: formatMoney(item.salePrice),
                   productName: `${item.product.brand} ${item.product.model}`,
                 })),
               },
@@ -268,11 +273,14 @@ export class BillingService {
           customerName: customer.name,
           invoices: [
             {
-              deposited: invoice.deposited,
-              total: invoice.total,
-              toPay: invoice.total - invoice.deposited,
+              order: '1)',
+              deposited: formatMoney(invoice.deposited),
+              total: formatMoney(invoice.total),
+              toPay: formatMoney(invoice.total - invoice.deposited),
               items: order.items.map((item) => ({
                 ...item,
+                price: formatMoney(item.price),
+                salePrice: formatMoney(item.salePrice),
                 productName: `${item.product.brand} ${item.product.model}`,
               })),
             },

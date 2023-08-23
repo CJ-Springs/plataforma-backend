@@ -4,9 +4,10 @@ import { AppRole } from '@prisma/client'
 import { Profile } from './value-objects/profile.value-object'
 import { Password } from './value-objects/password.value-object'
 import { UserCreatedEvent } from '../events/impl/user-created.event'
-import { UserStatusChangedEvent } from '../events/impl/user-status-changed'
 import { UserPasswordChangedEvent } from '../events/impl/user-password-changed'
 import { UserRolesUpdatedEvent } from '../events/impl/user-roles-updated.event'
+import { UserSuspendedEvent } from '../events/impl/user-suspended.event'
+import { UserActivatedEvent } from '../events/impl/user-activated.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Email, Result, Validate } from '@/.shared/helpers'
 import { DeepPartial, IToDTO } from '@/.shared/types'
@@ -88,12 +89,35 @@ export class User
     return Result.ok<User>(user)
   }
 
-  changeStatus(): Result<User> {
-    this.props.isSuspended = !this.props.isSuspended
+  activate(): Result<User> {
+    if (!this.props.isSuspended) {
+      return Result.fail('El usuario ya se encuentra activo')
+    }
 
-    const event = new UserStatusChangedEvent({
-      id: this.props.id.toString(),
-      isSuspended: this.props.isSuspended,
+    this.props.isSuspended = false
+
+    const event = new UserActivatedEvent({
+      userId: this.props.id.toString(),
+    })
+    this.apply(event)
+
+    return Result.ok(this)
+  }
+
+  suspend(): Result<User> {
+    if (this.hasRole(AppRole.SUPER_ADMIN)) {
+      return Result.fail(
+        `No se puede suspender a un usuario ${AppRole.SUPER_ADMIN}`,
+      )
+    }
+    if (this.props.isSuspended) {
+      return Result.fail('El usuario ya se encuentra suspendido')
+    }
+
+    this.props.isSuspended = true
+
+    const event = new UserSuspendedEvent({
+      userId: this.props.id.toString(),
     })
     this.apply(event)
 
@@ -117,16 +141,7 @@ export class User
     return Result.ok(this)
   }
 
-  hasRole(role: AppRole): boolean {
-    return this.props.roles.some((_role) => _role.equals(new UniqueField(role)))
-  }
-
   updateRoles(roles: AppRole[]): Result<User> {
-    if (this.props.deleted) {
-      return Result.fail(
-        `No se puede actualizar los roles de un usuario eliminado`,
-      )
-    }
     if (this.hasRole(AppRole.SUPER_ADMIN)) {
       return Result.fail(
         `No se puede actualizar los roles de un usuario ${AppRole.SUPER_ADMIN}`,
@@ -151,6 +166,10 @@ export class User
     return Result.ok<User>(this)
   }
 
+  private hasRole(role: AppRole): boolean {
+    return this.props.roles.some((_role) => _role.equals(new UniqueField(role)))
+  }
+
   toDTO(): UserPropsDTOWithoutPassword {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...props } = this.props
@@ -160,7 +179,7 @@ export class User
       id: props.id.toString(),
       email: props.email.getValue(),
       profile: props.profile.getValue(),
-      roles: props.roles.map((rol) => rol.toValue()),
+      roles: props.roles.map((role) => role.toValue()),
     }
   }
 }

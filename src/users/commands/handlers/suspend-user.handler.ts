@@ -2,22 +2,20 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { UserRepository } from '../../repository/user.repository'
-import { ChangeUserStatusCommand } from '../impl/change-user-status.command'
+import { SuspendUserCommand } from '../impl/suspend-user.command'
 import { Result, Validate, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(ChangeUserStatusCommand)
-export class ChangeUserStatusHandler
-  implements ICommandHandler<ChangeUserStatusCommand>
-{
+@CommandHandler(SuspendUserCommand)
+export class SuspendUserHandler implements ICommandHandler<SuspendUserCommand> {
   constructor(
     private readonly logger: LoggerService,
     private readonly publisher: EventPublisher,
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(command: ChangeUserStatusCommand): Promise<StandardResponse> {
-    this.logger.log('Users', 'Ejecutando el ChangeUserStatus command handler', {
+  async execute(command: SuspendUserCommand): Promise<StandardResponse> {
+    this.logger.log('Users', 'Ejecutando el SuspendUser command handler', {
       logType: 'command-handler',
     })
 
@@ -26,16 +24,20 @@ export class ChangeUserStatusHandler
       throw new BadRequestException(validateCommand.getErrorValue())
     }
 
-    const { data } = command
+    const {
+      data: { userId },
+    } = command
 
-    const userOrNull = await this.userRepository.findOneById(data.id)
+    const userOrNull = await this.userRepository.findOneById(userId)
     if (!userOrNull) {
-      throw new NotFoundException(
-        `No se ha encontrado el usuario con id ${data.id}`,
-      )
+      throw new NotFoundException(`No se ha encontrado el usuario ${userId}`)
     }
     const user = userOrNull.getValue()
-    user.changeStatus()
+
+    const suspendUserResult = user.suspend()
+    if (suspendUserResult.isFailure) {
+      throw new BadRequestException(suspendUserResult.getErrorValue())
+    }
 
     await this.userRepository.save(user)
     this.publisher.mergeObjectContext(user).commit()
@@ -43,15 +45,13 @@ export class ChangeUserStatusHandler
     return {
       success: true,
       status: 200,
-      message: `Usuario ${
-        user.props.isSuspended ? 'suspendido' : 'activado'
-      } correctamente`,
+      message: `El usuario ${user.props.email.getValue()} se ha suspendido`,
       data: user.toDTO(),
     }
   }
 
-  validate(command: ChangeUserStatusCommand) {
-    const validation = Validate.isRequired(command.data.id, 'id')
+  validate(command: SuspendUserCommand) {
+    const validation = Validate.isRequired(command.data.userId, 'userId')
 
     if (!validation.success) {
       return Result.fail<string>(validation.message)

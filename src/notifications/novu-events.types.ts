@@ -10,14 +10,15 @@ export type InvoicesDueTodayNotificationPayload = {
   customerEmail: string
   customerPhone: string
   invoices: {
-    deposited: number
-    total: number
-    toPay: number
+    order: string
+    deposited: string
+    total: string
+    toPay: string
     items: {
       productName: string
       requested: number
-      price: number
-      salePrice: number
+      price: string
+      salePrice: string
       discount: number | null
     }[]
   }[]

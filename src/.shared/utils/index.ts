@@ -1,5 +1,5 @@
 export * from './common-validations'
-export * from './getTimeZone'
+export * from './formatMoney'
 export * from './getNumericCode'
 export * from './getUniqueValues'
 export * from './time'

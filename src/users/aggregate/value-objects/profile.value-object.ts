@@ -23,10 +23,17 @@ export class Profile extends ValueObject<ProfileProps> {
     ])
 
     if (guardResult.isFailure) {
-      return Result.fail<Profile>(guardResult.getErrorValue())
+      return Result.fail(guardResult.getErrorValue())
     }
 
-    // TODO: validar el phone
+    const propsResult = Validate.combine([
+      Validate.againstAtLeast(3, props.firstname, 'firstname'),
+      Validate.againstAtLeast(3, props.lastname, 'lastname'),
+      Validate.isGreaterOrEqualThan(props.document, 1_000_000, 'document'),
+    ])
+    if (propsResult.isFailure) {
+      return Result.fail(propsResult.getErrorValue())
+    }
 
     const profile = new Profile({
       firstname: props.firstname,

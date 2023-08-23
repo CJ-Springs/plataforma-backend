@@ -1,4 +1,4 @@
-import { AllowedCurrency, ProductType } from '@prisma/client'
+import { Currencies, ProductType } from '@prisma/client'
 
 type ProductAddedEventProps = {
   id: string
@@ -10,8 +10,8 @@ type ProductAddedEventProps = {
   isGnc: boolean
   amountOfSales: number
   price: {
-    currency: AllowedCurrency
     price: number
+    currency: Currencies
   }
   spring: {
     id: string
