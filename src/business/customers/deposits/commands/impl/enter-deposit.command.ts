@@ -1,11 +1,10 @@
 import { PaymentMethod } from '@prisma/client'
 
-type AddPaymentCommandProps = {
-  invoiceId: string
+type EnterDepositCommandProps = {
+  customerCode: number
   paymentMethod: PaymentMethod
   amount: number
   createdBy: string
-  depositId?: string
   mpUser?: string
   voucherNumber?: number
   operationNumber?: number
@@ -15,6 +14,6 @@ type AddPaymentCommandProps = {
   thirdParty?: boolean
 }
 
-export class AddPaymentCommand {
-  constructor(public readonly data: AddPaymentCommandProps) {}
+export class EnterDepositCommand {
+  constructor(public readonly data: EnterDepositCommandProps) {}
 }

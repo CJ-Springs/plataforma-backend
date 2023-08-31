@@ -10,6 +10,7 @@ type PaymentProps = {
   createdBy: string
   canceledBy?: string
   status: PaymentStatus
+  depositId?: UniqueEntityID
   metadata?: Record<string, any>
 }
 
@@ -20,6 +21,7 @@ export type PaymentPropsDTO = {
   createdBy: string
   canceledBy?: string
   status: PaymentStatus
+  depositId?: string
   metadata?: Record<string, any>
 }
 
@@ -59,6 +61,7 @@ export class Payment
         createdBy: props.createdBy,
         canceledBy: props?.canceledBy,
         status: props.status,
+        depositId: props.depositId && new UniqueEntityID(props.depositId),
         metadata: props?.metadata,
       },
       new UniqueEntityID(props?.id),
@@ -82,13 +85,18 @@ export class Payment
     return Result.ok<Payment>(this)
   }
 
-  cancelPayment(canceledBy: string): Result<Payment> {
+  cancel(canceledBy: string): Result<Payment> {
     const validate = Validate.againstNullOrUndefined(canceledBy, 'canceledBy')
     if (validate.isFailure) {
       return Result.fail(validate.getErrorValue())
     }
     if (this.props.status === PaymentStatus.ANULADO) {
       return Result.fail('El pago ya ha sido anulado')
+    }
+    if (this.props.depositId) {
+      return Result.fail(
+        'El pago fue realizado a partir de un depósito, por lo que no se puede cancelar de manera individual',
+      )
     }
 
     this.props.status = PaymentStatus.ANULADO
@@ -102,6 +110,7 @@ export class Payment
       id: this._id.toString(),
       ...this.props,
       amount: this.props.amount.getValue(),
+      depositId: this.props.depositId?.toString(),
     }
   }
 }

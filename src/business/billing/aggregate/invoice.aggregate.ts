@@ -174,7 +174,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(`No se ha encontrado el pago ${paymentId}`)
     }
 
-    const cancelPaymentResult = payment.cancelPayment(canceledBy)
+    const cancelPaymentResult = payment.cancel(canceledBy)
     if (cancelPaymentResult.isFailure) {
       return Result.fail(cancelPaymentResult.getErrorValue())
     }

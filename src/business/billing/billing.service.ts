@@ -1,16 +1,10 @@
 import { InvoiceStatus, PaymentMethod } from '@prisma/client'
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
-import { EnterDepositDto } from './dtos'
 import { DueInvoiceCommand } from './commands/impl/due-invoice.command'
 import { AddPaymentCommand } from './commands/impl/add-payment.command'
-import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-balance.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { DateTime, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
@@ -55,57 +49,13 @@ export class BillingService {
     })
   }
 
-  async enterDeposit(
-    customerCode: number,
-    { amount, paymentMethod, ...metadata }: EnterDepositDto,
-    createdBy: string,
-  ): Promise<StandardResponse> {
-    this.logger.log('Billing', 'Ejecutando el método enterDeposit', {
-      logType: 'service',
-    })
-
-    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
-      customerCode,
-    )
-
-    if (!pendingInvoices.length) {
-      throw new ConflictException(
-        `El cliente ${customerCode} tiene todas sus facturas al día`,
-      )
-    }
-
-    const { data } = await this.payBulkInvoices(customerCode, {
-      amount,
-      createdBy,
-      paymentMethod,
-      metadata,
-    })
-
-    if (data.remaining) {
-      await this.commandBus.execute(
-        new IncreaseBalanceCommand({
-          code: customerCode,
-          increment: data.remaining,
-        }),
-      )
-    }
-
-    return {
-      success: true,
-      status: 200,
-      message: `Depósito del cliente #${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
-        .split('_')
-        .join()
-        .toLowerCase()}. Sobrante: $${data.remaining ?? 0}`,
-    }
-  }
-
   async payBulkInvoices(
     customerCode: number,
     paymentInfo: {
       amount: number
       paymentMethod: PaymentMethod
       createdBy: string
+      depositId?: string
       metadata?: Record<string, any>
     },
   ): Promise<StandardResponse<{ remaining: number | null }>> {
@@ -133,6 +83,7 @@ export class BillingService {
             invoiceId: invoice.id,
             paymentMethod: paymentInfo.paymentMethod,
             createdBy: paymentInfo.createdBy,
+            depositId: paymentInfo.depositId,
             ...paymentInfo.metadata,
           }),
         )
@@ -145,6 +96,7 @@ export class BillingService {
             invoiceId: invoice.id,
             paymentMethod: paymentInfo.paymentMethod,
             createdBy: paymentInfo.createdBy,
+            depositId: paymentInfo.depositId,
             ...paymentInfo.metadata,
           }),
         )

@@ -8,9 +8,16 @@ import { EventHandlers } from './events/handlers'
 import { RolesModule } from '@/auth/authorization/roles/roles.module'
 import { WarrantiesModule } from './warranties/warranties.module'
 import { CreditNotesModule } from './credit-notes/credit-notes.module'
+import { DepositsModule } from './deposits/deposits.module'
 
 @Module({
-  imports: [CqrsModule, RolesModule, WarrantiesModule, CreditNotesModule],
+  imports: [
+    CqrsModule,
+    RolesModule,
+    WarrantiesModule,
+    CreditNotesModule,
+    DepositsModule,
+  ],
   controllers: [CustomersController],
   providers: [CustomerRepository, ...CommandHandlers, ...EventHandlers],
 })

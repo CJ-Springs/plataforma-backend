@@ -115,6 +115,7 @@ export class InvoiceRepository
             createMany: {
               data: payments.map((payment) => ({
                 ...payment,
+                remaining: 0,
                 metadata: payment.metadata,
               })),
             },
@@ -157,6 +158,7 @@ export class InvoiceRepository
           payments: {
             create: {
               ...payment,
+              remaining: 0,
               metadata: payment.metadata,
             },
           },
