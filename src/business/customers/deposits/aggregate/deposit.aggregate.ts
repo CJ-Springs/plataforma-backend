@@ -2,10 +2,10 @@ import { Currencies, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { DepositMadeEvent } from '../events/impl/deposit-made.event'
+import { DepositRemainingUpdatedEvent } from '../events/impl/deposit-remaining-updated.event'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Currency, Money, Result, Validate } from '@/.shared/helpers'
 import { IToDTO } from '@/.shared/types'
-import { DepositRemainingUpdatedEvent } from '../events/impl/deposit-remaining-updated.event'
 
 type DepositProps = {
   id: UniqueEntityID
@@ -54,15 +54,17 @@ export class Deposit extends AggregateRoot implements IToDTO<DepositPropsDTO> {
       return Result.fail(validateAmount.getErrorValue())
     }
 
-    const validateRemaining = Money.validate(
-      props.remaining,
-      'depositRemaining',
-      {
-        validateIsGreaterOrEqualThanZero: true,
-      },
-    )
-    if (validateRemaining.isFailure) {
-      return Result.fail(validateRemaining.getErrorValue())
+    if (props.remaining) {
+      const validateRemaining = Money.validate(
+        props.remaining,
+        'depositRemaining',
+        {
+          validateInRange: { min: 0, max: props.amount },
+        },
+      )
+      if (validateRemaining.isFailure) {
+        return Result.fail(validateRemaining.getErrorValue())
+      }
     }
 
     const deposit = new Deposit({
@@ -73,17 +75,17 @@ export class Deposit extends AggregateRoot implements IToDTO<DepositPropsDTO> {
         Currency.create(Currencies.ARS),
       ),
       remaining: Money.fromString(
-        String(props.remaining),
+        String(props.remaining ?? 0),
         Currency.create(Currencies.ARS),
       ),
       createdBy: props.createdBy,
-      canceledBy: props?.canceledBy,
+      canceledBy: props.canceledBy,
       status: props.status,
-      metadata: props?.metadata,
+      metadata: props.metadata,
       customerCode: new UniqueField<number>(props.customerCode),
     })
 
-    if (!props?.id) {
+    if (!props.id) {
       const event = new DepositMadeEvent(deposit.toDTO())
       deposit.apply(event)
     }
@@ -107,19 +109,21 @@ export class Deposit extends AggregateRoot implements IToDTO<DepositPropsDTO> {
     return Result.ok<Deposit>(this)
   }
 
-  updateRemaining(remaining: number): Result<Deposit> {
-    const validateRemaining = Money.validate(remaining, 'remaining', {
-      validateIsGreaterOrEqualThanZero: true,
-    })
-    if (validateRemaining.isFailure) {
-      return Result.fail(validateRemaining.getErrorValue())
-    }
-
+  addToRemaining(addition: number): Result<Deposit> {
     const prevRemaining = this.props.remaining.getValue()
 
-    this.props.remaining = Money.fromString(
-      String(remaining),
-      this.props.remaining.getCurrency(),
+    const validateAddition = Money.validate(addition, 'addition', {
+      validateInRange: {
+        min: 0,
+        max: this.props.amount.getValue() - prevRemaining,
+      },
+    })
+    if (validateAddition.isFailure) {
+      return Result.fail(validateAddition.getErrorValue())
+    }
+
+    this.props.remaining = this.props.remaining.add(
+      Money.fromString(String(addition), this.props.remaining.getCurrency()),
     )
 
     const event = new DepositRemainingUpdatedEvent({

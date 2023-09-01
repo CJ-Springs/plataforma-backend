@@ -52,18 +52,20 @@ export class DepositRepository implements IRepository<Deposit> {
     )
   }
 
-  private async makeDeposit(data: DepositMadeEvent['data']) {
+  private async makeDeposit(deposit: DepositMadeEvent['data']) {
+    console.log({ deposit })
+
     try {
       await this.prisma.deposit.create({
         data: {
-          ...data,
-          metadata: data.metadata,
+          ...deposit,
+          metadata: deposit.metadata,
         },
       })
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar crear el depósito ${data.id} en la db`,
+        `Error al intentar crear el depósito ${deposit.id} en la db`,
       )
     }
   }

@@ -2,7 +2,7 @@ import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { BillingService } from '../../billing.service'
 import { DepositMadeEvent } from '@/business/customers/deposits/events/impl/deposit-made.event'
-import { UpdateDepositRemainingCommand } from '@/business/customers/deposits/commands/impl/update-deposit-remaining.command'
+import { AddRemainingToDepositCommand } from '@/business/customers/deposits/commands/impl/add-remaining-to-deposit-remaining.command'
 import { IncreaseBalanceCommand } from '@/business/customers/commands/impl/increase-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 
@@ -41,9 +41,9 @@ export class DepositMadeHandler implements IEventHandler<DepositMadeEvent> {
       )
 
       await this.commandBus.execute(
-        new UpdateDepositRemainingCommand({
+        new AddRemainingToDepositCommand({
           depositId: deposit.id,
-          remaining: data.remaining,
+          addition: data.remaining,
         }),
       )
 

@@ -106,6 +106,7 @@ export class InvoiceRepository
 
   private async generateInvoice(data: InvoiceGeneratedEvent['data']) {
     const { payments, ...invoice } = data
+    console.log({ invoice })
 
     try {
       await this.prisma.invoice.create({
@@ -115,7 +116,6 @@ export class InvoiceRepository
             createMany: {
               data: payments.map((payment) => ({
                 ...payment,
-                remaining: 0,
                 metadata: payment.metadata,
               })),
             },
@@ -146,6 +146,7 @@ export class InvoiceRepository
 
   private async addPayment(data: PaymentAddedEvent['data']) {
     const { invoiceId: id, status, payment } = data
+    console.log({ payment })
 
     try {
       await this.prisma.invoice.update({
@@ -158,7 +159,6 @@ export class InvoiceRepository
           payments: {
             create: {
               ...payment,
-              remaining: 0,
               metadata: payment.metadata,
             },
           },

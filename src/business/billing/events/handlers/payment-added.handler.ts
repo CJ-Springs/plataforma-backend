@@ -21,10 +21,10 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     })
 
     const {
-      data: { remaining: paymentRemaining, orderId, payment },
+      data: { orderId, payment },
     } = event
 
-    if (paymentRemaining) {
+    if (payment.remaining) {
       const order = await this.prisma.saleOrder.findUnique({
         where: { id: orderId },
         select: { customerCode: true },
@@ -34,7 +34,7 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
         order.customerCode,
         {
           ...payment,
-          amount: paymentRemaining,
+          amount: payment.remaining,
         },
       )
 

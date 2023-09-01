@@ -1,5 +1,9 @@
 import { PaymentStatus } from '@prisma/client'
-import { BadRequestException, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { InvoiceRepository } from '../../repository/invoice.repository'
@@ -42,10 +46,15 @@ export class CancelPaymentHandler
     }
     const invoice = invoiceOrNull.getValue()
 
-    const cancelPaymentResult = invoice.cancelPayment({
-      paymentId,
-      canceledBy,
-    })
+    // review
+    // const paymentToUpdate = invoice.findPayment(paymentId)
+    // if (paymentToUpdate.props.depositId) {
+    //   throw new ConflictException(
+    //     'El pago fue realizado a partir de un depósito, por lo que no se puede cancelar de manera individual',
+    //   )
+    // }
+
+    const cancelPaymentResult = invoice.cancelPayment(paymentId, canceledBy)
     if (cancelPaymentResult.isFailure) {
       throw new BadRequestException(cancelPaymentResult.getErrorValue())
     }

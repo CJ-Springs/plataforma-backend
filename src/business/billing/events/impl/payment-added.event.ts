@@ -4,13 +4,14 @@ type PaymentAddedEventProps = {
   invoiceId: string
   orderId: string
   status: InvoiceStatus
-  remaining?: number
   payment: {
     id: string
     paymentMethod: PaymentMethod
     amount: number
+    remaining: number
     createdBy: string
     canceledBy?: string
+    depositId?: string
     status: PaymentStatus
     metadata?: Record<string, any>
   }

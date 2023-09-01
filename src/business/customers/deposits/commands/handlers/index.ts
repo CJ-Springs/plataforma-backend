@@ -1,7 +1,7 @@
 import { EnterDepositHandler } from './enter-deposit.handler'
-import { UpdateDepositRemainingHandler } from './update-deposit-remaining.handler'
+import { AddRemainingToDepositHandler } from './add-remaining-to-deposit.handler'
 
 export const CommandHandlers = [
   EnterDepositHandler,
-  UpdateDepositRemainingHandler,
+  AddRemainingToDepositHandler,
 ]

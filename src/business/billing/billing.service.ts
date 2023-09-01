@@ -67,41 +67,35 @@ export class BillingService {
       customerCode,
     )
 
-    let paymentAmount = paymentInfo.amount
+    let availableAmount = paymentInfo.amount
 
     for await (const invoice of pendingInvoices) {
-      if (paymentAmount === 0) {
+      if (availableAmount === 0) {
         break
       }
 
       const leftToPay = invoice.total - invoice.deposited
 
-      if (paymentAmount >= leftToPay) {
+      if (availableAmount >= leftToPay) {
         await this.commandBus.execute(
           new AddPaymentCommand({
+            ...paymentInfo,
             amount: leftToPay,
             invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            depositId: paymentInfo.depositId,
-            ...paymentInfo.metadata,
           }),
         )
 
-        paymentAmount -= leftToPay
+        availableAmount -= leftToPay
       } else {
         await this.commandBus.execute(
           new AddPaymentCommand({
-            amount: paymentAmount,
+            ...paymentInfo,
+            amount: availableAmount,
             invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            depositId: paymentInfo.depositId,
-            ...paymentInfo.metadata,
           }),
         )
 
-        paymentAmount = 0
+        availableAmount = 0
       }
     }
 
@@ -110,7 +104,7 @@ export class BillingService {
       status: 200,
       message: '',
       data: {
-        remaining: paymentAmount > 0 ? paymentAmount : null,
+        remaining: availableAmount > 0 ? availableAmount : null,
       },
     }
   }

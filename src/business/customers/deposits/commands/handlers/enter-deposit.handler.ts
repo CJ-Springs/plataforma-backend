@@ -40,9 +40,8 @@ export class EnterDepositHandler
     }
 
     const {
-      data: { customerCode, createdBy, amount, paymentMethod, ...metadata },
+      data: { customerCode, amount, paymentMethod, createdBy, metadata },
     } = command
-    const emptyMetadata = !Object.values(metadata).length
 
     await this.prisma.customer
       .findUniqueOrThrow({ where: { code: customerCode } })
@@ -71,15 +70,13 @@ export class EnterDepositHandler
       createdBy,
       paymentMethod,
       status: PaymentStatus.ABONADO,
-      remaining: 0,
-      metadata: emptyMetadata ? undefined : metadata,
+      metadata,
       customerCode,
     })
     if (depositOrError.isFailure) {
       throw new BadRequestException(depositOrError.getErrorValue())
     }
     const deposit = depositOrError.getValue()
-    console.log({ deposit: deposit.props })
 
     await this.depositRepository.save(deposit)
     this.publisher.mergeObjectContext(deposit).commit()
@@ -115,42 +112,15 @@ export class EnterDepositHandler
     if (!validation.success) {
       return Result.fail<string>(validation.message)
     }
-
     const { paymentMethod } = command.data
 
     // VALIDATE EFECTIVO PAYMENT
 
     if (paymentMethod === PaymentMethod.EFECTIVO) {
-      const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
-        {
-          argument: command.data.mpUser,
-          argumentName: 'mpUser',
-        },
-        {
-          argument: command.data.voucherNumber,
-          argumentName: 'voucherNumber',
-        },
-        {
-          argument: command.data.operationNumber,
-          argumentName: 'operationNumber',
-        },
-        {
-          argument: command.data.cvu,
-          argumentName: 'cvu',
-        },
-        {
-          argument: command.data.code,
-          argumentName: 'code',
-        },
-        {
-          argument: command.data.paymentDate,
-          argumentName: 'paymentDate',
-        },
-        {
-          argument: command.data.thirdParty,
-          argumentName: 'thirdParty',
-        },
-      ])
+      const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExist(
+        command.data.metadata,
+        'metadata',
+      )
 
       if (!guardAgainstPropertiesShouldNotExist.success) {
         return Result.fail<string>(guardAgainstPropertiesShouldNotExist.message)
@@ -161,9 +131,10 @@ export class EnterDepositHandler
 
     if (paymentMethod === PaymentMethod.MERCADO_PAGO) {
       const validateMpPayment = Validate.isRequiredBulk([
-        { argument: command.data.mpUser, argumentName: 'mpUser' },
+        { argument: command.data.metadata, argumentName: 'metadata' },
+        { argument: command.data.metadata.mpUser, argumentName: 'mpUser' },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
       ])
@@ -174,23 +145,23 @@ export class EnterDepositHandler
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata.operationNumber,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
         {
-          argument: command.data.code,
+          argument: command.data.metadata.code,
           argumentName: 'code',
         },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -205,11 +176,15 @@ export class EnterDepositHandler
     if (paymentMethod === PaymentMethod.TRANSFERENCIA) {
       const validateTransferPayment = Validate.isRequiredBulk([
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.operationNumber,
+          argumentName: 'operationNumber',
+        },
+        {
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
       ])
@@ -220,23 +195,23 @@ export class EnterDepositHandler
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.mpUser,
+          argument: command.data.metadata.mpUser,
           argumentName: 'mpUser',
         },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
         {
-          argument: command.data.code,
+          argument: command.data.metadata.code,
           argumentName: 'code',
         },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -250,13 +225,14 @@ export class EnterDepositHandler
 
     if (paymentMethod === PaymentMethod.CHEQUE) {
       const validateCheckPayment = Validate.isRequiredBulk([
-        { argument: command.data.code, argumentName: 'code' },
+        { argument: command.data.metadata, argumentName: 'metadata' },
+        { argument: command.data.metadata.code, argumentName: 'code' },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -267,19 +243,19 @@ export class EnterDepositHandler
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.mpUser,
+          argument: command.data.metadata.mpUser,
           argumentName: 'mpUser',
         },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata.operationNumber,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
       ])

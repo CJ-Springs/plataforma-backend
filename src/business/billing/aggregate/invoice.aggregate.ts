@@ -36,12 +36,10 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
   }
 
   static create(
-    props: DeepPartial<Omit<InvoicePropsDTO, 'dueDate'>> &
-      Partial<Pick<InvoicePropsDTO, 'dueDate'>>,
+    props: Partial<Omit<InvoicePropsDTO, 'payments'>> &
+      DeepPartial<Pick<InvoicePropsDTO, 'payments'>>,
   ): Result<Invoice> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
-      { argument: props.total, argumentName: 'total' },
-      { argument: props.deposited, argumentName: 'deposited' },
       { argument: props.dueDate, argumentName: 'dueDate' },
       { argument: props.status, argumentName: 'status' },
       { argument: props.orderId, argumentName: 'orderId' },
@@ -76,7 +74,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     const invoice = new Invoice({
-      id: new UniqueEntityID(props?.id),
+      id: new UniqueEntityID(props.id),
       total: Money.fromString(
         String(props.total),
         Currency.create(Currencies.ARS),
@@ -91,7 +89,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       payments,
     })
 
-    if (!props?.id) {
+    if (!props.id) {
       const event = new InvoiceGeneratedEvent(invoice.toDTO())
       invoice.apply(event)
     }
@@ -138,7 +136,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       payment.props.amount.getValue() -
       (this.props.total.getValue() - this.props.deposited.getValue())
     if (remaining > 0) {
-      payment.reduceAmount(remaining)
+      payment.addToRemaining(remaining)
     }
 
     this.props.payments.push(payment)
@@ -152,7 +150,6 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       invoiceId: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
       status: this.props.status,
-      remaining: remaining > 0 ? remaining : null,
       payment: payment.toDTO(),
     })
     this.apply(event)
@@ -160,16 +157,8 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(this)
   }
 
-  cancelPayment({
-    paymentId,
-    canceledBy,
-  }: {
-    paymentId: string
-    canceledBy: string
-  }): Result<Invoice> {
-    const payment = this.props.payments.find(
-      (payment) => payment.toDTO().id === paymentId,
-    )
+  cancelPayment(paymentId: string, canceledBy: string): Result<Invoice> {
+    const payment = this.findPayment(paymentId)
     if (!payment) {
       return Result.fail(`No se ha encontrado el pago ${paymentId}`)
     }
@@ -196,12 +185,19 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       payment: {
         id: payment.toDTO().id,
         amount: payment.props.amount.getValue(),
+        remaining: payment.props.remaining.getValue(),
         canceledBy: payment.props.canceledBy,
       },
     })
     this.apply(event)
 
     return Result.ok<Invoice>(this)
+  }
+
+  findPayment(paymentId: string): Payment {
+    return this.props.payments.find(
+      (payment) => payment.toDTO().id === paymentId,
+    )
   }
 
   toDTO(): InvoicePropsDTO {

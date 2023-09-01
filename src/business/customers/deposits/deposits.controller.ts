@@ -6,15 +6,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
+import { CommandBus } from '@nestjs/cqrs'
 
+import { EnterDepositDto } from './dtos'
+import { EnterDepositCommand } from './commands/impl/enter-deposit.command'
 import { UserDec } from '@/.shared/decorators'
 import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
-import { CommandBus } from '@nestjs/cqrs'
-import { EnterDepositCommand } from './commands/impl/enter-deposit.command'
-import { EnterDepositDto } from './dtos'
 
 @Controller('clientes/:customerCode/depositos')
 export class DepositsController {
@@ -28,8 +28,17 @@ export class DepositsController {
     @Body() deposit: EnterDepositDto,
     @UserDec('email') email: string,
   ) {
+    const { amount, paymentMethod, ...metadata } = deposit
+    const emptyMetadata = !Object.values(metadata).length
+
     return await this.commandBus.execute(
-      new EnterDepositCommand({ ...deposit, customerCode, createdBy: email }),
+      new EnterDepositCommand({
+        customerCode,
+        createdBy: email,
+        amount,
+        paymentMethod,
+        metadata: emptyMetadata ? undefined : metadata,
+      }),
     )
   }
 }

@@ -2,7 +2,6 @@ import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterPaymentDto } from './dtos'
-import { BillingService } from './billing.service'
 import { AddPaymentCommand } from './commands/impl/add-payment.command'
 import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
 import {
@@ -13,10 +12,7 @@ import { UserDec } from '@/.shared/decorators'
 
 @Controller('facturacion')
 export class BillingController {
-  constructor(
-    private readonly billingService: BillingService,
-    private readonly commandBus: CommandBus,
-  ) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @RequiredPermissions('backoffice::ingresar-pago')
   @UseGuards(PermissionGuard)
@@ -26,11 +22,16 @@ export class BillingController {
     @Body() payment: EnterPaymentDto,
     @UserDec('email') email: string,
   ) {
+    const { amount, paymentMethod, ...metadata } = payment
+    const emptyMetadata = !Object.values(metadata).length
+
     return await this.commandBus.execute(
       new AddPaymentCommand({
-        ...payment,
         invoiceId,
         createdBy: email,
+        amount,
+        paymentMethod,
+        metadata: emptyMetadata ? undefined : metadata,
       }),
     )
   }

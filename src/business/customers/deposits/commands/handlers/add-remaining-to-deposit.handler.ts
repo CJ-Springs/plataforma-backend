@@ -2,14 +2,14 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { DepositRepository } from '../../repository/deposit.repository'
-import { UpdateDepositRemainingCommand } from '../impl/update-deposit-remaining.command'
+import { AddRemainingToDepositCommand } from '../impl/add-remaining-to-deposit-remaining.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(UpdateDepositRemainingCommand)
-export class UpdateDepositRemainingHandler
-  implements ICommandHandler<UpdateDepositRemainingCommand>
+@CommandHandler(AddRemainingToDepositCommand)
+export class AddRemainingToDepositHandler
+  implements ICommandHandler<AddRemainingToDepositCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -18,11 +18,11 @@ export class UpdateDepositRemainingHandler
   ) {}
 
   async execute(
-    command: UpdateDepositRemainingCommand,
+    command: AddRemainingToDepositCommand,
   ): Promise<StandardResponse> {
     this.logger.log(
       'Customers/Deposits',
-      'Ejecutando el UpdateDepositRemaining command handler',
+      'Ejecutando el AddRemainingToDeposit command handler',
       {
         logType: 'command-handler',
       },
@@ -34,7 +34,7 @@ export class UpdateDepositRemainingHandler
     }
 
     const {
-      data: { depositId, remaining },
+      data: { depositId, addition },
     } = command
 
     const depositOrNull = await this.depositRepository.findOneById(depositId)
@@ -45,9 +45,9 @@ export class UpdateDepositRemainingHandler
     }
     const deposit = depositOrNull.getValue()
 
-    const remainingUpdatedResult = deposit.updateRemaining(remaining)
-    if (remainingUpdatedResult.isFailure) {
-      throw new BadRequestException(remainingUpdatedResult.getErrorValue())
+    const addToRemainingResult = deposit.addToRemaining(addition)
+    if (addToRemainingResult.isFailure) {
+      throw new BadRequestException(addToRemainingResult.getErrorValue())
     }
 
     await this.depositRepository.save(deposit)
@@ -60,15 +60,15 @@ export class UpdateDepositRemainingHandler
     }
   }
 
-  validate(command: UpdateDepositRemainingCommand) {
+  validate(command: AddRemainingToDepositCommand) {
     const validation = Validate.isRequiredBulk([
       {
         argument: command.data.depositId,
         argumentName: 'depositId',
       },
       {
-        argument: command.data.remaining,
-        argumentName: 'remaining',
+        argument: command.data.addition,
+        argumentName: 'addition',
       },
     ])
 
