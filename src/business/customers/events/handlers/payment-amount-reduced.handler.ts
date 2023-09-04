@@ -1,22 +1,26 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
-import { PaymentAddedEvent } from '@/business/billing/events/impl/payment-added.event'
-import { IncreaseBalanceCommand } from '../../commands/impl/increase-balance.command'
+import { PaymentAmountReducedEvent } from '@/business/billing/events/impl/payment-amount-reduced.event'
+import { ReduceBalanceCommand } from '../../commands/impl/reduce-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
-@EventsHandler(PaymentAddedEvent)
-export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
+@EventsHandler(PaymentAmountReducedEvent)
+export class PaymentAmountReducedHandler
+  implements IEventHandler<PaymentAmountReducedEvent>
+{
   constructor(
     private readonly logger: LoggerService,
     private readonly commandBus: CommandBus,
     private readonly prisma: PrismaService,
   ) {}
 
-  async handle(event: PaymentAddedEvent) {
-    this.logger.log('Customers', 'Ejecutando el PaymentAdded event handler', {
-      logType: 'event-handler',
-    })
+  async handle(event: PaymentAmountReducedEvent) {
+    this.logger.log(
+      'Customers',
+      'Ejecutando el PaymentAmountReduced event handler',
+      { logType: 'event-handler' },
+    )
 
     const { data } = event
 
@@ -26,9 +30,9 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     })
 
     return this.commandBus.execute(
-      new IncreaseBalanceCommand({
+      new ReduceBalanceCommand({
         code: order.customer.code,
-        increment: data.payment.amount,
+        reduction: data.payment.reduction,
       }),
     )
   }

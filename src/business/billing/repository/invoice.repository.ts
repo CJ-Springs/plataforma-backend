@@ -6,6 +6,7 @@ import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { PaymentAddedEvent } from '../events/impl/payment-added.event'
 import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
+import { PaymentAmountReducedEvent } from '../events/impl/payment-amount-reduced.event'
 import { IFindByInput, IRepository } from '@/.shared/types'
 import { LoggerService, Result } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
@@ -100,6 +101,9 @@ export class InvoiceRepository
         if (event instanceof PaymentCanceledEvent) {
           return this.cancelPayment(event.data)
         }
+        if (event instanceof PaymentAmountReducedEvent) {
+          return this.reducePaymentAmount(event.data)
+        }
       }),
     )
   }
@@ -125,7 +129,7 @@ export class InvoiceRepository
     } catch (error) {
       this.logger.error(
         error,
-        `Error al intentar crear la factura de la orden ${data.orderId} en la db`,
+        `Error al intentar generar la factura de la orden ${data.orderId} en la db`,
       )
     }
   }
@@ -154,7 +158,7 @@ export class InvoiceRepository
         data: {
           status,
           deposited: {
-            increment: payment.amount,
+            increment: payment.amount - payment.remaining,
           },
           payments: {
             create: {
@@ -181,7 +185,7 @@ export class InvoiceRepository
         data: {
           status,
           deposited: {
-            decrement: payment.amount,
+            decrement: payment.amount - payment.remaining,
           },
           payments: {
             update: {
@@ -200,6 +204,39 @@ export class InvoiceRepository
       this.logger.error(
         error,
         `Error al intentar cancelar el pago ${payment.id} de la factura ${id} en la db`,
+      )
+    }
+  }
+
+  private async reducePaymentAmount(data: PaymentAmountReducedEvent['data']) {
+    const { invoiceId: id, status, payment } = data
+
+    try {
+      await this.prisma.invoice.update({
+        where: { id },
+        data: {
+          status,
+          deposited: {
+            decrement: payment.reduction,
+          },
+          payments: {
+            update: {
+              where: {
+                id: payment.id,
+              },
+              data: {
+                amount: {
+                  decrement: payment.reduction,
+                },
+              },
+            },
+          },
+        },
+      })
+    } catch (error) {
+      this.logger.error(
+        error,
+        `Error al intentar reducir el monto del pago ${payment.id} de la factura ${id} en la db`,
       )
     }
   }

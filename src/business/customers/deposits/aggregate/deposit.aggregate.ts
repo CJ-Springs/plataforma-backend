@@ -6,6 +6,7 @@ import { DepositRemainingUpdatedEvent } from '../events/impl/deposit-remaining-u
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Currency, Money, Result, Validate } from '@/.shared/helpers'
 import { IToDTO } from '@/.shared/types'
+import { DepositCanceledEvent } from '../events/impl/deposit-canceled.event'
 
 type DepositProps = {
   id: UniqueEntityID
@@ -105,6 +106,15 @@ export class Deposit extends AggregateRoot implements IToDTO<DepositPropsDTO> {
 
     this.props.status = PaymentStatus.ANULADO
     this.props.canceledBy = canceledBy
+
+    const event = new DepositCanceledEvent({
+      depositId: this.props.id.toString(),
+      customerCode: this.props.customerCode.toValue(),
+      canceledBy: this.props.canceledBy,
+      amount: this.props.amount.getValue(),
+      remaining: this.props.remaining.getValue(),
+    })
+    this.apply(event)
 
     return Result.ok<Deposit>(this)
   }

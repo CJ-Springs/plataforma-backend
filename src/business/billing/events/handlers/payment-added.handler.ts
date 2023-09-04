@@ -24,12 +24,19 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
       data: { orderId, payment },
     } = event
 
-    if (payment.remaining) {
-      const order = await this.prisma.saleOrder.findUnique({
-        where: { id: orderId },
-        select: { customerCode: true },
-      })
+    const order = await this.prisma.saleOrder.findUnique({
+      where: { id: orderId },
+      select: { customerCode: true },
+    })
 
+    await this.commandBus.execute(
+      new IncreaseBalanceCommand({
+        code: order.customerCode,
+        increment: payment.amount - payment.remaining,
+      }),
+    )
+
+    if (payment.remaining > 0) {
       const { data } = await this.billingService.payBulkInvoices(
         order.customerCode,
         {

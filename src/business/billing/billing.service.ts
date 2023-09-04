@@ -1,10 +1,12 @@
-import { InvoiceStatus, PaymentMethod } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { DueInvoiceCommand } from './commands/impl/due-invoice.command'
 import { AddPaymentCommand } from './commands/impl/add-payment.command'
+import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
+import { ReducePaymentAmountCommand } from './commands/impl/reduce-payment-amount.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { DateTime, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
@@ -105,6 +107,75 @@ export class BillingService {
       message: '',
       data: {
         remaining: availableAmount > 0 ? availableAmount : null,
+      },
+    }
+  }
+
+  async onPaymentOrDepositWithRemainingCanceled(
+    customerCode: number,
+    remaining: number,
+    canceledBy: string,
+  ): Promise<StandardResponse<{ remaining: number | null }>> {
+    this.logger.log(
+      'Billing',
+      'Ejecutando el método onPaymentOrDepositWithRemainingCanceled',
+      {
+        logType: 'service',
+      },
+    )
+
+    let paymentRemaining = remaining
+
+    do {
+      if (paymentRemaining <= 0) break
+
+      const payment = await this.prisma.payment.findFirst({
+        where: {
+          AND: [
+            {
+              paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+              status: PaymentStatus.ABONADO,
+              invoice: {
+                order: { customerCode: { equals: customerCode } },
+              },
+            },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      console.log({ payment })
+
+      if (!payment) break
+
+      if (payment.amount > paymentRemaining) {
+        await this.commandBus.execute(
+          new ReducePaymentAmountCommand({
+            paymentId: payment.id,
+            reduction: paymentRemaining,
+          }),
+        )
+
+        paymentRemaining = 0
+        break
+      } else {
+        await this.commandBus.execute(
+          new CancelPaymentCommand({
+            paymentId: payment.id,
+            canceledBy,
+          }),
+        )
+
+        paymentRemaining -= payment.amount
+      }
+    } while (paymentRemaining > 0)
+
+    return {
+      success: true,
+      status: 200,
+      message: '',
+      data: {
+        remaining: paymentRemaining > 0 ? paymentRemaining : null,
       },
     }
   }

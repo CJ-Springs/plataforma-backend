@@ -84,7 +84,10 @@ export class EnterDepositHandler
     return {
       success: true,
       status: 201,
-      message: `Depósito realizado con ${paymentMethod} de monto ${deposit.props.amount.getFormattedMoney()} ingresado al cliente #${customerCode}`,
+      message: `Depósito realizado con ${paymentMethod
+        .split('_')
+        .join(' ')
+        .toLowerCase()} de monto ${deposit.props.amount.getFormattedMoney()} ingresado al cliente #${customerCode}`,
       data: deposit.toDTO(),
     }
   }

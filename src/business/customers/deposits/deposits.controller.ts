@@ -10,6 +10,7 @@ import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterDepositDto } from './dtos'
 import { EnterDepositCommand } from './commands/impl/enter-deposit.command'
+import { CancelDepositCommand } from './commands/impl/cancel-deposit.command'
 import { UserDec } from '@/.shared/decorators'
 import {
   PermissionGuard,
@@ -38,6 +39,21 @@ export class DepositsController {
         amount,
         paymentMethod,
         metadata: emptyMetadata ? undefined : metadata,
+      }),
+    )
+  }
+
+  @RequiredPermissions('backoffice::anular-deposito')
+  @UseGuards(PermissionGuard)
+  @Post(':depositId/anular-deposito')
+  async cancelDeposit(
+    @Param('depositId') depositId: string,
+    @UserDec('email') email: string,
+  ) {
+    return await this.commandBus.execute(
+      new CancelDepositCommand({
+        depositId,
+        canceledBy: email,
       }),
     )
   }

@@ -1,16 +1,15 @@
-import { PaymentStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
 import { InvoiceRepository } from '../../repository/invoice.repository'
-import { CancelPaymentCommand } from '../impl/cancel-payment.command'
+import { ReducePaymentAmountCommand } from '../impl/reduce-payment-amount.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
-@CommandHandler(CancelPaymentCommand)
-export class CancelPaymentHandler
-  implements ICommandHandler<CancelPaymentCommand>
+@CommandHandler(ReducePaymentAmountCommand)
+export class ReducePaymentAmountHandler
+  implements ICommandHandler<ReducePaymentAmountCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -18,10 +17,16 @@ export class CancelPaymentHandler
     private readonly invoiceRepository: InvoiceRepository,
   ) {}
 
-  async execute(command: CancelPaymentCommand): Promise<StandardResponse> {
-    this.logger.log('Billing', 'Ejecutando el CancelPayment command handler', {
-      logType: 'command-handler',
-    })
+  async execute(
+    command: ReducePaymentAmountCommand,
+  ): Promise<StandardResponse> {
+    this.logger.log(
+      'Billing',
+      'Ejecutando el ReducePaymentAmount command handler',
+      {
+        logType: 'command-handler',
+      },
+    )
 
     const validateCommand = this.validate(command)
     if (validateCommand.isFailure) {
@@ -29,7 +34,7 @@ export class CancelPaymentHandler
     }
 
     const {
-      data: { paymentId, canceledBy },
+      data: { paymentId, reduction },
     } = command
 
     const invoiceOrNull = await this.invoiceRepository.findOneByInput({
@@ -42,9 +47,12 @@ export class CancelPaymentHandler
     }
     const invoice = invoiceOrNull.getValue()
 
-    const cancelPaymentResult = invoice.cancelPayment(paymentId, canceledBy)
-    if (cancelPaymentResult.isFailure) {
-      throw new BadRequestException(cancelPaymentResult.getErrorValue())
+    const reducePaymentAmount = invoice.reducePaymentAmount(
+      paymentId,
+      reduction,
+    )
+    if (reducePaymentAmount.isFailure) {
+      throw new BadRequestException(reducePaymentAmount.getErrorValue())
     }
 
     await this.invoiceRepository.save(invoice)
@@ -53,17 +61,14 @@ export class CancelPaymentHandler
     return {
       success: true,
       status: 200,
-      message: `Pago perteneciente a la factura ${invoice.props.id.toString()} marcado como ${
-        PaymentStatus.ANULADO
-      }`,
-      data: invoice.toDTO(),
+      message: `El monto del pago ${paymentId} se ha reducido`,
     }
   }
 
-  validate(command: CancelPaymentCommand) {
+  validate(command: ReducePaymentAmountCommand) {
     const validation = Validate.isRequiredBulk([
       { argument: command.data.paymentId, argumentName: 'paymentId' },
-      { argument: command.data.canceledBy, argumentName: 'canceledBy' },
+      { argument: command.data.reduction, argumentName: 'reduction' },
     ])
 
     if (!validation.success) {

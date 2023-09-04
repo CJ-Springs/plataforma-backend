@@ -5,6 +5,7 @@ import { Payment, PaymentPropsDTO } from './entities/payment.entity'
 import { InvoiceGeneratedEvent } from '../events/impl/invoice-generated.event'
 import { InvoiceDuedEvent } from '../events/impl/invoice-dued.event'
 import { PaymentAddedEvent } from '../events/impl/payment-added.event'
+import { PaymentAmountReducedEvent } from '../events/impl/payment-amount-reduced.event'
 import { PaymentCanceledEvent } from '../events/impl/payment-canceled.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID } from '@/.shared/domain'
@@ -140,7 +141,9 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     this.props.payments.push(payment)
-    this.props.deposited = this.props.deposited.add(payment.props.amount)
+    this.props.deposited = this.props.deposited.add(
+      payment.props.amount.substract(payment.props.remaining),
+    )
 
     if (this.props.deposited.getValue() === this.props.total.getValue()) {
       this.props.status = InvoiceStatus.PAGADA
@@ -160,7 +163,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
   cancelPayment(paymentId: string, canceledBy: string): Result<Invoice> {
     const payment = this.findPayment(paymentId)
     if (!payment) {
-      return Result.fail(`No se ha encontrado el pago ${paymentId}`)
+      return Result.fail(`No se ha encontrado el pago con id ${paymentId}`)
     }
 
     const cancelPaymentResult = payment.cancel(canceledBy)
@@ -168,7 +171,9 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       return Result.fail(cancelPaymentResult.getErrorValue())
     }
 
-    this.props.deposited = this.props.deposited.substract(payment.props.amount)
+    this.props.deposited = this.props.deposited.substract(
+      payment.props.amount.substract(payment.props.remaining),
+    )
 
     if (this.props.status === InvoiceStatus.PAGADA) {
       if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {
@@ -194,7 +199,45 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(this)
   }
 
-  findPayment(paymentId: string): Payment {
+  reducePaymentAmount(paymentId: string, reduction: number): Result<Invoice> {
+    const payment = this.findPayment(paymentId)
+    if (!payment) {
+      return Result.fail(`No se ha encontrado el pago con id ${paymentId}`)
+    }
+
+    const reducePaymentResult = payment.reduceAmount(reduction)
+    if (reducePaymentResult.isFailure) {
+      return Result.fail(reducePaymentResult.getErrorValue())
+    }
+
+    this.props.deposited = this.props.deposited.substract(
+      Money.fromString(String(reduction), payment.props.amount.getCurrency()),
+    )
+
+    if (this.props.status === InvoiceStatus.PAGADA) {
+      if (this.props.dueDate.greaterThanOrEqual(DateTime.today())) {
+        this.props.status = InvoiceStatus.POR_PAGAR
+      } else {
+        this.props.status = InvoiceStatus.DEUDA
+      }
+    }
+
+    const event = new PaymentAmountReducedEvent({
+      invoiceId: this.props.id.toString(),
+      orderId: this.props.orderId.toString(),
+      status: this.props.status,
+      payment: {
+        id: payment.toDTO().id,
+        amount: payment.props.amount.getValue(),
+        reduction,
+      },
+    })
+    this.apply(event)
+
+    return Result.ok<Invoice>(this)
+  }
+
+  private findPayment(paymentId: string): Payment {
     return this.props.payments.find(
       (payment) => payment.toDTO().id === paymentId,
     )

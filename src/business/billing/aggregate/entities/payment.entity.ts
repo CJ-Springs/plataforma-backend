@@ -88,20 +88,12 @@ export class Payment
     return Result.ok<Payment>(payment)
   }
 
-  /**
-   * @description añade el monto enviado al sobrante del pago, restándolo del monto
-   * total del mismo.
-   * @example
-   * amount = 1000
-   * remaining = 0
-   * // se llama el método addToRemaining(200)
-   * amount = 800
-   * remaining = 200
-   * @param addition
-   */
   addToRemaining(addition: number): Result<Payment> {
     const validateAddition = Money.validate(addition, 'addition', {
-      validateInRange: { min: 0, max: this.props.amount.getValue() },
+      validateInRange: {
+        min: 0,
+        max: this.props.amount.getValue() - this.props.remaining.getValue(),
+      },
     })
     if (validateAddition.isFailure) {
       return Result.fail(validateAddition.getErrorValue())
@@ -110,8 +102,6 @@ export class Payment
     this.props.remaining = this.props.remaining.add(
       Money.fromString(String(addition), this.props.remaining.getCurrency()),
     )
-
-    this.props.amount = this.props.amount.substract(this.props.remaining)
 
     return Result.ok<Payment>(this)
   }
@@ -124,14 +114,31 @@ export class Payment
     if (this.props.status === PaymentStatus.ANULADO) {
       return Result.fail('El pago ya ha sido anulado')
     }
-    if (this.props.paymentMethod === PaymentMethod.SALDO_A_FAVOR) {
-      return Result.fail(
-        'No es posible cancelar un pago realizado con el saldo a favor del cliente',
-      )
-    }
 
     this.props.status = PaymentStatus.ANULADO
     this.props.canceledBy = canceledBy
+
+    return Result.ok<Payment>(this)
+  }
+
+  reduceAmount(reduction: number): Result<Payment> {
+    if (this.props.status === PaymentStatus.ANULADO) {
+      return Result.fail('No se puede reducir el monto de un pago anulado')
+    }
+    if (this.props.remaining.getValue() > 0) {
+      return Result.fail('No se puede reducir el monto de un pago con sobrante')
+    }
+
+    const validateReduction = Money.validate(reduction, 'paymentReduction', {
+      validateInRange: { min: 0, max: this.props.amount.getValue() },
+    })
+    if (validateReduction.isFailure) {
+      return Result.fail(validateReduction.getErrorValue())
+    }
+
+    this.props.amount = this.props.amount.substract(
+      Money.fromString(String(reduction), this.props.amount.getCurrency()),
+    )
 
     return Result.ok<Payment>(this)
   }

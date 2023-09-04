@@ -1,4 +1,13 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common'
+import { PaymentMethod } from '@prisma/client'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterPaymentDto } from './dtos'
@@ -9,10 +18,14 @@ import {
   RequiredPermissions,
 } from '@/auth/authorization/guards'
 import { UserDec } from '@/.shared/decorators'
+import { PrismaService } from '@/.shared/infra/prisma.service'
 
 @Controller('facturacion')
 export class BillingController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @RequiredPermissions('backoffice::ingresar-pago')
   @UseGuards(PermissionGuard)
@@ -43,6 +56,21 @@ export class BillingController {
     @Param('paymentId') paymentId: string,
     @UserDec('email') email: string,
   ) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    })
+
+    if (payment && payment.depositId) {
+      throw new BadRequestException(
+        'El pago fue realizado a partir de un depósito, por lo que no se puede cancelar de manera individual',
+      )
+    }
+    if (payment && payment.paymentMethod === PaymentMethod.SALDO_A_FAVOR) {
+      throw new BadRequestException(
+        'No es posible anular un pago realizado a partir del saldo a favor del cliente',
+      )
+    }
+
     return await this.commandBus.execute(
       new CancelPaymentCommand({ paymentId, canceledBy: email }),
     )
