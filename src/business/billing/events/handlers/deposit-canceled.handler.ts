@@ -1,10 +1,11 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { BillingService } from '../../billing.service'
+import { CancelPaymentCommand } from '../../commands/impl/cancel-payment.command'
 import { DepositCanceledEvent } from '@/business/customers/deposits/events/impl/deposit-canceled.event'
+import { ReduceBalanceCommand } from '@/business/customers/commands/impl/reduce-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
-import { CancelPaymentCommand } from '../../commands/impl/cancel-payment.command'
 
 @EventsHandler(DepositCanceledEvent)
 export class DepositCanceledHandler
@@ -22,10 +23,10 @@ export class DepositCanceledHandler
       logType: 'event-handler',
     })
 
-    const { data } = event
+    const { data: canceledDeposit } = event
 
     const payments = await this.prisma.payment.findMany({
-      where: { depositId: data.depositId },
+      where: { depositId: canceledDeposit.depositId },
       select: { id: true },
     })
 
@@ -33,12 +34,55 @@ export class DepositCanceledHandler
       await this.commandBus.execute(
         new CancelPaymentCommand({
           paymentId: payment.id,
-          canceledBy: data.canceledBy,
+          canceledBy: canceledDeposit.canceledBy,
         }),
       )
     }
 
-    if (data.remaining > 0) {
+    if (canceledDeposit.remaining > 0) {
+      const { balance: customerBalance } =
+        await this.prisma.customer.findUnique({
+          where: { code: canceledDeposit.customerCode },
+          select: { balance: true },
+        })
+
+      if (customerBalance >= canceledDeposit.remaining) {
+        return await this.commandBus.execute(
+          new ReduceBalanceCommand({
+            code: canceledDeposit.customerCode,
+            reduction: canceledDeposit.remaining,
+          }),
+        )
+      }
+
+      let depositRemaining = canceledDeposit.remaining
+
+      if (customerBalance > 0) {
+        await this.commandBus.execute(
+          new ReduceBalanceCommand({
+            code: canceledDeposit.customerCode,
+            reduction: customerBalance,
+          }),
+        )
+
+        depositRemaining -= customerBalance
+      }
+
+      const { data } =
+        await this.billingService.onPaymentOrDepositWithRemainingCanceled(
+          canceledDeposit.customerCode,
+          depositRemaining,
+          canceledDeposit.canceledBy,
+        )
+
+      if (data.remaining) {
+        await this.commandBus.execute(
+          new ReduceBalanceCommand({
+            code: canceledDeposit.customerCode,
+            reduction: data.remaining,
+          }),
+        )
+      }
     }
   }
 }

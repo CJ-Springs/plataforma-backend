@@ -1,5 +1,3 @@
-import { InvoiceStatus } from '@prisma/client'
-
 type DepositCanceledEventProps = {
   depositId: string
   customerCode: number
