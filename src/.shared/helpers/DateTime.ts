@@ -92,4 +92,8 @@ export class DateTime {
 
     return DateTime.createFromDate(date.add(days, 'day').toDate(), false)
   }
+
+  getFormattedDate(opts?: Intl.DateTimeFormatOptions) {
+    return new Intl.DateTimeFormat('es-AR', opts).format(this.getDate())
+  }
 }

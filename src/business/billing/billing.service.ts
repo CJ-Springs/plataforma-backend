@@ -144,8 +144,6 @@ export class BillingService {
         orderBy: { createdAt: 'desc' },
       })
 
-      console.log({ payment })
-
       if (!payment) break
 
       if (payment.amount > paymentRemaining) {
@@ -256,6 +254,23 @@ export class BillingService {
         },
       },
     })
+
+    if (invoicesThatDueToday.length === 0) {
+      return this.notification.trigger(NovuEvent.EMPTY_INVOICES_DUE_TODAY, {
+        to: {
+          subscriberId: 'clivqlm380000z8wb6xi1hd8q',
+          email: 'francomusolino55@gmail.com',
+        },
+        payload: {
+          today: today.getFormattedDate({
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            timeZone: 'UTC',
+          }),
+        },
+      })
+    }
 
     const groupInvoicesByCustomer = invoicesThatDueToday.reduce(
       (acc, { order, ...invoice }) => {
