@@ -1,3 +1,4 @@
+import { InvoiceStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 
@@ -6,6 +7,7 @@ import { DueInvoiceCommand } from '../impl/due-invoice.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
+import { formatConstantValue } from '@/.shared/utils'
 
 @CommandHandler(DueInvoiceCommand)
 export class DueInvoiceHandler implements ICommandHandler<DueInvoiceCommand> {
@@ -46,7 +48,9 @@ export class DueInvoiceHandler implements ICommandHandler<DueInvoiceCommand> {
     return {
       success: true,
       status: 200,
-      message: `Factura de la órden ${invoice.props.orderId.toString()} marcada como "DEUDA"`,
+      message: `Factura de la órden ${invoice.props.orderId.toString()} marcada como ${formatConstantValue(
+        InvoiceStatus.DEUDA,
+      )}`,
       data: invoice.toDTO(),
     }
   }

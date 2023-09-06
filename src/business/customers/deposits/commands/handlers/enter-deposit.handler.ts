@@ -12,6 +12,7 @@ import { EnterDepositCommand } from '../impl/enter-deposit.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
+import { formatConstantValue } from '@/.shared/utils'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
 @CommandHandler(EnterDepositCommand)
@@ -84,10 +85,9 @@ export class EnterDepositHandler
     return {
       success: true,
       status: 201,
-      message: `Depósito realizado con ${paymentMethod
-        .split('_')
-        .join(' ')
-        .toLowerCase()} de monto ${deposit.props.amount.getFormattedMoney()} ingresado al cliente #${customerCode}`,
+      message: `Depósito realizado con ${formatConstantValue(
+        paymentMethod,
+      )} de monto ${deposit.props.amount.getFormattedMoney()} ingresado al cliente #${customerCode}`,
       data: deposit.toDTO(),
     }
   }

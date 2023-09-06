@@ -54,7 +54,7 @@ export class CancelDepositHandler
     return {
       success: true,
       status: 200,
-      message: `El depósito ha sido anulado`,
+      message: `El depósito ${depositId} ha sido anulado`,
     }
   }
 

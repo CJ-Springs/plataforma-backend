@@ -1,10 +1,11 @@
+import { PaymentMethod } from '@prisma/client'
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { PaymentAddedEvent } from '../impl/payment-added.event'
 import { BillingService } from '../../billing.service'
 import { IncreaseBalanceCommand } from '@/business/customers/commands/impl/increase-balance.command'
-import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
+import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 
 @EventsHandler(PaymentAddedEvent)
 export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
@@ -23,6 +24,8 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     const {
       data: { orderId, payment },
     } = event
+
+    if (payment.paymentMethod === PaymentMethod.SALDO_A_FAVOR) return
 
     const order = await this.prisma.saleOrder.findUnique({
       where: { id: orderId },

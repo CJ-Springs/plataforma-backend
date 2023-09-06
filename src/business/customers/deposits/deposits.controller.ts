@@ -3,6 +3,7 @@ import {
   Controller,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common'
@@ -45,7 +46,7 @@ export class DepositsController {
 
   @RequiredPermissions('backoffice::anular-deposito')
   @UseGuards(PermissionGuard)
-  @Post(':depositId/anular-deposito')
+  @Patch(':depositId/anular-deposito')
   async cancelDeposit(
     @Param('depositId') depositId: string,
     @UserDec('email') email: string,

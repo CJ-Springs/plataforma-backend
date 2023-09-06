@@ -133,9 +133,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
     const payment = paymentOrError.getValue()
 
-    const remaining =
-      payment.props.amount.getValue() -
-      (this.props.total.getValue() - this.props.deposited.getValue())
+    const remaining = payment.props.amount.getValue() - this.getLeftToPay()
     if (remaining > 0) {
       payment.addToRemaining(remaining)
     }
@@ -235,6 +233,10 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     this.apply(event)
 
     return Result.ok<Invoice>(this)
+  }
+
+  getLeftToPay(): number {
+    return this.props.total.getValue() - this.props.deposited.getValue()
   }
 
   private findPayment(paymentId: string): Payment {

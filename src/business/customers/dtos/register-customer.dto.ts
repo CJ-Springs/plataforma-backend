@@ -7,6 +7,8 @@ import {
   IsPhoneNumber,
   IsPositive,
   IsString,
+  Max,
+  Min,
   Validate,
   ValidateNested,
 } from 'class-validator'
@@ -51,6 +53,8 @@ export class RegisterCustomerDto {
   @IsPositive({
     message: "El campo 'discount' no puede ser un número negativo",
   })
+  @Min(1, { message: "El valor mínimo para el campo 'discount' es 1" })
+  @Max(99, { message: "El valor máximo para el campo 'discount' es 99" })
   discount?: number
 
   @IsDefined({ message: "Debe enviar el campo 'address'" })

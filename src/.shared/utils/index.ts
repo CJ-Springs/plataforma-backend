@@ -1,4 +1,5 @@
 export * from './common-validations'
+export * from './formatConstantValue'
 export * from './formatMoney'
 export * from './getNumericCode'
 export * from './getUniqueValues'

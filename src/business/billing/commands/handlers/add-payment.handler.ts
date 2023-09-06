@@ -5,6 +5,7 @@ import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 import { InvoiceRepository } from '../../repository/invoice.repository'
 import { AddPaymentCommand } from '../impl/add-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
+import { formatConstantValue } from '@/.shared/utils'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
@@ -36,12 +37,12 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     }
     const invoice = invoiceOrNull.getValue()
 
-    const appendPaymentResult = invoice.addPayment({
+    const addPaymentResult = invoice.addPayment({
       ...payment,
       status: PaymentStatus.ABONADO,
     })
-    if (appendPaymentResult.isFailure) {
-      throw new BadRequestException(appendPaymentResult.getErrorValue())
+    if (addPaymentResult.isFailure) {
+      throw new BadRequestException(addPaymentResult.getErrorValue())
     }
 
     await this.invoiceRepository.save(invoice)
@@ -49,11 +50,10 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
     return {
       success: true,
-      status: 200,
-      message: `Pago con ${payment.paymentMethod
-        .split('_')
-        .join(' ')
-        .toLowerCase()} de monto ${invoice.props.payments
+      status: 201,
+      message: `Pago con ${formatConstantValue(
+        payment.paymentMethod,
+      )} de monto ${invoice.props.payments
         .at(-1)
         .props.amount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
       data: invoice.toDTO(),

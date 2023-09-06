@@ -7,6 +7,7 @@ import { CancelPaymentCommand } from '../impl/cancel-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
+import { formatConstantValue } from '@/.shared/utils'
 
 @CommandHandler(CancelPaymentCommand)
 export class CancelPaymentHandler
@@ -53,9 +54,9 @@ export class CancelPaymentHandler
     return {
       success: true,
       status: 200,
-      message: `Pago perteneciente a la factura ${invoice.props.id.toString()} marcado como ${
-        PaymentStatus.ANULADO
-      }`,
+      message: `Pago perteneciente a la factura ${invoice.props.id.toString()} marcado como ${formatConstantValue(
+        PaymentStatus.ANULADO,
+      )}`,
       data: invoice.toDTO(),
     }
   }
