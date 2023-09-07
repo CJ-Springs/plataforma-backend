@@ -22,7 +22,7 @@ class CreditNoteItemDto {
   @IsPositive({ message: "El campo 'returned' debe ser mayor a 0" })
   returned: number
 
-  @IsOptional({ message: "Debe enviar el campo 'price'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 },
     {

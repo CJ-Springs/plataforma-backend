@@ -4,8 +4,6 @@ import { AggregateRoot } from '@nestjs/cqrs'
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
 import { ProductAddedEvent } from '../events/impl/product-added.event'
 import { ProductUpdatedEvent } from '../events/impl/product-updated.event'
-import { AmountOfSalesIncrementedEvent } from '../events/impl/amount-of-sales-incremented.event'
-import { AmountOfSalesDecrementedEvent } from '../events/impl/amount-of-sales-decremented.event'
 import { DeepPartial, IToDTO } from '@/.shared/types'
 import { UniqueEntityID, UniqueField } from '@/.shared/domain'
 import { Currency, Money, Result, Validate } from '@/.shared/helpers'
@@ -111,47 +109,6 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
     const event = new ProductUpdatedEvent({
       code: this.props.code.toValue(),
       ...props,
-    })
-    this.apply(event)
-
-    return Result.ok<Product>(this)
-  }
-
-  incrementAmountOfSales(increment: number): Result<Product> {
-    const validateIncrement = Validate.isGreaterThan(increment, 0, 'increment')
-    if (validateIncrement.isFailure) {
-      return Result.fail(validateIncrement.getErrorValue())
-    }
-
-    this.props.amountOfSales += increment
-
-    const event = new AmountOfSalesIncrementedEvent({
-      code: this.props.code.toString(),
-      increment,
-      amountOfSales: this.props.amountOfSales,
-    })
-    this.apply(event)
-
-    return Result.ok<Product>(this)
-  }
-
-  decrementAmountOfSales(reduction: number): Result<Product> {
-    const validateReduction = Validate.inRange(
-      reduction,
-      0,
-      this.props.amountOfSales,
-      'reduction',
-    )
-    if (validateReduction.isFailure) {
-      return Result.fail(validateReduction.getErrorValue())
-    }
-
-    this.props.amountOfSales -= reduction
-
-    const event = new AmountOfSalesDecrementedEvent({
-      code: this.props.code.toString(),
-      reduction,
-      amountOfSales: this.props.amountOfSales,
     })
     this.apply(event)
 

@@ -149,7 +149,7 @@ export class CreateWarrantyOrderHandler
     return {
       success: true,
       status: 201,
-      message: 'Orden de garantía creada',
+      message: `Orden de garantía creada (cliente ${data.customerCode})`,
       data: order.toDTO(),
     }
   }

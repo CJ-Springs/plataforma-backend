@@ -98,7 +98,7 @@ export class UserRepository implements IRepository<User> {
             },
           },
           roles: {
-            connect: roles.map((rol) => ({ code: rol })),
+            connect: roles.map((role) => ({ code: role })),
           },
         },
       })
