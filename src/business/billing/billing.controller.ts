@@ -12,7 +12,7 @@ import { CommandBus } from '@nestjs/cqrs'
 
 import { EnterPaymentDto } from './dtos'
 import { AddPaymentCommand } from './commands/impl/add-payment.command'
-import { PaymentWithCustomerBalanceCommand } from './commands/impl/payment-with-customer-balance.command'
+import { PayWithCustomerBalanceCommand } from './commands/impl/pay-with-customer-balance.command'
 import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
 import {
   PermissionGuard,
@@ -53,12 +53,12 @@ export class BillingController {
   @RequiredPermissions('backoffice::ingresar-pago')
   @UseGuards(PermissionGuard)
   @Post(':invoiceId/usar-balance-cliente')
-  async useCustomerBalance(
+  async payWithCustomerBalance(
     @Param('invoiceId') invoiceId: string,
     @UserDec('email') email: string,
   ) {
     return await this.commandBus.execute(
-      new PaymentWithCustomerBalanceCommand({ invoiceId, createdBy: email }),
+      new PayWithCustomerBalanceCommand({ invoiceId, createdBy: email }),
     )
   }
 

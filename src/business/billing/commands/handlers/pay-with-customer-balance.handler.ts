@@ -8,7 +8,7 @@ import {
 } from '@nestjs/cqrs'
 
 import { InvoiceRepository } from '../../repository/invoice.repository'
-import { PaymentWithCustomerBalanceCommand } from '../impl/payment-with-customer-balance.command'
+import { PayWithCustomerBalanceCommand } from '../impl/pay-with-customer-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { Result, Validate } from '@/.shared/helpers'
 import { formatConstantValue } from '@/.shared/utils'
@@ -16,9 +16,9 @@ import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { ReduceBalanceCommand } from '@/business/customers/commands/impl/reduce-balance.command'
 
-@CommandHandler(PaymentWithCustomerBalanceCommand)
-export class PaymentWithCustomerBalanceHandler
-  implements ICommandHandler<PaymentWithCustomerBalanceCommand>
+@CommandHandler(PayWithCustomerBalanceCommand)
+export class PayWithCustomerBalanceHandler
+  implements ICommandHandler<PayWithCustomerBalanceCommand>
 {
   constructor(
     private readonly logger: LoggerService,
@@ -29,11 +29,11 @@ export class PaymentWithCustomerBalanceHandler
   ) {}
 
   async execute(
-    command: PaymentWithCustomerBalanceCommand,
+    command: PayWithCustomerBalanceCommand,
   ): Promise<StandardResponse> {
     this.logger.log(
       'Billing',
-      'Ejecutando el PaymentWithCustomerBalance command handler',
+      'Ejecutando el PayWithCustomerBalance command handler',
       {
         logType: 'command-handler',
       },
@@ -109,7 +109,7 @@ export class PaymentWithCustomerBalanceHandler
     }
   }
 
-  validate(command: PaymentWithCustomerBalanceCommand) {
+  validate(command: PayWithCustomerBalanceCommand) {
     const validation = Validate.isRequiredBulk([
       {
         argument: command.data.invoiceId,

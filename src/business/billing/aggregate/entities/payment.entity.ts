@@ -45,7 +45,7 @@ export class Payment
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const validateAmount = Money.validate(props.amount, 'paymentAmount', {
+    const validateAmount = Money.validate(props.amount, 'payment-amount', {
       validateIsGreaterThanZero: true,
     })
     if (validateAmount.isFailure) {
@@ -55,9 +55,9 @@ export class Payment
     if (props.remaining) {
       const validateRemaining = Money.validate(
         props.remaining,
-        'paymentRemaining',
+        'payment-remaining',
         {
-          validateIsGreaterOrEqualThanZero: true,
+          validateInRange: { min: 0, max: props.amount },
         },
       )
       if (validateRemaining.isFailure) {

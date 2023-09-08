@@ -41,7 +41,7 @@ export class EnterDepositHandler
     }
 
     const {
-      data: { customerCode, amount, paymentMethod, createdBy, metadata },
+      data: { customerCode, ...props },
     } = command
 
     await this.prisma.customer
@@ -67,11 +67,8 @@ export class EnterDepositHandler
       })
 
     const depositOrError = Deposit.create({
-      amount,
-      createdBy,
-      paymentMethod,
+      ...props,
       status: PaymentStatus.ABONADO,
-      metadata,
       customerCode,
     })
     if (depositOrError.isFailure) {
@@ -86,7 +83,7 @@ export class EnterDepositHandler
       success: true,
       status: 201,
       message: `Depósito realizado con ${formatConstantValue(
-        paymentMethod,
+        deposit.props.paymentMethod,
       )} de monto ${deposit.props.amount.getFormattedMoney()} ingresado al cliente #${customerCode}`,
       data: deposit.toDTO(),
     }
