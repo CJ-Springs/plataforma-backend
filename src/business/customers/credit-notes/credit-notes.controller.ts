@@ -16,13 +16,13 @@ import {
 } from '@/auth/authorization/guards'
 import { UserDec } from '@/.shared/decorators'
 
-@Controller('clientes/notas-credito')
+@Controller('clientes/:customerCode/notas-credito')
 export class CreditNotesController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @RequiredPermissions('backoffice::hacer-nota-credito')
   @UseGuards(PermissionGuard)
-  @Post(':customerCode')
+  @Post('nueva-nota-credito')
   async makeCreditNote(
     @Param('customerCode', ParseIntPipe) customerCode: number,
     @Body() creditNote: MakeCreditNoteDto,

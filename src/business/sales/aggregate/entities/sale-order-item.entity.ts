@@ -1,13 +1,14 @@
 import { Entity, UniqueEntityID, UniqueField } from '@/.shared/domain'
-import { Result, Validate } from '@/.shared/helpers'
+import { Currency, Money, Result, Validate } from '@/.shared/helpers'
 import { IToDTO } from '@/.shared/types'
+import { Currencies } from '@prisma/client'
 
 type SaleOrderItemProps = {
   productCode: UniqueField
   requested: number
-  price: number
+  price: Money
   discount?: number
-  salePrice: number
+  salePrice: Money
 }
 
 export type SaleOrderItemPropsDTO = {
@@ -32,21 +33,31 @@ export class SaleOrderItem
       Validate.againstNullOrUndefinedBulk([
         { argument: props.productCode, argumentName: 'productCode' },
         { argument: props.requested, argumentName: 'requested' },
-        { argument: props.price, argumentName: 'price' },
       ]),
       Validate.isGreaterThan(props.requested, 0, 'requested'),
-      Validate.isGreaterThan(props.price, 0, 'price'),
     ])
     if (guardResult.isFailure) {
       return Result.fail(guardResult.getErrorValue())
     }
 
+    const validatePrice = Money.validate(props.price, 'item-price', {
+      validateIsGreaterThanZero: true,
+    })
+    if (validatePrice.isFailure) {
+      return Result.fail(validatePrice.getErrorValue())
+    }
+
+    const price = Money.fromString(
+      String(props.price),
+      Currency.create(Currencies.ARS),
+    )
+
     const saleOrderItem = new SaleOrderItem(
       {
         productCode: new UniqueField(props.productCode),
         requested: props.requested,
-        price: props.price,
-        salePrice: props.price,
+        price,
+        salePrice: price,
         discount: null,
       },
       new UniqueEntityID(props?.id),
@@ -64,15 +75,13 @@ export class SaleOrderItem
   }
 
   applyDiscount(discount: number): Result<SaleOrderItem> {
-    const validateDicount = Validate.isGreaterThan(discount, 0, 'discount')
+    const validateDicount = Validate.inRange(discount, 1, 99, 'item-discount')
     if (validateDicount.isFailure) {
       return Result.fail(validateDicount.getErrorValue())
     }
 
     this.props.discount = discount
-
-    const reduction = this.props.price * (discount / 100)
-    this.props.salePrice = Math.round(this.props.price - reduction)
+    this.props.salePrice = this.props.price.reduceByPercentage(discount)
 
     return Result.ok<SaleOrderItem>(this)
   }
@@ -82,6 +91,8 @@ export class SaleOrderItem
       ...this.props,
       id: this._id.toString(),
       productCode: this.props.productCode.toString(),
+      price: this.props.price.getValue(),
+      salePrice: this.props.salePrice.getValue(),
     }
   }
 }

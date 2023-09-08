@@ -1,6 +1,7 @@
 export enum NovuEvent {
   RECOVERY_PASSWORD_CODE = 'recovery-password-code',
   INVOICES_DUE_TODAY = 'invoices-due-today',
+  EMPTY_INVOICES_DUE_TODAY = 'empty-invoices-due-today',
 }
 
 export type InvoicesDueTodayNotificationPayload = {

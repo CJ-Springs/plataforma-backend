@@ -248,6 +248,7 @@ model Customer {
   buys SaleOrder[]
   warranties WarrantyOrder[]
   creditNotes CreditNote[] 
+  deposits Deposit[] 
 
   @@index([code], map: "customers_code")
   @@map("customers")
@@ -359,6 +360,25 @@ model SaleOrderItem {
   @@map("sale_order_items")
 }
 
+model Deposit {
+  id String @id @default(cuid())
+
+  paymentMethod PaymentMethod @map("payment_method")
+  amount Float
+  remaining Float
+  createdBy String @map("created_by")
+  canceledBy String? @map("canceled_by")
+  status PaymentStatus @default(ABONADO)
+  metadata Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at") 
+
+  customer Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int @map("customer_code")
+
+  @@map("deposits")
+}
+
 model Invoice {
   id String @id @default(cuid())
 
@@ -374,6 +394,7 @@ model Invoice {
   order SaleOrder @relation(fields: [orderId], references: [id])
   orderId String @unique @map("order_id")
 
+  @@index([id], map: "invoices_id")
   @@map("invoices")
 }
 
@@ -382,6 +403,8 @@ model Payment {
 
   paymentMethod PaymentMethod @map("payment_method")
   amount Float
+  remaining Float
+  depositId String? @map("deposit_id")
   metadata Json?
   createdBy String @map("created_by")
   canceledBy String? @map("canceled_by")

@@ -1,16 +1,12 @@
-import { InvoiceStatus, PaymentMethod } from '@prisma/client'
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
-import { EnterDepositDto } from './dtos'
 import { DueInvoiceCommand } from './commands/impl/due-invoice.command'
 import { AddPaymentCommand } from './commands/impl/add-payment.command'
-import { IncreaseBalanceCommand } from '../customers/commands/impl/increase-balance.command'
+import { CancelPaymentCommand } from './commands/impl/cancel-payment.command'
+import { ReducePaymentAmountCommand } from './commands/impl/reduce-payment-amount.command'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { DateTime, LoggerService } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
@@ -55,57 +51,13 @@ export class BillingService {
     })
   }
 
-  async enterDeposit(
-    customerCode: number,
-    { amount, paymentMethod, ...metadata }: EnterDepositDto,
-    createdBy: string,
-  ): Promise<StandardResponse> {
-    this.logger.log('Billing', 'Ejecutando el método enterDeposit', {
-      logType: 'service',
-    })
-
-    const pendingInvoices = await this.getCustomerPendingOrDueInvoices(
-      customerCode,
-    )
-
-    if (!pendingInvoices.length) {
-      throw new ConflictException(
-        `El cliente ${customerCode} tiene todas sus facturas al día`,
-      )
-    }
-
-    const { data } = await this.payBulkInvoices(customerCode, {
-      amount,
-      createdBy,
-      paymentMethod,
-      metadata,
-    })
-
-    if (data.remaining) {
-      await this.commandBus.execute(
-        new IncreaseBalanceCommand({
-          code: customerCode,
-          increment: data.remaining,
-        }),
-      )
-    }
-
-    return {
-      success: true,
-      status: 200,
-      message: `Depósito del cliente #${customerCode} realizado correctamente. Monto abonado: $${amount}. Método de pago: ${paymentMethod
-        .split('_')
-        .join()
-        .toLowerCase()}. Sobrante: $${data.remaining ?? 0}`,
-    }
-  }
-
   async payBulkInvoices(
     customerCode: number,
     paymentInfo: {
       amount: number
       paymentMethod: PaymentMethod
       createdBy: string
+      depositId?: string
       metadata?: Record<string, any>
     },
   ): Promise<StandardResponse<{ remaining: number | null }>> {
@@ -117,39 +69,35 @@ export class BillingService {
       customerCode,
     )
 
-    let paymentAmount = paymentInfo.amount
+    let availableAmount = paymentInfo.amount
 
     for await (const invoice of pendingInvoices) {
-      if (paymentAmount === 0) {
+      if (availableAmount === 0) {
         break
       }
 
       const leftToPay = invoice.total - invoice.deposited
 
-      if (paymentAmount >= leftToPay) {
+      if (availableAmount >= leftToPay) {
         await this.commandBus.execute(
           new AddPaymentCommand({
+            ...paymentInfo,
             amount: leftToPay,
             invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            ...paymentInfo.metadata,
           }),
         )
 
-        paymentAmount -= leftToPay
+        availableAmount -= leftToPay
       } else {
         await this.commandBus.execute(
           new AddPaymentCommand({
-            amount: paymentAmount,
+            ...paymentInfo,
+            amount: availableAmount,
             invoiceId: invoice.id,
-            paymentMethod: paymentInfo.paymentMethod,
-            createdBy: paymentInfo.createdBy,
-            ...paymentInfo.metadata,
           }),
         )
 
-        paymentAmount = 0
+        availableAmount = 0
       }
     }
 
@@ -158,7 +106,74 @@ export class BillingService {
       status: 200,
       message: '',
       data: {
-        remaining: paymentAmount > 0 ? paymentAmount : null,
+        remaining: availableAmount > 0 ? availableAmount : null,
+      },
+    }
+  }
+
+  async onPaymentOrDepositWithRemainingCanceled(
+    customerCode: number,
+    remaining: number,
+    canceledBy: string,
+  ): Promise<StandardResponse<{ remaining: number | null }>> {
+    this.logger.log(
+      'Billing',
+      'Ejecutando el método onPaymentOrDepositWithRemainingCanceled',
+      {
+        logType: 'service',
+      },
+    )
+
+    let paymentRemaining = remaining
+
+    do {
+      if (paymentRemaining <= 0) break
+
+      const payment = await this.prisma.payment.findFirst({
+        where: {
+          AND: [
+            {
+              paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+              status: PaymentStatus.ABONADO,
+              invoice: {
+                order: { customerCode: { equals: customerCode } },
+              },
+            },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (!payment) break
+
+      if (payment.amount > paymentRemaining) {
+        await this.commandBus.execute(
+          new ReducePaymentAmountCommand({
+            paymentId: payment.id,
+            reduction: paymentRemaining,
+          }),
+        )
+
+        paymentRemaining = 0
+        break
+      } else {
+        await this.commandBus.execute(
+          new CancelPaymentCommand({
+            paymentId: payment.id,
+            canceledBy,
+          }),
+        )
+
+        paymentRemaining -= payment.amount
+      }
+    } while (paymentRemaining > 0)
+
+    return {
+      success: true,
+      status: 200,
+      message: '',
+      data: {
+        remaining: paymentRemaining > 0 ? paymentRemaining : null,
       },
     }
   }
@@ -239,6 +254,23 @@ export class BillingService {
         },
       },
     })
+
+    if (invoicesThatDueToday.length === 0) {
+      return this.notification.trigger(NovuEvent.EMPTY_INVOICES_DUE_TODAY, {
+        to: {
+          subscriberId: 'clivqlm380000z8wb6xi1hd8q',
+          email: 'francomusolino55@gmail.com',
+        },
+        payload: {
+          today: today.getFormattedDate({
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            timeZone: 'UTC',
+          }),
+        },
+      })
+    }
 
     const groupInvoicesByCustomer = invoicesThatDueToday.reduce(
       (acc, { order, ...invoice }) => {

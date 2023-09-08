@@ -5,13 +5,8 @@ type AddPaymentCommandProps = {
   paymentMethod: PaymentMethod
   amount: number
   createdBy: string
-  mpUser?: string
-  voucherNumber?: number
-  operationNumber?: number
-  cvu?: number
-  code?: number
-  paymentDate?: Date
-  thirdParty?: boolean
+  depositId?: string
+  metadata?: Record<string, any>
 }
 
 export class AddPaymentCommand {

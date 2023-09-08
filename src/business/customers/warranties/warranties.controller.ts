@@ -16,13 +16,13 @@ import {
 } from '@/auth/authorization/guards'
 import { UserDec } from '@/.shared/decorators'
 
-@Controller('clientes/garantias')
+@Controller('clientes/:customerCode/garantias')
 export class WarrantiesController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @RequiredPermissions('backoffice::crear-orden-garantia')
   @UseGuards(PermissionGuard)
-  @Post(':customerCode/nueva-garantia')
+  @Post('nueva-garantia')
   async createWarrantyOrder(
     @Param('customerCode', ParseIntPipe) customerCode: number,
     @Body() warrantyOrder: CreateWarrantyOrderDto,

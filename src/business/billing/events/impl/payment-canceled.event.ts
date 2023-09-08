@@ -7,6 +7,7 @@ type PaymentCanceledEventProps = {
   payment: {
     id: string
     amount: number
+    remaining: number
     canceledBy: string
   }
 }

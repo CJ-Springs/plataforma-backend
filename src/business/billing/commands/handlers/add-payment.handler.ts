@@ -5,6 +5,7 @@ import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
 import { InvoiceRepository } from '../../repository/invoice.repository'
 import { AddPaymentCommand } from '../impl/add-payment.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
+import { formatConstantValue } from '@/.shared/utils'
 import { Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 
@@ -27,9 +28,8 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     }
 
     const {
-      data: { invoiceId, createdBy, amount, paymentMethod, ...metadata },
+      data: { invoiceId, ...payment },
     } = command
-    const emptyMetadata = !Object.values(metadata).length
 
     const invoiceOrNull = await this.invoiceRepository.findOneById(invoiceId)
     if (!invoiceOrNull) {
@@ -37,15 +37,12 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     }
     const invoice = invoiceOrNull.getValue()
 
-    const appendPaymentResult = invoice.addPayment({
-      amount,
-      createdBy,
-      paymentMethod,
+    const addPaymentResult = invoice.addPayment({
+      ...payment,
       status: PaymentStatus.ABONADO,
-      metadata: emptyMetadata ? undefined : metadata,
     })
-    if (appendPaymentResult.isFailure) {
-      throw new BadRequestException(appendPaymentResult.getErrorValue())
+    if (addPaymentResult.isFailure) {
+      throw new BadRequestException(addPaymentResult.getErrorValue())
     }
 
     await this.invoiceRepository.save(invoice)
@@ -53,11 +50,10 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
     return {
       success: true,
-      status: 200,
-      message: `Pago con ${paymentMethod
-        .split('_')
-        .join(' ')
-        .toLowerCase()} de monto ${invoice.props.payments
+      status: 201,
+      message: `Pago con ${formatConstantValue(
+        payment.paymentMethod,
+      )} de monto ${invoice.props.payments
         .at(-1)
         .props.amount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
       data: invoice.toDTO(),
@@ -93,36 +89,10 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     // VALIDATE EFECTIVO PAYMENT
 
     if (paymentMethod === PaymentMethod.EFECTIVO) {
-      const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
-        {
-          argument: command.data.mpUser,
-          argumentName: 'mpUser',
-        },
-        {
-          argument: command.data.voucherNumber,
-          argumentName: 'voucherNumber',
-        },
-        {
-          argument: command.data.operationNumber,
-          argumentName: 'operationNumber',
-        },
-        {
-          argument: command.data.cvu,
-          argumentName: 'cvu',
-        },
-        {
-          argument: command.data.code,
-          argumentName: 'code',
-        },
-        {
-          argument: command.data.paymentDate,
-          argumentName: 'paymentDate',
-        },
-        {
-          argument: command.data.thirdParty,
-          argumentName: 'thirdParty',
-        },
-      ])
+      const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExist(
+        command.data.metadata,
+        'metadata',
+      )
 
       if (!guardAgainstPropertiesShouldNotExist.success) {
         return Result.fail<string>(guardAgainstPropertiesShouldNotExist.message)
@@ -133,9 +103,10 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
     if (paymentMethod === PaymentMethod.MERCADO_PAGO) {
       const validateMpPayment = Validate.isRequiredBulk([
-        { argument: command.data.mpUser, argumentName: 'mpUser' },
+        { argument: command.data.metadata, argumentName: 'metadata' },
+        { argument: command.data.metadata.mpUser, argumentName: 'mpUser' },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
       ])
@@ -146,23 +117,23 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata.operationNumber,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
         {
-          argument: command.data.code,
+          argument: command.data.metadata.code,
           argumentName: 'code',
         },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -177,11 +148,15 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     if (paymentMethod === PaymentMethod.TRANSFERENCIA) {
       const validateTransferPayment = Validate.isRequiredBulk([
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.operationNumber,
+          argumentName: 'operationNumber',
+        },
+        {
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
       ])
@@ -192,23 +167,23 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.mpUser,
+          argument: command.data.metadata.mpUser,
           argumentName: 'mpUser',
         },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
         {
-          argument: command.data.code,
+          argument: command.data.metadata.code,
           argumentName: 'code',
         },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -222,13 +197,14 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
     if (paymentMethod === PaymentMethod.CHEQUE) {
       const validateCheckPayment = Validate.isRequiredBulk([
-        { argument: command.data.code, argumentName: 'code' },
+        { argument: command.data.metadata, argumentName: 'metadata' },
+        { argument: command.data.metadata.code, argumentName: 'code' },
         {
-          argument: command.data.paymentDate,
+          argument: command.data.metadata.paymentDate,
           argumentName: 'paymentDate',
         },
         {
-          argument: command.data.thirdParty,
+          argument: command.data.metadata.thirdParty,
           argumentName: 'thirdParty',
         },
       ])
@@ -239,19 +215,19 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
 
       const guardAgainstPropertiesShouldNotExist = Validate.shouldNotExistBulk([
         {
-          argument: command.data.mpUser,
+          argument: command.data.metadata.mpUser,
           argumentName: 'mpUser',
         },
         {
-          argument: command.data.voucherNumber,
+          argument: command.data.metadata.voucherNumber,
           argumentName: 'voucherNumber',
         },
         {
-          argument: command.data.operationNumber,
+          argument: command.data.metadata.operationNumber,
           argumentName: 'operationNumber',
         },
         {
-          argument: command.data.cvu,
+          argument: command.data.metadata.cvu,
           argumentName: 'cvu',
         },
       ])

@@ -8,6 +8,8 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator'
 
@@ -26,6 +28,8 @@ class SaleOrderItemDto {
   @IsPositive({
     message: "El campo 'discount' no puede ser un número negativo",
   })
+  @Min(1, { message: "El valor mínimo para el campo 'discount' es 1" })
+  @Max(99, { message: "El valor máximo para el campo 'discount' es 99" })
   discount?: number
 }
 
