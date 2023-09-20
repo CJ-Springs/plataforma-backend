@@ -34,19 +34,19 @@ export class RegisterCustomerHandler
 
     const { data } = command
 
-    const customerCodeInUser = await this.prisma.customer.findUnique({
+    const customerCodeInUse = await this.prisma.customer.findUnique({
       where: { code: data.code },
     })
-    if (customerCodeInUser) {
+    if (customerCodeInUse) {
       throw new ConflictException(
         `El código #${data.code} ya le pertenece a otro cliente`,
       )
     }
 
-    const customerEmailInUser = await this.prisma.customer.findUnique({
+    const customerEmailInUse = await this.prisma.customer.findUnique({
       where: { email: data.email },
     })
-    if (customerEmailInUser) {
+    if (customerEmailInUse) {
       throw new ConflictException(
         `El email ${data.email} ya le pertenece a otro cliente`,
       )
