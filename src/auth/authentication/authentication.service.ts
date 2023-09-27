@@ -12,7 +12,7 @@ import { LoginDto, StepOneDto, StepThreeDto, StepTwoDto } from './dtos'
 import { RecoveryCodeGeneratedEvent } from './events/impl/recovery-code-generated.event'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { JwtPayload, StandardResponse } from '@/.shared/types'
-import { ONE_MINUTE, getNumericCode } from '@/.shared/utils'
+import { ONE_MINUTE, getNumericCode, timingSafeEqual } from '@/.shared/utils'
 import { ChangeUserPasswordCommand } from '@/users/commands/impl/change-user-password.command'
 import { DateTime, LoggerService } from '@/.shared/helpers'
 
@@ -164,7 +164,8 @@ export class AuthenticationService {
         'El código ha expirado. Por favor, genere uno nuevo',
       )
     }
-    if (existingCode.code !== code) {
+
+    if (!timingSafeEqual(String(code), String(existingCode.code))) {
       throw new BadRequestException('El código ingresado no es válido')
     }
 
@@ -218,7 +219,8 @@ export class AuthenticationService {
         'El código ha expirado. Por favor, genere uno nuevo',
       )
     }
-    if (existingCode.code !== code) {
+
+    if (!timingSafeEqual(String(code), String(existingCode.code))) {
       throw new BadRequestException('El código ingresado no es válido')
     }
 

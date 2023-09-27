@@ -1,4 +1,4 @@
-import { AppRole } from '@prisma/client'
+import { AppRole, Prisma } from '@prisma/client'
 import {
   BadRequestException,
   Injectable,
@@ -18,9 +18,9 @@ export class UsersService {
     private readonly eventBus: EventBus,
   ) {}
 
-  private async findUserOrThrow(id: string) {
+  private async findUserOrThrow(id: string, include?: Prisma.UserInclude) {
     return await this.prisma.user
-      .findUniqueOrThrow({ where: { id }, include: { roles: true } })
+      .findUniqueOrThrow({ where: { id }, include })
       .catch(() => {
         throw new NotFoundException(`Usuario con id ${id} no encontrado`)
       })
@@ -31,8 +31,7 @@ export class UsersService {
       logType: 'service',
     })
 
-    const existingUser = await this.findUserOrThrow(id)
-
+    const existingUser = await this.findUserOrThrow(id, { roles: true })
     if (existingUser.deleted) {
       throw new BadRequestException(
         `El usuario con id ${id} ya ha sido eliminado`,

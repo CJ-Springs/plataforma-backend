@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CommandBus } from '@nestjs/cqrs'
-import * as crypto from 'crypto'
 
 import { CreateUserDto, UpdateUserRolesDto } from './dtos'
 import { UsersService } from './users.service'
@@ -25,6 +24,8 @@ import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
+import { RequireReAuthenticationGuard } from '@/auth/authentication/guards/require-re-authentication.guard'
+import { timingSafeEqual } from '@/.shared/utils'
 
 @Controller('usuarios')
 export class UsersController {
@@ -58,10 +59,7 @@ export class UsersController {
         )
       }
 
-      const a = Buffer.from(appSecret)
-      const b = Buffer.from(secretInReq)
-
-      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      if (!timingSafeEqual(appSecret, secretInReq)) {
         throw new BadRequestException(
           `Error al crear un usuario ${AppRole.SUPER_ADMIN}: Las credenciales son inválidas`,
         )
@@ -106,7 +104,7 @@ export class UsersController {
   }
 
   @RequiredPermissions('backoffice::eliminar-usuario')
-  @UseGuards(PermissionGuard)
+  @UseGuards(PermissionGuard, RequireReAuthenticationGuard)
   @Delete(':ID')
   async deleteUser(@Param('ID') id: string) {
     return await this.userService.deleteUser(id)
