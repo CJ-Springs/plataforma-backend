@@ -53,8 +53,8 @@ export class CreditNoteMadeHandler
       return acc.set(code, returned)
     }, new Map<string, number>())
 
-    for (const [code, returned] of springsMap)
-      this.commandBus.execute(
+    for await (const [code, returned] of springsMap)
+      await this.commandBus.execute(
         new IncrementStockCommand({
           code,
           entered: returned,

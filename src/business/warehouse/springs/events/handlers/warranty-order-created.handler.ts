@@ -55,8 +55,8 @@ export class WarrantyOrderCreatedHandler
       return acc.set(code, requested)
     }, new Map<string, number>())
 
-    for (const [code, requested] of springsMap)
-      this.commandBus.execute(
+    for await (const [code, requested] of springsMap)
+      await this.commandBus.execute(
         new DecrementStockCommand({
           code,
           requested,

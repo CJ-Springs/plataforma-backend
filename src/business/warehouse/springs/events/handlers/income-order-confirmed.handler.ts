@@ -55,8 +55,8 @@ export class IncomeOrderConfirmedHandler
       return acc.set(code, entered)
     }, new Map<string, number>())
 
-    for (const [code, entered] of springsMap)
-      this.commandBus.execute(
+    for await (const [code, entered] of springsMap)
+      await this.commandBus.execute(
         new IncrementStockCommand({
           code,
           entered,
