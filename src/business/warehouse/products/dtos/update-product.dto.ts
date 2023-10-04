@@ -1,11 +1,18 @@
-import { ProductType } from '@prisma/client'
+import { ProductPosition, ProductType } from '@prisma/client'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { IsOptional } from 'class-validator'
 
 import { AddProductDto } from './add-product.dto'
 
 export class UpdateProductDto extends IntersectionType(
-  PickType(AddProductDto, ['brand', 'model', 'description', 'isGnc', 'type']),
+  PickType(AddProductDto, [
+    'brand',
+    'model',
+    'description',
+    'isGnc',
+    'type',
+    'position',
+  ]),
 ) {
   @IsOptional()
   brand: string
@@ -18,4 +25,7 @@ export class UpdateProductDto extends IntersectionType(
 
   @IsOptional()
   type: ProductType
+
+  @IsOptional()
+  position: ProductPosition
 }

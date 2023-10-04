@@ -1,4 +1,4 @@
-import { ProductType, Currencies } from '@prisma/client'
+import { ProductType, Currencies, ProductPosition } from '@prisma/client'
 import { Type } from 'class-transformer'
 import {
   IsBoolean,
@@ -8,6 +8,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   Validate,
   ValidateIf,
@@ -48,22 +49,37 @@ class ProductSpringDto {
 export class AddProductDto {
   @IsNotEmpty({ message: "Debe enviar el campo 'code'" })
   @IsString({ message: "El campo 'code' debe ser un string" })
+  @MaxLength(55, {
+    message: "El campo 'code' no debe exceder los 55 caracteres",
+  })
   code: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'brand'" })
   @IsString({ message: "El campo 'brand' debe ser un string" })
+  @MaxLength(55, {
+    message: "El campo 'brand' no debe exceder los 55 caracteres",
+  })
   brand: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'model'" })
   @IsString({ message: "El campo 'model' debe ser un string" })
+  @MaxLength(255, {
+    message: "El campo 'model' no debe exceder los 255 caracteres",
+  })
   model: string
 
   @IsOptional()
   @IsString({ message: "El campo 'description' debe ser un string" })
+  @MaxLength(1000, {
+    message: "El campo 'description' no debe exceder los 1000 caracteres",
+  })
   description?: string
 
   @Validate(RequireValueForEnum, [ProductType])
   type: ProductType
+
+  @Validate(RequireValueForEnum, [ProductPosition])
+  position: ProductPosition
 
   @IsDefined({ message: "Debe enviar el campo 'isGnc'" })
   @IsBoolean({ message: "El campo 'isGnc' debe ser un booleano" })

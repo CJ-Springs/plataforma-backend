@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Validate,
 } from 'class-validator'
 import { RequireValueForEnum } from '@/.shared/utils'
@@ -15,6 +16,9 @@ export class CreateRoleDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'name'" })
   @IsString({ message: "El campo 'name' debe ser un string" })
+  @MaxLength(55, {
+    message: "El campo 'name' no debe exceder los 55 caracteres",
+  })
   name: string
 
   @IsOptional()

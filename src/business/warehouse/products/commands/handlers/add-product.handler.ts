@@ -83,6 +83,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
 
     const productOrError = Product.create({
       ...data,
+      code: data.code.toUpperCase(),
       amountOfSales: 0,
       price: {
         price: data.price,
@@ -112,6 +113,7 @@ export class AddProductHandler implements ICommandHandler<AddProductCommand> {
       { argument: command.data.brand, argumentName: 'brand' },
       { argument: command.data.model, argumentName: 'model' },
       { argument: command.data.type, argumentName: 'type' },
+      { argument: command.data.position, argumentName: 'position' },
       { argument: command.data.price, argumentName: 'price' },
       { argument: command.data.isGnc, argumentName: 'isGnc' },
       { argument: command.data.spring, argumentName: 'spring' },

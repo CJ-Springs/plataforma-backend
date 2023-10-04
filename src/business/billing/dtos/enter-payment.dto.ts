@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
+  MaxLength,
   Min,
   Validate,
   ValidateIf,
@@ -32,6 +33,9 @@ export class EnterPaymentDto {
   @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO)
   @IsNotEmpty({ message: "Debe enviar el campo 'mpUser'" })
   @IsString({ message: "El campo 'mpUser' debe ser un string" })
+  @MaxLength(255, {
+    message: "El campo 'mpUser' no debe exceder los 255 caracteres",
+  })
   mpUser?: string
 
   @ValidateIf((o) => o.paymentMethod === PaymentMethod.MERCADO_PAGO)

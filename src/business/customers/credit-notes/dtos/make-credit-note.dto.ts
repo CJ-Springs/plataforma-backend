@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator'
 
@@ -36,6 +37,9 @@ class CreditNoteItemDto {
 export class MakeCreditNoteDto {
   @IsOptional()
   @IsString({ message: "El campo 'observation' debe ser un string" })
+  @MaxLength(1000, {
+    message: "El campo 'observation' no debe exceder los 1000 caracteres",
+  })
   observation?: string
 
   @IsDefined({ message: "Debe enviar el campo 'items'" })

@@ -130,6 +130,7 @@ export class ProductRepository
       )
     }
   }
+
   private async updateProduct(updatedProduct: ProductUpdatedEvent['data']) {
     const { code, ...data } = updatedProduct
 

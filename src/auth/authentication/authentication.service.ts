@@ -41,13 +41,11 @@ export class AuthenticationService {
         },
       })
       .catch(() => {
-        throw new NotFoundException(
-          `No se ha encontrado al usuario con email ${email}`,
-        )
+        throw new BadRequestException('Las credenciales son inválidas')
       })
 
     if (existUser.deleted) {
-      throw new BadRequestException(`El usuario ${email} ha sido eliminado`)
+      throw new BadRequestException('Las credenciales son inválidas')
     }
 
     const match = await compare(password, existUser.password.passwordHash)

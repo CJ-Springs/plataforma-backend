@@ -1,4 +1,4 @@
-import { ProductType } from '@prisma/client'
+import { ProductPosition, ProductType } from '@prisma/client'
 
 type ProductUpdatedEventProps = {
   code: string
@@ -6,6 +6,7 @@ type ProductUpdatedEventProps = {
   model?: string
   description?: string
   type?: ProductType
+  position?: ProductPosition
   isGnc?: boolean
 }
 
