@@ -1,4 +1,4 @@
-import { Currencies, ProductType } from '@prisma/client'
+import { Currencies, ProductPosition, ProductType } from '@prisma/client'
 
 type AddProductCommandProps = {
   code: string
@@ -6,6 +6,7 @@ type AddProductCommandProps = {
   model: string
   description?: string
   type: ProductType
+  position: ProductPosition
   isGnc: boolean
   price: number
   currency?: Currencies

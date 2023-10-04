@@ -8,6 +8,7 @@ import {
   IsPositive,
   IsString,
   Max,
+  MaxLength,
   Min,
   Validate,
   ValidateNested,
@@ -20,6 +21,9 @@ import { AddressDto } from './address.dto'
 export class RegisterCustomerDto {
   @IsNotEmpty({ message: "Debe enviar el campo 'name'" })
   @IsString({ message: "El campo 'name' debe ser un string" })
+  @MaxLength(255, {
+    message: "El campo 'name' no debe exceder los 255 caracteres",
+  })
   name: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'code'" })
@@ -32,6 +36,9 @@ export class RegisterCustomerDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'cuil'" })
   @IsString({ message: "El campo 'cuil' debe ser un string" })
+  @MaxLength(255, {
+    message: "El campo 'cuil' no debe exceder los 255 caracteres",
+  })
   cuil: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'phone'" })

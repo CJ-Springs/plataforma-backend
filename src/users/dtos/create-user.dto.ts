@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsPhoneNumber,
   IsString,
+  MaxLength,
   Min,
   MinLength,
   Validate,
@@ -25,6 +26,9 @@ export class CreateUserDto {
   @MinLength(3, {
     message: "El campo 'firstname' debe contar con, al menos, 3 letras",
   })
+  @MaxLength(55, {
+    message: "El campo 'firstname' no debe exceder los 55 caracteres",
+  })
   firstname: string
 
   @IsNotEmpty({
@@ -35,6 +39,9 @@ export class CreateUserDto {
   })
   @MinLength(3, {
     message: "El campo 'lastname' debe contar con, al menos, 3 letras",
+  })
+  @MaxLength(55, {
+    message: "El campo 'firstname' no debe exceder los 55 caracteres",
   })
   lastname: string
 

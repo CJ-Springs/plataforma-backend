@@ -13,43 +13,43 @@ datasource db {
 model User {
   id String @id @default(cuid())
 
-  email String @unique
-  isSuspended Boolean @default(false) @map("is_suspended")
-  deleted Boolean @default(false)
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
-  deletedAt DateTime?  @map("deleted_at") 
+  email       String    @unique
+  isSuspended Boolean   @default(false) @map("is_suspended")
+  deleted     Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  password Password?
-  profile Profile?
-  codes Code[]
+  password     Password?
+  profile      Profile?
+  codes        Code[]
   incomeOrders IncomeOrder[]
-  roles Role[]  @relation("roles_users")
+  roles        Role[]        @relation("roles_users")
 
   @@index([email, id], map: "users_id_email")
   @@map("users")
 }
 
 model Password {
-  passwordHash String  @map("password_hash")
-  createdAt DateTime @default(now()) @map("created_at") 
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique @id @map("user_id") 
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @id @unique @map("user_id")
 
   @@map("passwords")
 }
 
 model Profile {
-  firstname String 
-  lastname String 
-  document Int
-  phone String
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  firstname String
+  lastname  String
+  document  Int
+  phone     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique @id @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @id @unique @map("user_id")
 
   @@map("profiles")
 }
@@ -57,12 +57,12 @@ model Profile {
 model Code {
   id String @id @default(cuid())
 
-  code Int 
-  used Boolean @default(false) 
-  expiresAt DateTime @map("expires_at") 
-  createdAt DateTime @default(now()) @map("created_at") 
+  code      Int
+  used      Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @map("user_id")
 
   @@map("recovery_codes")
@@ -71,12 +71,12 @@ model Code {
 model Role {
   id String @id @default(cuid())
 
-  code AppRole  @unique 
-  name String 
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  code      AppRole  @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  users User[] @relation("roles_users")
+  users       User[]       @relation("roles_users")
   permissions Permission[] @relation("roles_permissions")
 
   @@index([code], map: "roles_code")
@@ -86,9 +86,9 @@ model Role {
 model Permission {
   id String @id @default(cuid())
 
-  name String @unique
-  description String 
-  createdAt DateTime @default(now()) @map("created_at") 
+  name        String   @unique
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
 
   roles Role[] @relation("roles_permissions")
 
@@ -98,12 +98,12 @@ model Permission {
 model IncomeOrder {
   id String @id @default(cuid())
 
-  status IncomeOrderStatus @default(EN_PROGRESO)
-  createdAt DateTime @default(now()) @map("created_at") 
+  status    IncomeOrderStatus @default(EN_PROGRESO)
+  createdAt DateTime          @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id])
-  userId String @map("user_id")
-  items IncomeOrderItem[]
+  user   User              @relation(fields: [userId], references: [id])
+  userId String            @map("user_id")
+  items  IncomeOrderItem[]
 
   @@map("income_orders")
 }
@@ -111,13 +111,13 @@ model IncomeOrder {
 model IncomeOrderItem {
   id String @id @default(cuid())
 
-  entered Int
-  createdAt DateTime @default(now()) @map("created_at") 
+  entered   Int
+  createdAt DateTime @default(now()) @map("created_at")
 
-  order IncomeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orderId String @map("order_id")
-  product Product @relation(fields: [productCode], references: [code])
-  productCode String @map("product_code")
+  order       IncomeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId     String      @map("order_id")
+  product     Product     @relation(fields: [productCode], references: [code])
+  productCode String      @map("product_code")
 
   @@map("income_order_items")
 }
@@ -125,23 +125,24 @@ model IncomeOrderItem {
 model Product {
   id String @id @default(cuid())
 
-  code String @unique
-  type ProductType
-  description String?
-  brand String
-  model String
-  isGnc Boolean @map("is_gnc")
-  amountOfSales Int @default(0) @map("amount_of_sales")
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  code          String          @unique
+  type          ProductType
+  position      ProductPosition
+  description   String?
+  brand         String
+  model         String
+  isGnc         Boolean         @map("is_gnc")
+  amountOfSales Int             @default(0) @map("amount_of_sales")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
 
-  price ProductPricing?
-  sales SaleOrderItem[]
-  incomes IncomeOrderItem[]
-  lossesByWarranties WarrantyOrderItem[]
+  price                ProductPricing?
+  sales                SaleOrderItem[]
+  incomes              IncomeOrderItem[]
+  lossesByWarranties   WarrantyOrderItem[]
   incomesByCreditNotes CreditNoteItem[]
 
-  spring Spring @relation(fields: [springId], references: [id])
+  spring   Spring @relation(fields: [springId], references: [id])
   springId String @map("spring_id")
 
   @@index([code], map: "products_code")
@@ -149,13 +150,13 @@ model Product {
 }
 
 model ProductPricing {
-  price Float
-  currency Currencies @default(ARS)
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  price     Float
+  currency  Currencies @default(ARS)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
-  product Product @relation(fields: [productCode], references: [code], onDelete: Cascade, onUpdate: Cascade)
-  productCode String @unique @id @map("product_code")
+  product     Product @relation(fields: [productCode], references: [code], onDelete: Cascade, onUpdate: Cascade)
+  productCode String  @id @unique @map("product_code")
 
   @@map("products_pricing")
 }
@@ -163,28 +164,28 @@ model ProductPricing {
 model Spring {
   id String @id @default(cuid())
 
-  code String @unique
-  canAssociate Boolean @map("can_associate")
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  code         String   @unique
+  canAssociate Boolean  @map("can_associate")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  stock Stock?
-  technicalSheet TechnicalSheet? 
-  products Product[]
-  movements Movement[]
+  stock          Stock?
+  technicalSheet TechnicalSheet?
+  products       Product[]
+  movements      Movement[]
 
   @@index([code], map: "springs_code")
   @@map("springs")
 }
 
 model Stock {
-  quantityOnHand Int @map("quantity_on_hand")
-  minQuantity Int @map("min_quantity")
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  quantityOnHand Int      @map("quantity_on_hand")
+  minQuantity    Int      @map("min_quantity")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  springId String @unique @id @map("spring_id")
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  springId String @id @unique @map("spring_id")
 
   @@map("stocks")
 }
@@ -192,40 +193,40 @@ model Stock {
 model Movement {
   id String @id @default(cuid())
 
-  type MovementType
-  reason String
-  quantity Int
-  updatedStock Int @map("updated_stock")
-  createdAt DateTime @default(now()) @map("created_at") 
+  type         MovementType
+  reason       String
+  quantity     Int
+  updatedStock Int          @map("updated_stock")
+  createdAt    DateTime     @default(now()) @map("created_at")
 
-  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   springId String @map("spring_id")
 
   @@map("movements")
 }
 
 model TechnicalSheet {
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
-  type TechnicalSheetType
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  type      TechnicalSheetType
 
   //Common fields between the three posible types of Spring
 
-  weight Float 
-  height Float
-  wireThickness Float @map("wire_thickness")
-  amountOfLaps Int @map("amount_of_laps")
+  weight            Float
+  height            Float
+  wireThickness     Float @map("wire_thickness")
+  amountOfLaps      Int   @map("amount_of_laps")
   lightBetweenBases Float @map("light_between_bases")
-  innerCore Float @map("inner_core")
+  innerCore         Float @map("inner_core")
 
   //Not common fields (optional)
 
   lightBetweenBasesTwo Float? @map("light_between_bases_two")
-  innerBases Float? @map("inner_bases")
-  innerBasesTwo Float? @map("inner_bases_two")
-  
-  spring Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  springId String @unique @id @map("spring_id")
+  innerBases           Float? @map("inner_bases")
+  innerBasesTwo        Float? @map("inner_bases_two")
+
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  springId String @id @unique @map("spring_id")
 
   @@map("technical_sheets")
 }
@@ -233,39 +234,39 @@ model TechnicalSheet {
 model Customer {
   id String @id @default(cuid())
 
-  code Int @unique
-  email String @unique
-  name String 
-  phone String 
-  discount Int?
-  balance Float @default(0) 
-  cuil String
-  paymentDeadline Int @map("payment_deadline")
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  code            Int      @unique
+  email           String   @unique
+  name            String
+  phone           String
+  discount        Int?
+  balance         Float    @default(0)
+  cuil            String
+  paymentDeadline Int      @map("payment_deadline")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  address Address?
-  buys SaleOrder[]
-  warranties WarrantyOrder[]
-  creditNotes CreditNote[] 
-  deposits Deposit[] 
+  address     Address?
+  buys        SaleOrder[]
+  warranties  WarrantyOrder[]
+  creditNotes CreditNote[]
+  deposits    Deposit[]
 
   @@index([code], map: "customers_code")
   @@map("customers")
 }
 
 model Address {
-  country String @default("Argentina")
-  countryCode String @default("ARG") @map("country_code")
-  province String
-  city String 
-  locality String 
-  address String 
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  country     String   @default("Argentina")
+  countryCode String   @default("ARG") @map("country_code")
+  province    String
+  city        String
+  locality    String
+  address     String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  customerId String @unique @id @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  customerId String   @id @unique @map("customer_id")
 
   @@map("addresses")
 }
@@ -274,13 +275,13 @@ model WarrantyOrder {
   id String @id @default(cuid())
 
   observation String?
-  createdBy String @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   items WarrantyOrderItem[]
 
-  customer Customer @relation(fields: [customerCode], references: [code])
-  customerCode Int @map("customer_code")
+  customer     Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int      @map("customer_code")
 
   @@map("warranty_orders")
 }
@@ -289,26 +290,27 @@ model WarrantyOrderItem {
   id String @id @default(cuid())
 
   requested Int
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdAt DateTime @default(now()) @map("created_at")
 
-  order WarrantyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orderId String @map("order_id")
-  product Product @relation(fields: [productCode], references: [code])
-  productCode String @map("product_code")
+  order       WarrantyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId     String        @map("order_id")
+  product     Product       @relation(fields: [productCode], references: [code])
+  productCode String        @map("product_code")
 
   @@map("warranty_order_items")
 }
+
 model CreditNote {
   id String @id @default(cuid())
 
   observation String?
-  createdBy String @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   items CreditNoteItem[]
 
-  customer Customer @relation(fields: [customerCode], references: [code])
-  customerCode Int @map("customer_code")
+  customer     Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int      @map("customer_code")
 
   @@map("credit_notes")
 }
@@ -316,14 +318,14 @@ model CreditNote {
 model CreditNoteItem {
   id String @id @default(cuid())
 
-  returned Int
-  price Float
-  createdAt DateTime @default(now()) @map("created_at") 
+  returned  Int
+  price     Float
+  createdAt DateTime @default(now()) @map("created_at")
 
-  creditNote CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  creditNoteId String @map("credit_note_id")
-  product Product @relation(fields: [productCode], references: [code])
-  productCode String @map("product_code")
+  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creditNoteId String     @map("credit_note_id")
+  product      Product    @relation(fields: [productCode], references: [code])
+  productCode  String     @map("product_code")
 
   @@map("credit_note_items")
 }
@@ -331,14 +333,14 @@ model CreditNoteItem {
 model SaleOrder {
   id String @id @default(cuid())
 
-  createdBy String @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  items SaleOrderItem[]
+  items   SaleOrderItem[]
   invoice Invoice?
 
-  customer Customer @relation(fields: [customerCode], references: [code])
-  customerCode Int @map("customer_code")
+  customer     Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int      @map("customer_code")
 
   @@map("sale_orders")
 }
@@ -347,15 +349,15 @@ model SaleOrderItem {
   id String @id @default(cuid())
 
   requested Int
-  price Float
-  discount Int?
-  salePrice Float @map("sale_price")
-  createdAt DateTime @default(now()) @map("created_at") 
+  price     Float
+  discount  Int?
+  salePrice Float    @map("sale_price")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  order SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orderId String @map("order_id")
-  product Product @relation(fields: [productCode], references: [code])
-  productCode String @map("product_code")
+  order       SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId     String    @map("order_id")
+  product     Product   @relation(fields: [productCode], references: [code])
+  productCode String    @map("product_code")
 
   @@map("sale_order_items")
 }
@@ -364,17 +366,17 @@ model Deposit {
   id String @id @default(cuid())
 
   paymentMethod PaymentMethod @map("payment_method")
-  amount Float
-  remaining Float
-  createdBy String @map("created_by")
-  canceledBy String? @map("canceled_by")
-  status PaymentStatus @default(ABONADO)
-  metadata Json?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  amount        Float
+  remaining     Float
+  createdBy     String        @map("created_by")
+  canceledBy    String?       @map("canceled_by")
+  status        PaymentStatus @default(ABONADO)
+  metadata      Json?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerCode], references: [code])
-  customerCode Int @map("customer_code")
+  customer     Customer @relation(fields: [customerCode], references: [code])
+  customerCode Int      @map("customer_code")
 
   @@map("deposits")
 }
@@ -382,17 +384,17 @@ model Deposit {
 model Invoice {
   id String @id @default(cuid())
 
-  total Float
-  deposited Float 
-  dueDate DateTime @db.Date @map("due_date")
-  status InvoiceStatus @default(POR_PAGAR)
-  createdAt DateTime @default(now()) @map("created_at") 
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  total     Float
+  deposited Float
+  dueDate   DateTime      @map("due_date") @db.Date
+  status    InvoiceStatus @default(POR_PAGAR)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   payments Payment[]
 
-  order SaleOrder @relation(fields: [orderId], references: [id])
-  orderId String @unique @map("order_id")
+  order   SaleOrder @relation(fields: [orderId], references: [id])
+  orderId String    @unique @map("order_id")
 
   @@index([id], map: "invoices_id")
   @@map("invoices")
@@ -402,22 +404,21 @@ model Payment {
   id String @id @default(cuid())
 
   paymentMethod PaymentMethod @map("payment_method")
-  amount Float
-  remaining Float
-  depositId String? @map("deposit_id")
-  metadata Json?
-  createdBy String @map("created_by")
-  canceledBy String? @map("canceled_by")
-  status PaymentStatus @default(ABONADO)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at") 
+  amount        Float
+  remaining     Float
+  depositId     String?       @map("deposit_id")
+  metadata      Json?
+  createdBy     String        @map("created_by")
+  canceledBy    String?       @map("canceled_by")
+  status        PaymentStatus @default(ABONADO)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  invoiceId String @map("invoice_id")
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  invoiceId String  @map("invoice_id")
 
   @@map("payments")
 }
-
 
 enum AppRole {
   SUPER_ADMIN
@@ -438,7 +439,7 @@ enum InvoiceStatus {
 }
 
 enum PaymentStatus {
-  ABONADO 
+  ABONADO
   ANULADO
 }
 
@@ -451,6 +452,11 @@ enum ProductType {
   ESPECIAL
   REGULABLE
   CONFORT
+}
+
+enum ProductPosition {
+  DELANTERO
+  TRASERO
 }
 
 enum MovementType {

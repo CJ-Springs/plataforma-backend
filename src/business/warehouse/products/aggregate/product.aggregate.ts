@@ -1,4 +1,4 @@
-import { Currencies, ProductType } from '@prisma/client'
+import { Currencies, ProductPosition, ProductType } from '@prisma/client'
 import { AggregateRoot } from '@nestjs/cqrs'
 
 import { Spring, SpringPropsDTO } from './entities/spring.entity'
@@ -12,6 +12,7 @@ type ProductProps = {
   id: UniqueEntityID
   code: UniqueField
   type: ProductType
+  position: ProductPosition
   brand: string
   model: string
   description?: string
@@ -25,6 +26,7 @@ type ProductPropsDTO = {
   id: string
   code: string
   type: ProductType
+  position: ProductPosition
   brand: string
   model: string
   description?: string
@@ -47,6 +49,7 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.code, argumentName: 'code' },
       { argument: props.type, argumentName: 'type' },
+      { argument: props.position, argumentName: 'position' },
       { argument: props.brand, argumentName: 'brand' },
       { argument: props.model, argumentName: 'model' },
       { argument: props.isGnc, argumentName: 'isGnc' },
@@ -74,6 +77,7 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       id: new UniqueEntityID(props?.id),
       code: new UniqueField(props.code),
       type: props.type,
+      position: props.position,
       brand: props.brand,
       model: props.model,
       isGnc: props.isGnc,
@@ -86,7 +90,7 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
       spring: springResult.getValue(),
     })
 
-    if (!props?.id) {
+    if (!props.id) {
       const event = new ProductAddedEvent(product.toDTO())
       product.apply(event)
     }

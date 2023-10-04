@@ -1,4 +1,4 @@
-import { Currencies, ProductType } from '@prisma/client'
+import { Currencies, ProductPosition, ProductType } from '@prisma/client'
 
 type ProductAddedEventProps = {
   id: string
@@ -7,6 +7,7 @@ type ProductAddedEventProps = {
   model: string
   description?: string
   type: ProductType
+  position: ProductPosition
   isGnc: boolean
   amountOfSales: number
   price: {

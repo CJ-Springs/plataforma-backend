@@ -75,6 +75,7 @@ export class UpdateProductHandler
       'model',
       'description',
       'type',
+      'position',
       'isGnc',
     )
     if (!validation.success) {

@@ -216,12 +216,13 @@ export class Validate {
   public static againstAtMost(
     numChars: number,
     text: string,
+    argumentName: string,
   ): Result<ValidateResult> {
     return text.length <= numChars
       ? Result.ok<ValidateResult>()
       : Result.fail<ValidateResult>({
           success: false,
-          message: `Text is greater than ${numChars} chars.`,
+          message: `${argumentName} is greater than ${numChars} chars.`,
         })
   }
 }
