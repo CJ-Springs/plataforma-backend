@@ -57,6 +57,14 @@ export class Money {
     return Money.fromCents(rounded, this.currency)
   }
 
+  roundMoney(unit: 1 | 10 | 100 | 1000): Money {
+    const zeros = 100 * unit
+    const rounded = Math.round(this.cents / zeros)
+    const cents = rounded * zeros
+
+    return Money.fromCents(cents, this.currency)
+  }
+
   static validate(
     money: number | string,
     argumentName: string,
