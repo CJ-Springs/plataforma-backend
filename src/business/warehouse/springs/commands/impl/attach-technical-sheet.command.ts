@@ -6,6 +6,7 @@ type AttachTechnicalSheetCommandProps = {
   weight: number
   height: number
   wireThickness: number
+  barLength: number
   amountOfLaps: number
   lightBetweenBases: number
   innerCore: number
