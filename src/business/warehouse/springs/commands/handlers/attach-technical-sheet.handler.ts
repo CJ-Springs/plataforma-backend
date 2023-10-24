@@ -68,7 +68,7 @@ export class AttachTechnicalSheetHandler
     return {
       success: true,
       status: 200,
-      message: `Ficha técnica adjuntada al espiral ${code}`,
+      message: `Ficha técnica adjuntada al espiral #${code}`,
     }
   }
 
@@ -79,6 +79,7 @@ export class AttachTechnicalSheetHandler
       { argument: command.data.weight, argumentName: 'weight' },
       { argument: command.data.height, argumentName: 'height' },
       { argument: command.data.wireThickness, argumentName: 'wireThickness' },
+      { argument: command.data.barLength, argumentName: 'barLength' },
       { argument: command.data.amountOfLaps, argumentName: 'amountOfLaps' },
       {
         argument: command.data.lightBetweenBases,

@@ -79,7 +79,7 @@ export class EditTechnicalSheetHandler
     return {
       success: true,
       status: 200,
-      message: `Ficha técnica del espiral ${code} actualizada correctamente`,
+      message: `Se actualizó la ficha técnica del espiral #${code}`,
     }
   }
 

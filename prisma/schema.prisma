@@ -216,6 +216,7 @@ model TechnicalSheet {
   height            Float
   wireThickness     Float @map("wire_thickness")
   amountOfLaps      Int   @map("amount_of_laps")
+  barLength         Float @map("bar_length")
   lightBetweenBases Float @map("light_between_bases")
   innerCore         Float @map("inner_core")
 

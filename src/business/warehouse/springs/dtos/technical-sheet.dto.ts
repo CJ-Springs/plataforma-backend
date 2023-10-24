@@ -50,6 +50,18 @@ export class AttachTechnicalSheetDto {
   })
   wireThickness: number
 
+  @IsNotEmpty({ message: "Debe enviar el campo 'barLength'" })
+  @IsNumber(
+    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
+    {
+      message: "El campo 'barLength' debe ser un número (máximo 3 decimales)",
+    },
+  )
+  @IsPositive({
+    message: "El campo 'barLength' no puede ser un número negativo",
+  })
+  barLength: number
+
   @IsNotEmpty({ message: "Debe enviar el campo 'amountOfLaps'" })
   @IsInt({
     message: "El campo 'amountOfLaps' debe ser un número entero",
@@ -148,6 +160,9 @@ export class EditTechnicalSheetDto extends PartialType(
 
   @IsOptional()
   wireThickness?: number
+
+  @IsOptional()
+  barLength?: number
 
   @IsOptional()
   amountOfLaps?: number
