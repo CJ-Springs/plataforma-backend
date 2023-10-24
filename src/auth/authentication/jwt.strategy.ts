@@ -31,15 +31,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       include: { roles: true },
     })
     if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`)
+      throw new NotFoundException('Usuario inexistente')
     }
     if (user.deleted) {
-      throw new UnauthorizedException(
-        `El usuario con id ${id} ha sido eliminado`,
-      )
+      throw new UnauthorizedException('Este usuario ha sido eliminado')
     }
     if (user.isSuspended) {
-      throw new UnauthorizedException(`El usuario con id ${id} está suspendido`)
+      throw new UnauthorizedException(`Su usuario se encuentra suspendido`)
     }
 
     return user
