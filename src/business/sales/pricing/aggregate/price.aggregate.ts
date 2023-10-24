@@ -55,7 +55,7 @@ export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
     this.props.price = Money.fromString(
       String(newPrice),
       this.props.price.getCurrency(),
-    )
+    ).roundMoney(10)
 
     const event = new PriceManuallyUpdatedEvent({
       price: this.props.price.getValue(),
@@ -67,7 +67,9 @@ export class Price extends AggregateRoot implements IToDTO<PricePropsDTO> {
   }
 
   increaseByPercentage(percentage: number): Result<Price> {
-    this.props.price = this.props.price.increaseByPercentage(percentage)
+    this.props.price = this.props.price
+      .increaseByPercentage(percentage)
+      .roundMoney(10)
 
     const event = new PriceIncreasedEvent({
       price: this.props.price.getValue(),
