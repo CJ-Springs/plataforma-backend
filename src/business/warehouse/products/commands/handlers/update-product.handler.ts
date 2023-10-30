@@ -64,20 +64,8 @@ export class UpdateProductHandler
   }
 
   validate(command: UpdateProductCommand) {
-    const productCodeValidation = Validate.isRequired(command.data.code, 'code')
-    if (!productCodeValidation.success) {
-      return Result.fail<string>(productCodeValidation.message)
-    }
+    const validation = Validate.isRequired(command.data.code, 'code')
 
-    const validation = Validate.isAnyRequired(
-      command.data,
-      'brand',
-      'model',
-      'description',
-      'type',
-      'position',
-      'isGnc',
-    )
     if (!validation.success) {
       return Result.fail<string>(validation.message)
     }
