@@ -102,6 +102,8 @@ export class Product extends AggregateRoot implements IToDTO<ProductPropsDTO> {
     const fields = Object.keys(props)
 
     for (const field of fields) {
+      if (field === 'description') continue
+
       const guardResult = Validate.againstNullOrUndefined(props[field], field)
       if (guardResult.isFailure) {
         return Result.fail(guardResult.getErrorValue())
