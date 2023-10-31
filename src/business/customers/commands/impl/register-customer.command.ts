@@ -2,7 +2,7 @@ type RegisterCustomerCommandProps = {
   name: string
   code: number
   email: string
-  cuil: string
+  cuil?: string
   phone: string
   paymentDeadline: number
   discount?: number

@@ -12,9 +12,6 @@ export class UpdateCustomerDto extends PartialType(
   name?: string
 
   @IsOptional()
-  cuil?: string
-
-  @IsOptional()
   phone?: string
 
   @IsOptional()

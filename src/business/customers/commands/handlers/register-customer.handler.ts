@@ -81,7 +81,6 @@ export class RegisterCustomerHandler
       { argument: command.data.name, argumentName: 'name' },
       { argument: command.data.code, argumentName: 'code' },
       { argument: command.data.email, argumentName: 'email' },
-      { argument: command.data.cuil, argumentName: 'cuil' },
       { argument: command.data.phone, argumentName: 'phone' },
       {
         argument: command.data.paymentDeadline,

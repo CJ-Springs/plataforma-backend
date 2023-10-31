@@ -16,7 +16,7 @@ type CustomerProps = {
   email: Email
   name: string
   phone: string
-  cuil: string
+  cuil?: string
   balance: Money
   paymentDeadline: number
   discount?: number
@@ -29,7 +29,7 @@ type CustomerPropsDTO = {
   email: string
   name: string
   phone: string
-  cuil: string
+  cuil?: string
   balance: number
   paymentDeadline: number
   discount?: number
@@ -53,7 +53,6 @@ export class Customer
       { argument: props.code, argumentName: 'code' },
       { argument: props.name, argumentName: 'name' },
       { argument: props.phone, argumentName: 'phone' },
-      { argument: props.cuil, argumentName: 'cuil' },
       { argument: props.paymentDeadline, argumentName: 'paymentDeadline' },
       { argument: props.address, argumentName: 'address' },
     ])
@@ -88,7 +87,7 @@ export class Customer
       ),
       paymentDeadline: props.paymentDeadline,
       cuil: props.cuil,
-      discount: props?.discount,
+      discount: props.discount,
       address: addressResult.getValue(),
     })
 
@@ -105,6 +104,7 @@ export class Customer
 
     for (const field of Object.keys(fieldsToUpdate)) {
       if (field === 'discount') continue
+      if (field === 'cuil') continue
 
       const guardResult = Validate.againstNullOrUndefined(
         fieldsToUpdate[field],

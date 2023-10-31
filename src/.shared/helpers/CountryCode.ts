@@ -25,12 +25,12 @@ export class CountryCode extends ValueObject<CountryCodeProps> {
       'es',
     )
 
-    const phonePropResult = CountryCode.validateCountry(
+    const validateCountryResult = CountryCode.validateCountry(
       countryCode,
       'countryCode',
     )
-    if (!phonePropResult.success) {
-      return Result.fail(phonePropResult.message)
+    if (!validateCountryResult.success) {
+      return Result.fail(validateCountryResult.message)
     }
 
     return Result.ok(new CountryCode({ country: country.trim(), countryCode }))
@@ -45,12 +45,12 @@ export class CountryCode extends ValueObject<CountryCodeProps> {
       return Result.fail(nullPropResult.getErrorValue())
     }
 
-    const phonePropResult = CountryCode.validateCountry(
+    const validateCountryResult = CountryCode.validateCountry(
       countryCode,
       'countryCode',
     )
-    if (!phonePropResult.success) {
-      return Result.fail(phonePropResult.message)
+    if (!validateCountryResult.success) {
+      return Result.fail(validateCountryResult.message)
     }
     const country = countries.getName(countryCode.trim().toLowerCase(), 'es')
     return Result.ok(

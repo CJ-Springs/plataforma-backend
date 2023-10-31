@@ -241,7 +241,7 @@ model Customer {
   phone           String
   discount        Int?
   balance         Float    @default(0)
-  cuil            String
+  cuil            String?
   paymentDeadline Int      @map("payment_deadline")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
