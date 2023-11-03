@@ -40,6 +40,7 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     )
 
     if (payment.remaining > 0) {
+      // Creo que se deberían registrar como pagos de SALDO A FAVOR
       const { data } = await this.billingService.payBulkInvoices(
         order.customerCode,
         {
