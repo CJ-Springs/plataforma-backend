@@ -3,13 +3,13 @@ import { TechnicalSheetType } from '@prisma/client'
 type AttachTechnicalSheetCommandProps = {
   code: string
   type: TechnicalSheetType
-  weight: number
-  height: number
-  wireThickness: number
-  barLength: number
-  amountOfLaps: number
-  lightBetweenBases: number
-  innerCore: number
+  weight?: number
+  height?: number
+  wireThickness?: number
+  barLength?: number
+  amountOfLaps?: number
+  lightBetweenBases?: number
+  innerCore?: number
   lightBetweenBasesTwo?: number
   innerBases?: number
   innerBasesTwo?: number

@@ -122,6 +122,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     return Result.ok<Invoice>(this)
   }
 
+  // maybe pay fits better
   addPayment(props: Partial<PaymentPropsDTO>): Result<Invoice> {
     if (this.props.status === InvoiceStatus.PAGADA) {
       return Result.fail('La factura ya ha sido pagada en su totalidad')

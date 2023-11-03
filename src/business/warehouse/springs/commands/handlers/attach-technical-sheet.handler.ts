@@ -43,11 +43,11 @@ export class AttachTechnicalSheetHandler
       select: { id: true, technicalSheet: true },
     })
     if (!existingSpring) {
-      throw new NotFoundException(`El espiral ${code} no existe`)
+      throw new NotFoundException(`El espiral #${code} no existe`)
     }
     if (existingSpring.technicalSheet) {
       throw new ConflictException(
-        `El espiral ${code} ya posee una hoja técnicna`,
+        `El espiral #${code} ya posee una ficha técnicna`,
       )
     }
 
@@ -76,38 +76,14 @@ export class AttachTechnicalSheetHandler
     const validation = Validate.isRequiredBulk([
       { argument: command.data.code, argumentName: 'code' },
       { argument: command.data.type, argumentName: 'type' },
-      { argument: command.data.weight, argumentName: 'weight' },
-      { argument: command.data.height, argumentName: 'height' },
-      { argument: command.data.wireThickness, argumentName: 'wireThickness' },
-      { argument: command.data.barLength, argumentName: 'barLength' },
-      { argument: command.data.amountOfLaps, argumentName: 'amountOfLaps' },
-      {
-        argument: command.data.lightBetweenBases,
-        argumentName: 'lightBetweenBases',
-      },
-      { argument: command.data.innerCore, argumentName: 'innerCore' },
     ])
 
     if (!validation.success) {
       return Result.fail<string>(validation.message)
     }
 
-    if (command.data.type === TechnicalSheetType.TRABA_OJAL) {
-      const typeValidation = Validate.isRequiredBulk([
-        {
-          argument: command.data.lightBetweenBasesTwo,
-          argumentName: 'lightBetweenBasesTwo',
-        },
-        { argument: command.data.innerBases, argumentName: 'innerBases' },
-      ])
-
-      if (!typeValidation.success) {
-        return Result.fail<string>(typeValidation.message)
-      }
-    }
-
-    if (command.data.type === TechnicalSheetType.OJAL_OJAL) {
-      const typeValidation = Validate.isRequiredBulk([
+    if (command.data.type === TechnicalSheetType.TRABA_TRABA) {
+      const againstPropsShouldNotExists = Validate.shouldNotExistBulk([
         {
           argument: command.data.lightBetweenBasesTwo,
           argumentName: 'lightBetweenBasesTwo',
@@ -116,8 +92,19 @@ export class AttachTechnicalSheetHandler
         { argument: command.data.innerBasesTwo, argumentName: 'innerBasesTwo' },
       ])
 
-      if (!typeValidation.success) {
-        return Result.fail<string>(typeValidation.message)
+      if (!againstPropsShouldNotExists.success) {
+        return Result.fail<string>(againstPropsShouldNotExists.message)
+      }
+    }
+
+    if (command.data.type === TechnicalSheetType.TRABA_OJAL) {
+      const againstPropShouldNotExists = Validate.shouldNotExist(
+        command.data.innerBasesTwo,
+        'innerBasesTwo',
+      )
+
+      if (!againstPropShouldNotExists.success) {
+        return Result.fail<string>(againstPropShouldNotExists.message)
       }
     }
 

@@ -41,16 +41,16 @@ export class EditTechnicalSheetHandler
       select: { id: true, technicalSheet: true },
     })
     if (!existingSpring) {
-      throw new NotFoundException(`El espiral ${code} no existe`)
+      throw new NotFoundException(`El espiral #${code} no existe`)
     }
     if (!existingSpring.technicalSheet) {
       throw new ConflictException(
-        `El espiral ${code} no posee una hoja técnicna`,
+        `El espiral #${code} no posee una ficha técnicna`,
       )
     }
     if (existingSpring.technicalSheet.type !== technicalSheet.type) {
       throw new BadRequestException(
-        `No se puede actualizar el tipo de espiral. El tipo del espiral ${code} es ${existingSpring.technicalSheet.type}`,
+        `No se puede actualizar el tipo de espiral. El tipo del espiral #${code} es ${existingSpring.technicalSheet.type}`,
       )
     }
 
@@ -94,28 +94,31 @@ export class EditTechnicalSheetHandler
     }
 
     if (command.data.type === TechnicalSheetType.TRABA_TRABA) {
-      const typeValidation = Validate.shouldNotExistBulk([
+      const againstPropsShouldNotExists = Validate.shouldNotExistBulk([
         {
           argument: command.data.lightBetweenBasesTwo,
           argumentName: 'lightBetweenBasesTwo',
         },
         { argument: command.data.innerBases, argumentName: 'innerBases' },
-        { argument: command.data.innerBasesTwo, argumentName: 'innerBasesTwo' },
+        {
+          argument: command.data.innerBasesTwo,
+          argumentName: 'innerBasesTwo',
+        },
       ])
 
-      if (!typeValidation.success) {
-        return Result.fail<string>(typeValidation.message)
+      if (!againstPropsShouldNotExists.success) {
+        return Result.fail<string>(againstPropsShouldNotExists.message)
       }
     }
 
     if (command.data.type === TechnicalSheetType.TRABA_OJAL) {
-      const typeValidation = Validate.shouldNotExist(
+      const againstPropShouldNotExists = Validate.shouldNotExist(
         command.data.innerBasesTwo,
         'innerBasesTwo',
       )
 
-      if (!typeValidation.success) {
-        return Result.fail<string>(typeValidation.message)
+      if (!againstPropShouldNotExists.success) {
+        return Result.fail<string>(againstPropShouldNotExists.message)
       }
     }
 

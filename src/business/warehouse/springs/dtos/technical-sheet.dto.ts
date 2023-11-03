@@ -1,147 +1,159 @@
 import { TechnicalSheetType } from '@prisma/client'
 import { OmitType, PartialType } from '@nestjs/swagger'
 import {
-  IsInt,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
+  Min,
   Validate,
-  ValidateIf,
 } from 'class-validator'
 
-import { RequireValueForEnum } from '@/.shared/utils'
+import { RequireValueForEnum, formatConstantValue } from '@/.shared/utils'
 import { ShouldNotExistsIf } from '@/.shared/decorators'
 
 export class AttachTechnicalSheetDto {
   @Validate(RequireValueForEnum, [TechnicalSheetType])
   type: TechnicalSheetType
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'weight'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
-    { message: "El campo 'weight' debe ser un número (máximo 3 decimales)" },
+    { message: 'El peso debe ser un número (máximo 3 decimales)' },
   )
   @IsPositive({
-    message: "El campo 'weight' no puede ser un número negativo",
+    message: 'El peso no puede ser un número menor o igual a 0',
   })
-  weight: number
+  weight?: number
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'height'" })
-  @IsNumber(
-    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
-    { message: "El campo 'height' debe ser un número (máximo 3 decimales)" },
-  )
-  @IsPositive({
-    message: "El campo 'height' no puede ser un número negativo",
-  })
-  height: number
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'wireThickness'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
-      message:
-        "El campo 'wireThickness' debe ser un número (máximo 3 decimales)",
+      message: 'La altura debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'wireThickness' no puede ser un número negativo",
+    message: 'La altura no puede ser un número menor o igual a 0',
   })
-  wireThickness: number
+  height?: number
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'barLength'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
-      message: "El campo 'barLength' debe ser un número (máximo 3 decimales)",
+      message: 'El grosor de alambre debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'barLength' no puede ser un número negativo",
+    message: 'El grosor de alambre no puede ser un número menor o igual a 0',
   })
-  barLength: number
+  wireThickness?: number
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'amountOfLaps'" })
-  @IsInt({
-    message: "El campo 'amountOfLaps' debe ser un número entero",
-  })
-  @IsPositive({
-    message: "El campo 'amountOfLaps' no puede ser un número negativo",
-  })
-  amountOfLaps: number
-
-  @IsNotEmpty({ message: "Debe enviar el campo 'lightBetweenBases'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
-      message:
-        "El campo 'lightBetweenBases' debe ser un número (máximo 3 decimales)",
+      message: 'El largo de barra debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'lightBetweenBases' no puede ser un número negativo",
+    message: 'El largo de barra no puede ser un número menor o igual a 0',
   })
-  lightBetweenBases: number
+  barLength?: number
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'innerCore'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
-      message: "El campo 'innerCore' debe ser un número (máximo 3 decimales)",
+      message: 'La cantidad de vueltas debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'innerCore' no puede ser un número negativo",
+    message: 'La cantidad de vueltas no puede ser un número menor o igual a 0',
   })
-  innerCore: number
+  amountOfLaps?: number
 
-  @ValidateIf(
-    (o) =>
-      o.type === TechnicalSheetType.TRABA_OJAL ||
-      o.type === TechnicalSheetType.OJAL_OJAL,
-  )
-  @IsNotEmpty({ message: "Debe enviar el campo 'lightBetweenBasesTwo'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
-      message:
-        "El campo 'lightBetweenBasesTwo' debe ser un número (máximo 3 decimales)",
+      message: 'La luz entre bases I debe ser un número (máximo 3 decimales)',
+    },
+  )
+  @Min(0, {
+    message: 'La luz entre bases I debe ser mayor o igual a 0',
+  })
+  lightBetweenBases?: number
+
+  @IsOptional()
+  @IsNumber(
+    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
+    {
+      message: 'El interior (núcleo) debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'lightBetweenBasesTwo' no puede ser un número negativo",
+    message: 'El interior (núcleo) no puede ser un número menor o igual a 0',
+  })
+  innerCore?: number
+
+  @ShouldNotExistsIf((o) => o.type === TechnicalSheetType.TRABA_TRABA, {
+    message: `La luz entre bases II no corresponde a un espiral de tipo ${formatConstantValue(
+      TechnicalSheetType.TRABA_TRABA,
+    )}`,
+  })
+  @IsOptional()
+  @IsNumber(
+    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
+    {
+      message: 'La luz entre bases II debe ser un número (máximo 3 decimales)',
+    },
+  )
+  @Min(0, {
+    message: 'La luz entre bases II debe ser mayor o igual a 0',
   })
   lightBetweenBasesTwo?: number
 
-  @ValidateIf(
-    (o) =>
-      o.type === TechnicalSheetType.TRABA_OJAL ||
-      o.type === TechnicalSheetType.OJAL_OJAL,
-  )
-  @IsNotEmpty({ message: "Debe enviar el campo 'innerBases'" })
-  @IsNumber(
-    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
-    {
-      message: "El campo 'innerBases' debe ser un número (máximo 3 decimales)",
-    },
-  )
-  @IsPositive({
-    message: "El campo 'innerBases' no puede ser un número negativo",
+  @ShouldNotExistsIf((o) => o.type === TechnicalSheetType.TRABA_TRABA, {
+    message: `El interior entre bases I no corresponde a un espiral de tipo ${formatConstantValue(
+      TechnicalSheetType.TRABA_TRABA,
+    )}`,
   })
-  innerBases?: number
-
-  @ValidateIf((o) => o.type === TechnicalSheetType.OJAL_OJAL)
-  @IsNotEmpty({ message: "Debe enviar el campo 'innerBasesTwo'" })
+  @IsOptional()
   @IsNumber(
     { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
     {
       message:
-        "El campo 'innerBasesTwo' debe ser un número (máximo 3 decimales)",
+        'El interior entre bases I debe ser un número (máximo 3 decimales)',
     },
   )
   @IsPositive({
-    message: "El campo 'innerBasesTwo' no puede ser un número negativo",
+    message:
+      'El interior entre bases I no puede ser un número menor o igual a 0',
+  })
+  innerBases?: number
+
+  @ShouldNotExistsIf(
+    (o) =>
+      o.type === TechnicalSheetType.TRABA_TRABA ||
+      o.type === TechnicalSheetType.TRABA_OJAL,
+    {
+      message: `El interior entre bases II no corresponde a un espiral de tipo ${formatConstantValue(
+        TechnicalSheetType.TRABA_TRABA,
+      )} o ${formatConstantValue(TechnicalSheetType.TRABA_OJAL)}`,
+    },
+  )
+  @IsOptional()
+  @IsNumber(
+    { allowInfinity: false, allowNaN: false, maxDecimalPlaces: 3 },
+    {
+      message:
+        'El interior entre bases II debe ser un número (máximo 3 decimales)',
+    },
+  )
+  @IsPositive({
+    message:
+      'El interior entre bases II no puede ser un número menor o igual a 0',
   })
   innerBasesTwo?: number
 }
@@ -151,48 +163,4 @@ export class EditTechnicalSheetDto extends PartialType(
 ) {
   @Validate(RequireValueForEnum, [TechnicalSheetType])
   type: TechnicalSheetType
-
-  @IsOptional()
-  weight?: number
-
-  @IsOptional()
-  height?: number
-
-  @IsOptional()
-  wireThickness?: number
-
-  @IsOptional()
-  barLength?: number
-
-  @IsOptional()
-  amountOfLaps?: number
-
-  @IsOptional()
-  lightBetweenBases?: number
-
-  @IsOptional()
-  innerCore?: number
-
-  @ShouldNotExistsIf((o) => o.type === TechnicalSheetType.TRABA_TRABA, {
-    message: `El campo lightBetweenBasesTwo no debe existir si el tipo del espiral es ${TechnicalSheetType.TRABA_TRABA}`,
-  })
-  @IsOptional()
-  lightBetweenBasesTwo?: number
-
-  @ShouldNotExistsIf((o) => o.type === TechnicalSheetType.TRABA_TRABA, {
-    message: `El campo innerBases no debe existir si el tipo del espiral es ${TechnicalSheetType.TRABA_TRABA}`,
-  })
-  @IsOptional()
-  innerBases?: number
-
-  @ShouldNotExistsIf(
-    (o) =>
-      o.type === TechnicalSheetType.TRABA_TRABA ||
-      o.type === TechnicalSheetType.TRABA_OJAL,
-    {
-      message: `El campo innerBasesTwo no debe existir si el tipo del espiral es ${TechnicalSheetType.TRABA_TRABA} o ${TechnicalSheetType.TRABA_OJAL}`,
-    },
-  )
-  @IsOptional()
-  innerBasesTwo?: number
 }
