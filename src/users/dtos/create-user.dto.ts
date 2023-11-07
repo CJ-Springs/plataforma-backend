@@ -50,7 +50,7 @@ export class CreateUserDto {
   })
   @IsPhoneNumber('AR', {
     message:
-      "El campo 'phone' debe cumplir con el formato de un celular argentino (10 números mínimo)",
+      'El número de teléfono enviado no cumple con el formato de un celular argentino (10 dígitos => código de área + número de abonado)',
   })
   phone: string
 
