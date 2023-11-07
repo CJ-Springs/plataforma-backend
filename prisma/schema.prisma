@@ -388,6 +388,7 @@ model Deposit {
 model Invoice {
   id String @id @default(cuid())
 
+  number    Int           @unique @default(autoincrement())
   total     Float
   deposited Float
   dueDate   DateTime      @map("due_date") @db.Date
