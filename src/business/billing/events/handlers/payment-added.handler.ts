@@ -35,7 +35,7 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     await this.commandBus.execute(
       new IncreaseBalanceCommand({
         code: order.customerCode,
-        increment: payment.amount - payment.remaining,
+        increment: payment.netAmount,
       }),
     )
 

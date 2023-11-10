@@ -37,8 +37,9 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
     }
     const invoice = invoiceOrNull.getValue()
 
-    const addPaymentResult = invoice.addPayment({
+    const addPaymentResult = invoice.pay({
       ...payment,
+      totalAmount: payment.amount,
       status: PaymentStatus.ABONADO,
     })
     if (addPaymentResult.isFailure) {
@@ -55,7 +56,7 @@ export class AddPaymentHandler implements ICommandHandler<AddPaymentCommand> {
         payment.paymentMethod,
       )} de monto ${invoice.props.payments
         .at(-1)
-        .props.amount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
+        .props.totalAmount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
       data: invoice.toDTO(),
     }
   }

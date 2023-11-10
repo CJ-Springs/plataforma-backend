@@ -34,7 +34,7 @@ export class PaymentCanceledHandler
     await this.commandBus.execute(
       new ReduceBalanceCommand({
         code: order.customer.code,
-        reduction: canceledPayment.amount - canceledPayment.remaining,
+        reduction: canceledPayment.netAmount,
       }),
     )
 

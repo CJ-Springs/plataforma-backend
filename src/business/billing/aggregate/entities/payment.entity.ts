@@ -6,7 +6,8 @@ import { IToDTO } from '@/.shared/types'
 
 type PaymentProps = {
   paymentMethod: PaymentMethod
-  amount: Money
+  totalAmount: Money
+  netAmount: Money
   remaining: Money
   createdBy: string
   canceledBy?: string
@@ -18,7 +19,8 @@ type PaymentProps = {
 export type PaymentPropsDTO = {
   id: string
   paymentMethod: PaymentMethod
-  amount: number
+  totalAmount: number
+  netAmount: number
   remaining: number
   createdBy: string
   canceledBy?: string
@@ -35,6 +37,10 @@ export class Payment
     super(props, id)
   }
 
+  get id(): string {
+    return this._id.toString()
+  }
+
   static create(props: Partial<PaymentPropsDTO>): Result<Payment> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.paymentMethod, argumentName: 'paymentMethod' },
@@ -45,35 +51,45 @@ export class Payment
       return Result.fail(guardResult.getErrorValue())
     }
 
-    const validateAmount = Money.validate(props.amount, 'payment-amount', {
-      validateIsGreaterThanZero: true,
-    })
-    if (validateAmount.isFailure) {
-      return Result.fail(validateAmount.getErrorValue())
+    const validateTotalAmount = Money.validate(
+      props.totalAmount,
+      'payment-total-amount',
+      {
+        validateIsGreaterThanZero: true,
+      },
+    )
+    if (validateTotalAmount.isFailure) {
+      return Result.fail(validateTotalAmount.getErrorValue())
     }
 
-    if (props.remaining) {
-      const validateRemaining = Money.validate(
-        props.remaining,
-        'payment-remaining',
-        {
-          validateInRange: { min: 0, max: props.amount },
-        },
+    const remaining = props.remaining ?? 0
+    const netAmount = props.netAmount ?? props.totalAmount - remaining
+
+    if (netAmount + remaining !== props.totalAmount) {
+      return Result.fail(
+        'La suma del monto neto y el sobrante no coincide con el monto total del pago',
       )
-      if (validateRemaining.isFailure) {
-        return Result.fail(validateRemaining.getErrorValue())
-      }
+    }
+
+    if (props.paymentMethod === PaymentMethod.SALDO_A_FAVOR && remaining > 0) {
+      return Result.fail(
+        'Los pagos realizados con saldo a favor no pueden tener sobrante',
+      )
     }
 
     const payment = new Payment(
       {
         paymentMethod: props.paymentMethod,
-        amount: Money.fromString(
-          String(props.amount),
+        totalAmount: Money.fromString(
+          String(props.totalAmount),
+          Currency.create(Currencies.ARS),
+        ),
+        netAmount: Money.fromString(
+          String(netAmount),
           Currency.create(Currencies.ARS),
         ),
         remaining: Money.fromString(
-          String(props.remaining ?? 0),
+          String(remaining),
           Currency.create(Currencies.ARS),
         ),
         createdBy: props.createdBy,
@@ -92,16 +108,20 @@ export class Payment
     const validateAddition = Money.validate(addition, 'addition', {
       validateInRange: {
         min: 0,
-        max: this.props.amount.getValue() - this.props.remaining.getValue(),
+        max: this.props.netAmount.getValue(),
       },
     })
     if (validateAddition.isFailure) {
       return Result.fail(validateAddition.getErrorValue())
     }
 
-    this.props.remaining = this.props.remaining.add(
-      Money.fromString(String(addition), this.props.remaining.getCurrency()),
+    const additionToRemaining = Money.fromString(
+      String(addition),
+      this.props.totalAmount.getCurrency(),
     )
+
+    this.props.remaining = this.props.remaining.add(additionToRemaining)
+    this.props.netAmount = this.props.netAmount.substract(additionToRemaining)
 
     return Result.ok<Payment>(this)
   }
@@ -130,15 +150,18 @@ export class Payment
     }
 
     const validateReduction = Money.validate(reduction, 'paymentReduction', {
-      validateInRange: { min: 0, max: this.props.amount.getValue() },
+      validateInRange: { min: 0, max: this.props.totalAmount.getValue() },
     })
     if (validateReduction.isFailure) {
       return Result.fail(validateReduction.getErrorValue())
     }
 
-    this.props.amount = this.props.amount.substract(
-      Money.fromString(String(reduction), this.props.amount.getCurrency()),
+    this.props.totalAmount = this.props.totalAmount.substract(
+      Money.fromString(String(reduction), this.props.totalAmount.getCurrency()),
     )
+
+    // Podemos hacer esto porque solo se reduce el monto de pagos SIN sobrante
+    this.props.netAmount = this.props.totalAmount
 
     return Result.ok<Payment>(this)
   }
@@ -147,7 +170,8 @@ export class Payment
     return {
       id: this._id.toString(),
       ...this.props,
-      amount: this.props.amount.getValue(),
+      totalAmount: this.props.totalAmount.getValue(),
+      netAmount: this.props.netAmount.getValue(),
       remaining: this.props.remaining.getValue(),
       depositId: this.props.depositId?.toString(),
     }

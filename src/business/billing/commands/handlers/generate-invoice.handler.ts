@@ -64,7 +64,7 @@ export class GenerateInvoiceHandler
         status = InvoiceStatus.PAGADA
         deposited = roundedTotal
         payments.push({
-          amount: roundedTotal,
+          totalAmount: roundedTotal,
           createdBy,
           paymentMethod: PaymentMethod.SALDO_A_FAVOR,
           status: PaymentStatus.ABONADO,
@@ -72,7 +72,7 @@ export class GenerateInvoiceHandler
       } else {
         deposited = customerBalance
         payments.push({
-          amount: customerBalance,
+          totalAmount: customerBalance,
           createdBy,
           paymentMethod: PaymentMethod.SALDO_A_FAVOR,
           status: PaymentStatus.ABONADO,

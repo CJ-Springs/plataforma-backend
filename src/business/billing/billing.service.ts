@@ -72,13 +72,11 @@ export class BillingService {
     let availableAmount = paymentInfo.amount
 
     for await (const invoice of pendingInvoices) {
-      if (availableAmount === 0) {
-        break
-      }
+      if (availableAmount === 0) break
 
       const leftToPay = invoice.total - invoice.deposited
 
-      if (availableAmount >= leftToPay) {
+      if (availableAmount > leftToPay) {
         await this.commandBus.execute(
           new AddPaymentCommand({
             ...paymentInfo,
@@ -146,7 +144,7 @@ export class BillingService {
 
       if (!payment) break
 
-      if (payment.amount > paymentRemaining) {
+      if (payment.totalAmount >= paymentRemaining) {
         await this.commandBus.execute(
           new ReducePaymentAmountCommand({
             paymentId: payment.id,
@@ -164,7 +162,7 @@ export class BillingService {
           }),
         )
 
-        paymentRemaining -= payment.amount
+        paymentRemaining -= payment.totalAmount
       }
     } while (paymentRemaining > 0)
 

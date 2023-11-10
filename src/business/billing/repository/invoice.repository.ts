@@ -158,7 +158,7 @@ export class InvoiceRepository
         data: {
           status,
           deposited: {
-            increment: payment.amount - payment.remaining,
+            increment: payment.netAmount,
           },
           payments: {
             create: {
@@ -185,7 +185,7 @@ export class InvoiceRepository
         data: {
           status,
           deposited: {
-            decrement: payment.amount - payment.remaining,
+            decrement: payment.netAmount,
           },
           payments: {
             update: {
@@ -225,7 +225,10 @@ export class InvoiceRepository
                 id: payment.id,
               },
               data: {
-                amount: {
+                totalAmount: {
+                  decrement: payment.reduction,
+                },
+                netAmount: {
                   decrement: payment.reduction,
                 },
               },

@@ -7,7 +7,8 @@ type PaymentAddedEventProps = {
   payment: {
     id: string
     paymentMethod: PaymentMethod
-    amount: number
+    totalAmount: number
+    netAmount: number
     remaining: number
     createdBy: string
     canceledBy?: string

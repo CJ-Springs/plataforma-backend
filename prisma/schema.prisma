@@ -409,7 +409,8 @@ model Payment {
   id String @id @default(cuid())
 
   paymentMethod PaymentMethod @map("payment_method")
-  amount        Float
+  totalAmount   Float         @map("total_amount")
+  netAmount     Float         @map("net_amount")
   remaining     Float
   depositId     String?       @map("deposit_id")
   metadata      Json?

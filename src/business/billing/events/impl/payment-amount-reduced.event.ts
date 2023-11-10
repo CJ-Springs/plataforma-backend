@@ -6,7 +6,8 @@ type PaymentAmountReducedEventProps = {
   status: InvoiceStatus
   payment: {
     id: string
-    amount: number
+    totalAmount: number
+    netAmount: number
     reduction: number
   }
 }
