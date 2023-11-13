@@ -1,7 +1,3 @@
-import { InvoiceGeneratedHandler } from './invoice-generated.handler'
-import { PaymentAmountReducedHandler } from './payment-amount-reduced.handler'
+import { InvoiceDuedHandler } from './invoice-dued.handler'
 
-export const EventHandlers = [
-  InvoiceGeneratedHandler,
-  PaymentAmountReducedHandler,
-]
+export const EventHandlers = [InvoiceDuedHandler]

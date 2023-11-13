@@ -1,3 +1,4 @@
+import { InvoiceStatus } from '@prisma/client'
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { BillingService } from '../../billing.service'
@@ -23,57 +24,60 @@ export class PaymentCanceledHandler
     })
 
     const {
-      data: { orderId, payment: canceledPayment },
+      data: { orderId, status, payment: canceledPayment },
     } = event
 
-    const order = await this.prisma.saleOrder.findUnique({
+    const { customer } = await this.prisma.saleOrder.findUnique({
       where: { id: orderId },
-      select: { customer: { select: { code: true, balance: true } } },
+      select: { customer: { select: { code: true } } },
     })
 
-    await this.commandBus.execute(
-      new ReduceBalanceCommand({
-        code: order.customer.code,
-        reduction: canceledPayment.netAmount,
-      }),
-    )
+    if (status === InvoiceStatus.DEUDA) {
+      await this.commandBus.execute(
+        new ReduceBalanceCommand({
+          code: customer.code,
+          reduction: canceledPayment.netAmount,
+        }),
+      )
+    }
 
     if (canceledPayment.remaining > 0) {
-      const customerBalance = order.customer.balance
+      const { balance: customerBalance } =
+        await this.prisma.customer.findUnique({
+          where: { code: customer.code },
+          select: { balance: true },
+        })
 
-      if (customerBalance >= canceledPayment.remaining) {
-        return await this.commandBus.execute(
-          new ReduceBalanceCommand({
-            code: order.customer.code,
-            reduction: canceledPayment.remaining,
-          }),
-        )
-      }
-
-      let paymentRemaining = canceledPayment.remaining
+      let canceledPaymentRemaining = canceledPayment.remaining
 
       if (customerBalance > 0) {
+        const reduceFromBalance =
+          canceledPaymentRemaining > customerBalance
+            ? customerBalance
+            : canceledPaymentRemaining
+
         await this.commandBus.execute(
           new ReduceBalanceCommand({
-            code: order.customer.code,
-            reduction: customerBalance,
+            code: customer.code,
+            reduction: reduceFromBalance,
           }),
         )
 
-        paymentRemaining -= customerBalance
+        canceledPaymentRemaining -= reduceFromBalance
+        if (canceledPaymentRemaining === 0) return
       }
 
       const { data } =
         await this.billingService.onPaymentOrDepositWithRemainingCanceled(
-          order.customer.code,
-          paymentRemaining,
+          customer.code,
+          canceledPaymentRemaining,
           canceledPayment.canceledBy,
         )
 
       if (data.remaining) {
         await this.commandBus.execute(
           new ReduceBalanceCommand({
-            code: order.customer.code,
+            code: customer.code,
             reduction: data.remaining,
           }),
         )

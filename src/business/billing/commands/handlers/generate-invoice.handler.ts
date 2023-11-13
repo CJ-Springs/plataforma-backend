@@ -1,6 +1,11 @@
 import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
-import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs'
+import {
+  CommandBus,
+  CommandHandler,
+  EventPublisher,
+  ICommandHandler,
+} from '@nestjs/cqrs'
 
 import { Invoice } from '../../aggregate/invoice.aggregate'
 import { PaymentPropsDTO } from '../../aggregate/entities/payment.entity'
@@ -10,12 +15,14 @@ import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { DateTime, Result, Validate } from '@/.shared/helpers'
 import { StandardResponse } from '@/.shared/types'
 import { PrismaService } from '@/.shared/infra/prisma.service'
+import { ReduceBalanceCommand } from '@/business/customers/commands/impl/reduce-balance.command'
 
 @CommandHandler(GenerateInvoiceCommand)
 export class GenerateInvoiceHandler
   implements ICommandHandler<GenerateInvoiceCommand>
 {
   constructor(
+    private readonly commandBus: CommandBus,
     private readonly logger: LoggerService,
     private readonly prisma: PrismaService,
     private readonly publisher: EventPublisher,
@@ -42,12 +49,18 @@ export class GenerateInvoiceHandler
       .findUniqueOrThrow({
         where: { id: orderId },
         select: {
-          customer: { select: { paymentDeadline: true, balance: true } },
+          customer: {
+            select: { code: true, paymentDeadline: true, balance: true },
+          },
         },
       })
       .catch(() => {
         throw new NotFoundException(`La orden ${orderId} no se ha encontrado`)
       })
+
+    const dueDate = DateTime.today().addDays(
+      existingOrder.customer.paymentDeadline,
+    )
 
     const total = items.reduce((acc, item) => {
       return acc + item.salePrice * item.quantity
@@ -55,40 +68,41 @@ export class GenerateInvoiceHandler
     const roundedTotal = Math.round(total)
 
     const customerBalance = existingOrder.customer.balance
-    let status: InvoiceStatus = InvoiceStatus.POR_PAGAR
+    let initialStatus: InvoiceStatus = InvoiceStatus.POR_PAGAR
     let deposited = 0
     const payments: Partial<PaymentPropsDTO>[] = []
 
     if (customerBalance > 0) {
+      let payment: Partial<PaymentPropsDTO> = {
+        createdBy,
+        paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+        status: PaymentStatus.ABONADO,
+      }
+
       if (customerBalance >= roundedTotal) {
-        status = InvoiceStatus.PAGADA
+        initialStatus = InvoiceStatus.PAGADA
         deposited = roundedTotal
-        payments.push({
-          totalAmount: roundedTotal,
-          createdBy,
-          paymentMethod: PaymentMethod.SALDO_A_FAVOR,
-          status: PaymentStatus.ABONADO,
-        })
+        payment = { ...payment, totalAmount: roundedTotal }
       } else {
         deposited = customerBalance
-        payments.push({
-          totalAmount: customerBalance,
-          createdBy,
-          paymentMethod: PaymentMethod.SALDO_A_FAVOR,
-          status: PaymentStatus.ABONADO,
-        })
+        payment = { ...payment, totalAmount: customerBalance }
       }
-    }
 
-    const dueDate = DateTime.today().addDays(
-      existingOrder.customer.paymentDeadline,
-    )
+      await this.commandBus.execute(
+        new ReduceBalanceCommand({
+          code: existingOrder.customer.code,
+          reduction: payment.totalAmount,
+        }),
+      )
+
+      payments.push(payment)
+    }
 
     const invoiceOrError = Invoice.create({
       orderId,
       deposited,
       dueDate: dueDate.getDate(),
-      status,
+      status: initialStatus,
       total: roundedTotal,
       payments,
     })

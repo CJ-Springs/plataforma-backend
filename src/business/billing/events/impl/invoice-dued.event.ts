@@ -1,5 +1,6 @@
 type InvoiceDuedEventProps = {
   id: string
+  leftToPay: number
 }
 
 export class InvoiceDuedEvent {

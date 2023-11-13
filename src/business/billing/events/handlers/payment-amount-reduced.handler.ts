@@ -1,7 +1,8 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
+import { InvoiceStatus } from '@prisma/client'
 
-import { PaymentAmountReducedEvent } from '@/business/billing/events/impl/payment-amount-reduced.event'
-import { ReduceBalanceCommand } from '../../commands/impl/reduce-balance.command'
+import { PaymentAmountReducedEvent } from '../impl/payment-amount-reduced.event'
+import { ReduceBalanceCommand } from '@/business/customers/commands/impl/reduce-balance.command'
 import { LoggerService } from '@/.shared/helpers/logger/logger.service'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 
@@ -17,23 +18,25 @@ export class PaymentAmountReducedHandler
 
   async handle(event: PaymentAmountReducedEvent) {
     this.logger.log(
-      'Customers',
+      'Billing',
       'Ejecutando el PaymentAmountReduced event handler',
       { logType: 'event-handler' },
     )
 
     const { data } = event
 
-    const order = await this.prisma.saleOrder.findUnique({
-      where: { id: data.orderId },
-      select: { customer: { select: { code: true } } },
-    })
+    if (data.status === InvoiceStatus.DEUDA) {
+      const order = await this.prisma.saleOrder.findUnique({
+        where: { id: data.orderId },
+        select: { customer: { select: { code: true } } },
+      })
 
-    return this.commandBus.execute(
-      new ReduceBalanceCommand({
-        code: order.customer.code,
-        reduction: data.payment.reduction,
-      }),
-    )
+      return this.commandBus.execute(
+        new ReduceBalanceCommand({
+          code: order.customer.code,
+          reduction: data.payment.reduction,
+        }),
+      )
+    }
   }
 }

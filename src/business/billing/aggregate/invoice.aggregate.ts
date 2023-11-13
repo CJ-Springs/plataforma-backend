@@ -116,7 +116,10 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
 
     this.props.status = InvoiceStatus.DEUDA
 
-    const event = new InvoiceDuedEvent({ id: this.props.id.toString() })
+    const event = new InvoiceDuedEvent({
+      id: this.props.id.toString(),
+      leftToPay: this.getLeftToPay(),
+    })
     this.apply(event)
 
     return Result.ok<Invoice>(this)
@@ -141,6 +144,8 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     this.props.payments.push(payment)
     this.props.deposited = this.props.deposited.add(payment.props.netAmount)
 
+    const prevStatus = this.props.status
+
     if (this.getLeftToPay() === 0) {
       this.props.status = InvoiceStatus.PAGADA
     }
@@ -148,6 +153,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     const event = new PaymentAddedEvent({
       invoiceId: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
+      prevStatus,
       status: this.props.status,
       payment: payment.toDTO(),
     })

@@ -1,4 +1,4 @@
-import { PaymentMethod } from '@prisma/client'
+import { InvoiceStatus, PaymentMethod } from '@prisma/client'
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs'
 
 import { PaymentAddedEvent } from '../impl/payment-added.event'
@@ -22,30 +22,30 @@ export class PaymentAddedHandler implements IEventHandler<PaymentAddedEvent> {
     })
 
     const {
-      data: { orderId, payment },
+      data: { orderId, payment, prevStatus },
     } = event
-
-    if (payment.paymentMethod === PaymentMethod.SALDO_A_FAVOR) return
 
     const order = await this.prisma.saleOrder.findUnique({
       where: { id: orderId },
       select: { customerCode: true },
     })
 
-    await this.commandBus.execute(
-      new IncreaseBalanceCommand({
-        code: order.customerCode,
-        increment: payment.netAmount,
-      }),
-    )
+    if (prevStatus === InvoiceStatus.DEUDA) {
+      await this.commandBus.execute(
+        new IncreaseBalanceCommand({
+          code: order.customerCode,
+          increment: payment.netAmount,
+        }),
+      )
+    }
 
     if (payment.remaining > 0) {
-      // Creo que se deberían registrar como pagos de SALDO A FAVOR
       const { data } = await this.billingService.payBulkInvoices(
         order.customerCode,
+        payment.remaining,
         {
-          ...payment,
-          amount: payment.remaining,
+          paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+          createdBy: payment.createdBy,
         },
       )
 

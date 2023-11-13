@@ -23,10 +23,10 @@ export class DepositMadeHandler implements IEventHandler<DepositMadeEvent> {
 
     const { data } = await this.billingService.payBulkInvoices(
       deposit.customerCode,
+      deposit.amount,
       {
         createdBy: deposit.createdBy,
         paymentMethod: deposit.paymentMethod,
-        amount: deposit.amount,
         depositId: deposit.id,
         metadata: deposit.metadata,
       },
@@ -46,8 +46,6 @@ export class DepositMadeHandler implements IEventHandler<DepositMadeEvent> {
           addition: data.remaining,
         }),
       )
-
-      return
     }
   }
 }
