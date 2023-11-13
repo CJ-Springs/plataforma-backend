@@ -6,7 +6,8 @@ type PaymentCanceledEventProps = {
   status: InvoiceStatus
   payment: {
     id: string
-    amount: number
+    totalAmount: number
+    netAmount: number
     remaining: number
     canceledBy: string
   }

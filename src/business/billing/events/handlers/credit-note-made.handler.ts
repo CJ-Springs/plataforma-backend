@@ -30,17 +30,22 @@ export class CreditNoteMadeHandler
       0,
     )
 
-    await this.commandBus.execute(
-      new IncreaseBalanceCommand({
-        code: creditNote.customerCode,
-        increment: creditNoteTotalAmount,
-      }),
+    const { data } = await this.billingService.payBulkInvoices(
+      creditNote.customerCode,
+      creditNoteTotalAmount,
+      {
+        createdBy: creditNote.createdBy,
+        paymentMethod: PaymentMethod.SALDO_A_FAVOR,
+      },
     )
 
-    await this.billingService.payBulkInvoices(creditNote.customerCode, {
-      createdBy: creditNote.createdBy,
-      paymentMethod: PaymentMethod.SALDO_A_FAVOR,
-      amount: creditNoteTotalAmount,
-    })
+    if (data.remaining) {
+      await this.commandBus.execute(
+        new IncreaseBalanceCommand({
+          code: creditNote.customerCode,
+          increment: data.remaining,
+        }),
+      )
+    }
   }
 }

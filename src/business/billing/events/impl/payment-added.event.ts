@@ -3,11 +3,13 @@ import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 type PaymentAddedEventProps = {
   invoiceId: string
   orderId: string
+  prevStatus: InvoiceStatus
   status: InvoiceStatus
   payment: {
     id: string
     paymentMethod: PaymentMethod
-    amount: number
+    totalAmount: number
+    netAmount: number
     remaining: number
     createdBy: string
     canceledBy?: string

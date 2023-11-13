@@ -46,32 +46,29 @@ export class DepositCanceledHandler
           select: { balance: true },
         })
 
-      if (customerBalance >= canceledDeposit.remaining) {
-        return await this.commandBus.execute(
-          new ReduceBalanceCommand({
-            code: canceledDeposit.customerCode,
-            reduction: canceledDeposit.remaining,
-          }),
-        )
-      }
-
-      let depositRemaining = canceledDeposit.remaining
+      let canceledDepositRemaining = canceledDeposit.remaining
 
       if (customerBalance > 0) {
+        const reduceFromBalance =
+          canceledDepositRemaining > customerBalance
+            ? customerBalance
+            : canceledDepositRemaining
+
         await this.commandBus.execute(
           new ReduceBalanceCommand({
             code: canceledDeposit.customerCode,
-            reduction: customerBalance,
+            reduction: reduceFromBalance,
           }),
         )
 
-        depositRemaining -= customerBalance
+        canceledDepositRemaining -= reduceFromBalance
+        if (canceledDepositRemaining === 0) return
       }
 
       const { data } =
         await this.billingService.onPaymentOrDepositWithRemainingCanceled(
           canceledDeposit.customerCode,
-          depositRemaining,
+          canceledDepositRemaining,
           canceledDeposit.canceledBy,
         )
 

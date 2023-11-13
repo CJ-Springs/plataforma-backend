@@ -53,8 +53,8 @@ export class BillingService {
 
   async payBulkInvoices(
     customerCode: number,
+    amount: number,
     paymentInfo: {
-      amount: number
       paymentMethod: PaymentMethod
       createdBy: string
       depositId?: string
@@ -69,16 +69,12 @@ export class BillingService {
       customerCode,
     )
 
-    let availableAmount = paymentInfo.amount
-
     for await (const invoice of pendingInvoices) {
-      if (availableAmount === 0) {
-        break
-      }
+      if (amount <= 0) break
 
       const leftToPay = invoice.total - invoice.deposited
 
-      if (availableAmount >= leftToPay) {
+      if (amount > leftToPay) {
         await this.commandBus.execute(
           new AddPaymentCommand({
             ...paymentInfo,
@@ -87,17 +83,18 @@ export class BillingService {
           }),
         )
 
-        availableAmount -= leftToPay
+        amount -= leftToPay
       } else {
         await this.commandBus.execute(
           new AddPaymentCommand({
             ...paymentInfo,
-            amount: availableAmount,
+            amount,
             invoiceId: invoice.id,
           }),
         )
 
-        availableAmount = 0
+        amount = 0
+        break
       }
     }
 
@@ -106,7 +103,7 @@ export class BillingService {
       status: 200,
       message: '',
       data: {
-        remaining: availableAmount > 0 ? availableAmount : null,
+        remaining: amount > 0 ? amount : null,
       },
     }
   }
@@ -124,11 +121,7 @@ export class BillingService {
       },
     )
 
-    let paymentRemaining = remaining
-
-    do {
-      if (paymentRemaining <= 0) break
-
+    while (remaining > 0) {
       const payment = await this.prisma.payment.findFirst({
         where: {
           AND: [
@@ -146,17 +139,7 @@ export class BillingService {
 
       if (!payment) break
 
-      if (payment.amount > paymentRemaining) {
-        await this.commandBus.execute(
-          new ReducePaymentAmountCommand({
-            paymentId: payment.id,
-            reduction: paymentRemaining,
-          }),
-        )
-
-        paymentRemaining = 0
-        break
-      } else {
+      if (remaining >= payment.totalAmount) {
         await this.commandBus.execute(
           new CancelPaymentCommand({
             paymentId: payment.id,
@@ -164,16 +147,26 @@ export class BillingService {
           }),
         )
 
-        paymentRemaining -= payment.amount
+        remaining -= payment.totalAmount
+      } else {
+        await this.commandBus.execute(
+          new ReducePaymentAmountCommand({
+            paymentId: payment.id,
+            reduction: remaining,
+          }),
+        )
+
+        remaining = 0
+        break
       }
-    } while (paymentRemaining > 0)
+    }
 
     return {
       success: true,
       status: 200,
       message: '',
       data: {
-        remaining: paymentRemaining > 0 ? paymentRemaining : null,
+        remaining: remaining > 0 ? remaining : null,
       },
     }
   }
@@ -203,6 +196,12 @@ export class BillingService {
         new DueInvoiceCommand({ invoiceId: invoice.id }),
       )
     }
+
+    console.log(
+      `[${today.getFormattedDate({ timeZone: 'UTC' })}]: Se vencieron ${
+        unpaidAndExpiredInvoices.length
+      } facturas`,
+    )
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_7AM, {

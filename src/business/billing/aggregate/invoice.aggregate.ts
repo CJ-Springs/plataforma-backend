@@ -58,7 +58,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     const validateDeposited = Money.validate(props.deposited, 'deposited', {
-      validateIsGreaterOrEqualThanZero: true,
+      validateInRange: { min: 0, max: props.total },
     })
     if (validateDeposited.isFailure) {
       return Result.fail(validateDeposited.getErrorValue())
@@ -116,14 +116,16 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
 
     this.props.status = InvoiceStatus.DEUDA
 
-    const event = new InvoiceDuedEvent({ id: this.props.id.toString() })
+    const event = new InvoiceDuedEvent({
+      id: this.props.id.toString(),
+      leftToPay: this.getLeftToPay(),
+    })
     this.apply(event)
 
     return Result.ok<Invoice>(this)
   }
 
-  // maybe pay fits better
-  addPayment(props: Partial<PaymentPropsDTO>): Result<Invoice> {
+  pay(props: Partial<PaymentPropsDTO>): Result<Invoice> {
     if (this.props.status === InvoiceStatus.PAGADA) {
       return Result.fail('La factura ya ha sido pagada en su totalidad')
     }
@@ -134,23 +136,24 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
     const payment = paymentOrError.getValue()
 
-    const remaining = payment.props.amount.getValue() - this.getLeftToPay()
+    const remaining = payment.props.totalAmount.getValue() - this.getLeftToPay()
     if (remaining > 0) {
       payment.addToRemaining(remaining)
     }
 
     this.props.payments.push(payment)
-    this.props.deposited = this.props.deposited.add(
-      payment.props.amount.substract(payment.props.remaining),
-    )
+    this.props.deposited = this.props.deposited.add(payment.props.netAmount)
 
-    if (this.props.deposited.getValue() === this.props.total.getValue()) {
+    const prevStatus = this.props.status
+
+    if (this.getLeftToPay() === 0) {
       this.props.status = InvoiceStatus.PAGADA
     }
 
     const event = new PaymentAddedEvent({
       invoiceId: this.props.id.toString(),
       orderId: this.props.orderId.toString(),
+      prevStatus,
       status: this.props.status,
       payment: payment.toDTO(),
     })
@@ -171,7 +174,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     this.props.deposited = this.props.deposited.substract(
-      payment.props.amount.substract(payment.props.remaining),
+      payment.props.netAmount,
     )
 
     if (this.props.status === InvoiceStatus.PAGADA) {
@@ -187,8 +190,9 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       orderId: this.props.orderId.toString(),
       status: this.props.status,
       payment: {
-        id: payment.toDTO().id,
-        amount: payment.props.amount.getValue(),
+        id: payment.id,
+        totalAmount: payment.props.totalAmount.getValue(),
+        netAmount: payment.props.netAmount.getValue(),
         remaining: payment.props.remaining.getValue(),
         canceledBy: payment.props.canceledBy,
       },
@@ -210,7 +214,10 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
     }
 
     this.props.deposited = this.props.deposited.substract(
-      Money.fromString(String(reduction), payment.props.amount.getCurrency()),
+      Money.fromString(
+        String(reduction),
+        payment.props.totalAmount.getCurrency(),
+      ),
     )
 
     if (this.props.status === InvoiceStatus.PAGADA) {
@@ -226,8 +233,9 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
       orderId: this.props.orderId.toString(),
       status: this.props.status,
       payment: {
-        id: payment.toDTO().id,
-        amount: payment.props.amount.getValue(),
+        id: payment.id,
+        totalAmount: payment.props.totalAmount.getValue(),
+        netAmount: payment.props.netAmount.getValue(),
         reduction,
       },
     })
@@ -241,9 +249,7 @@ export class Invoice extends AggregateRoot implements IToDTO<InvoicePropsDTO> {
   }
 
   private findPayment(paymentId: string): Payment {
-    return this.props.payments.find(
-      (payment) => payment.toDTO().id === paymentId,
-    )
+    return this.props.payments.find((payment) => payment.id === paymentId)
   }
 
   toDTO(): InvoicePropsDTO {

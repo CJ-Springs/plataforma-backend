@@ -77,8 +77,8 @@ export class PayWithCustomerBalanceHandler
         ? customer.balance
         : invoice.getLeftToPay()
 
-    const addPaymentResult = invoice.addPayment({
-      amount,
+    const addPaymentResult = invoice.pay({
+      totalAmount: amount,
       createdBy,
       paymentMethod: PaymentMethod.SALDO_A_FAVOR,
       status: PaymentStatus.ABONADO,
@@ -104,7 +104,7 @@ export class PayWithCustomerBalanceHandler
         PaymentMethod.SALDO_A_FAVOR,
       )} de monto ${invoice.props.payments
         .at(-1)
-        .props.amount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
+        .props.totalAmount.getFormattedMoney()} registrado a la factura ${invoiceId}`,
       data: invoice.toDTO(),
     }
   }
