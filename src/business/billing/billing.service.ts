@@ -1,5 +1,6 @@
 import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client'
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { CommandBus } from '@nestjs/cqrs'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
@@ -24,6 +25,7 @@ export class BillingService {
     private readonly commandBus: CommandBus,
     private readonly logger: LoggerService,
     private readonly notification: NotificationsService,
+    private readonly configService: ConfigService,
   ) {}
 
   private async getCustomerPendingOrDueInvoices(customerCode: number) {
@@ -223,6 +225,7 @@ export class BillingService {
         ],
       },
       select: {
+        id: true,
         total: true,
         deposited: true,
         order: {
@@ -271,9 +274,14 @@ export class BillingService {
       })
     }
 
+    const isProduction = this.configService.get('NODE_ENV') === 'production'
+
     const groupInvoicesByCustomer = invoicesThatDueToday.reduce(
       (acc, { order, ...invoice }) => {
         const { code, ...customer } = order.customer
+        const href = `${
+          isProduction ? '' : 'http://localhost:3001'
+        }/clientes/${code}/boletas/${invoice.id}`
 
         if (acc.has(code)) {
           const customerInvoices = acc.get(code)
@@ -283,10 +291,11 @@ export class BillingService {
             invoices: [
               ...customerInvoices.invoices,
               {
-                order: `${customerInvoices.invoices.length + 1})`,
+                order: customerInvoices.invoices.length + 1,
                 deposited: formatMoney(invoice.deposited),
                 total: formatMoney(invoice.total),
                 toPay: formatMoney(invoice.total - invoice.deposited),
+                href,
                 items: order.items.map((item) => ({
                   ...item,
                   price: formatMoney(item.price),
@@ -304,10 +313,11 @@ export class BillingService {
           customerName: customer.name,
           invoices: [
             {
-              order: '1)',
+              order: 1,
               deposited: formatMoney(invoice.deposited),
               total: formatMoney(invoice.total),
               toPay: formatMoney(invoice.total - invoice.deposited),
+              href,
               items: order.items.map((item) => ({
                 ...item,
                 price: formatMoney(item.price),

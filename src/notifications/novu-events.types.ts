@@ -11,10 +11,11 @@ export type InvoicesDueTodayNotificationPayload = {
   customerEmail: string
   customerPhone: string
   invoices: {
-    order: string
+    order: number
     deposited: string
     total: string
     toPay: string
+    href: string
     items: {
       productName: string
       requested: number
