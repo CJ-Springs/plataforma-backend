@@ -50,8 +50,8 @@ export class RegisterCustomerDto {
 
   @IsNotEmpty({ message: "Debe enviar el campo 'paymentDeadline'" })
   @IsInt({ message: "El campo 'paymentDeadline' debe ser un número entero" })
-  @IsPositive({
-    message: "El campo 'paymentDeadline' no puede ser un número negativo",
+  @Min(0, {
+    message: "El campo 'paymentDeadline' debe ser un número mayor o igual a 0",
   })
   paymentDeadline: number
 
