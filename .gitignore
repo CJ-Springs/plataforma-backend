@@ -5,6 +5,9 @@
 # envs
 .env
 
+# certificates
+/prisma/*.cer
+
 # Logs
 logs
 *.log

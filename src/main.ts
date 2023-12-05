@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core'
+import { ConfigService } from '@nestjs/config'
 import { ValidationPipe } from '@nestjs/common'
 import * as morgan from 'morgan'
+import * as path from 'path'
 import helmet from 'helmet'
+import { writeFileSync } from 'fs'
 
 import { AppModule } from './app.module'
 import { HttpExceptionFilter } from './.shared/filters'
@@ -21,6 +24,12 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
     }),
+  )
+
+  const configService = app.get(ConfigService)
+  writeFileSync(
+    path.join(process.cwd(), 'prisma/ca-certificate.cer'),
+    configService.get('SSL_CERTIFICATE'),
   )
 
   await app.listen(PORT)
