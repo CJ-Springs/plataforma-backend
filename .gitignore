@@ -2,6 +2,12 @@
 /dist
 /node_modules
 
+# envs
+.env
+
+# certificates
+/prisma/*.cer
+
 # Logs
 logs
 *.log
