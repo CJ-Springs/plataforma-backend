@@ -260,8 +260,8 @@ export class BillingService {
     if (invoicesThatDueToday.length === 0) {
       return this.notification.trigger(NovuEvent.EMPTY_INVOICES_DUE_TODAY, {
         to: {
-          subscriberId: 'clivqlm380000z8wb6xi1hd8q',
-          email: 'francomusolino55@gmail.com',
+          subscriberId: this.configService.get('SUPER_ADMIN_SUBSCRIBER_ID'),
+          email: this.configService.get('SUPER_ADMIN_EMAIL'),
         },
         payload: {
           today: today.getFormattedDate({
@@ -280,7 +280,9 @@ export class BillingService {
       (acc, { order, ...invoice }) => {
         const { code, ...customer } = order.customer
         const href = `${
-          isProduction ? '' : 'http://localhost:3001'
+          isProduction
+            ? 'https://backoffice.cjsprings.com'
+            : 'http://localhost:3001'
         }/clientes/${code}/boletas/${invoice.id}`
 
         if (acc.has(code)) {
@@ -346,8 +348,8 @@ export class BillingService {
 
       this.notification.trigger(NovuEvent.INVOICES_DUE_TODAY, {
         to: {
-          subscriberId: 'clivqlm380000z8wb6xi1hd8q',
-          email: 'francomusolino55@gmail.com',
+          subscriberId: this.configService.get('SUPER_ADMIN_SUBSCRIBER_ID'),
+          email: this.configService.get('SUPER_ADMIN_EMAIL'),
         },
         payload: notificationPayload as any,
       })
