@@ -1,5 +1,18 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  Param,
+  ParseFilePipe,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
+import { FileInterceptor } from '@nestjs/platform-express'
 
 import { AddProductDto, UpdateProductDto } from './dtos'
 import { AddProductCommand } from './commands/impl/add-product.command'
@@ -8,10 +21,41 @@ import {
   PermissionGuard,
   RequiredPermissions,
 } from '@/auth/authorization/guards'
+import { ProductsService } from './products.service'
 
 @Controller('productos')
 export class ProductsController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly productsService: ProductsService,
+  ) {}
+
+  @RequiredPermissions('backoffice::registrar-productos-en-masa')
+  @UseGuards(PermissionGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('registrar-productos')
+  async registerBulkProducts(
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        validators: [
+          new FileTypeValidator({ fileType: 'text/csv' }),
+          new MaxFileSizeValidator({
+            maxSize: 500_000, // 500KB
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+    @Body('fathers') fathers?: string,
+  ) {
+    const products = await this.productsService.parseProductsFromCSVFile(
+      file.buffer,
+      !!fathers,
+    )
+
+    return products
+  }
 
   @RequiredPermissions('backoffice::añadir-producto')
   @UseGuards(PermissionGuard)
