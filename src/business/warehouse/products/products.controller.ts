@@ -54,7 +54,7 @@ export class ProductsController {
       !!fathers,
     )
 
-    return products
+    return await this.productsService.registerBulkProducts(products, !!fathers)
   }
 
   @RequiredPermissions('backoffice::añadir-producto')
