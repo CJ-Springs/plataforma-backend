@@ -49,7 +49,7 @@ export class ProductsController {
     file: Express.Multer.File,
     @Body('fathers') fathers?: string,
   ) {
-    const products = await this.productsService.parseProductsFromCSVFile(
+    const products = this.productsService.parseProductsFromCSVFile(
       file.buffer,
       !!fathers,
     )

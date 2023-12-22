@@ -4,15 +4,19 @@ import * as Papa from 'papaparse'
 
 import { LoggerService } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
+import { Types } from '@/.shared/types'
+import { EventBus } from '@nestjs/cqrs'
+import { ProductAddedEvent } from './events/impl/product-added.event'
 
 @Injectable()
 export class ProductsService {
   constructor(
+    private readonly eventBus: EventBus,
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
   ) {}
 
-  async parseProductsFromCSVFile(file: Buffer, fathers: boolean) {
+  parseProductsFromCSVFile(file: Buffer, fathers: boolean): ParsedProduct[] {
     this.logger.log('products', 'Parsing CSV file', {
       logType: 'service',
     })
@@ -20,13 +24,13 @@ export class ProductsService {
     const { data } = Papa.parse(file.toString())
     const [keys, ...products] = data as Array<string[]>
 
-    const requiredFields = fathers ? fathersFields : associatedFields
+    const productFields = fathers ? fathersFields : associatedFields
 
-    const allKeysMustBeIncluded = requiredFields
+    const allKeysMustBeIncluded = productFields
       .map((field) => field.key)
       .every((key) => keys.includes(key))
 
-    if (!allKeysMustBeIncluded || requiredFields.length < keys.length) {
+    if (!allKeysMustBeIncluded || productFields.length < keys.length) {
       throw new BadRequestException(
         'Faltan o sobran campos en el archivo enviado',
       )
@@ -35,9 +39,7 @@ export class ProductsService {
     const parseProducts = products.reduce<ParsedProduct[]>((acc, csvValues) => {
       const product = csvValues.reduce<any>((acc, value, i) => {
         let actualValue: any = value
-        const field = requiredFields.find(
-          (requiredField) => requiredField.key === keys[i],
-        )
+        const field = productFields.find((field) => field.key === keys[i])
 
         if (value === '' && field.type !== 'boolean') actualValue = null
         else if (field.type === 'number') actualValue = Number(value)
@@ -93,14 +95,22 @@ export class ProductsService {
             connectToSpring = createdSpring.code
           }
 
-          await tx.product.create({
+          const createdProduct = await tx.product.create({
             data: {
               ...product,
               amountOfSales: 0,
               price: { create: { price } },
               spring: { connect: { code: connectToSpring } },
             },
+            include: {
+              price: true,
+              spring: {
+                include: { stock: true },
+              },
+            },
           })
+
+          this.eventBus.publish(new ProductAddedEvent(createdProduct))
 
           successfulProducts.push({ code: product.code })
         } catch (err) {
@@ -141,9 +151,7 @@ type ParsedProduct = {
   quantityOnHand?: number
 }
 
-type Types = 'string' | 'number' | 'boolean'
-
-const productFields: { key: string; type: Types }[] = [
+const productFields: { key: keyof ParsedProduct; type: Types }[] = [
   {
     key: 'code',
     type: 'string',
