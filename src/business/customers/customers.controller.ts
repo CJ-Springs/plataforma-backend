@@ -35,7 +35,7 @@ export class CustomersController {
   @UseGuards(PermissionGuard)
   @UseInterceptors(FileInterceptor('file'))
   @Post('registrar-clientes')
-  async registerBulkProducts(
+  async registerBulkCustomers(
     @UploadedFile(
       new ParseFilePipe({
         fileIsRequired: true,
