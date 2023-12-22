@@ -1,11 +1,11 @@
 import { ProductPosition, ProductType } from '@prisma/client'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { EventBus } from '@nestjs/cqrs'
 import * as Papa from 'papaparse'
 
 import { LoggerService } from '@/.shared/helpers'
 import { PrismaService } from '@/.shared/infra/prisma.service'
 import { Types } from '@/.shared/types'
-import { EventBus } from '@nestjs/cqrs'
 import { ProductAddedEvent } from './events/impl/product-added.event'
 
 @Injectable()

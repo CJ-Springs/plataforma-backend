@@ -30,7 +30,9 @@ export class PricingService {
 
     if (!products.length) {
       throw new NotFoundException(
-        `No se han encontrado productos del tipo ${type}`,
+        type
+          ? `No se han encontrado productos del tipo ${type}`
+          : 'Todavía no se ha registrado ningún producto',
       )
     }
 
