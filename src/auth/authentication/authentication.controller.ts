@@ -1,8 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 
 import { AuthenticationService } from './authentication.service'
 import { LoginDto, StepOneDto, StepThreeDto, StepTwoDto } from './dtos'
 import { Public } from './guards/is-public.decorator'
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard'
 
 @Controller('authentication')
 export class AuthenticationController {
@@ -16,6 +24,7 @@ export class AuthenticationController {
   }
 
   @Public()
+  @UseGuards(AuthThrottlerGuard)
   @Post('cambiar-password/paso-1')
   @HttpCode(HttpStatus.OK)
   async generateRecoveryCode(@Body() data: StepOneDto) {
@@ -23,6 +32,7 @@ export class AuthenticationController {
   }
 
   @Public()
+  @UseGuards(AuthThrottlerGuard)
   @Post('cambiar-password/paso-2')
   @HttpCode(HttpStatus.OK)
   async validateCode(@Body() data: StepTwoDto) {
@@ -30,6 +40,7 @@ export class AuthenticationController {
   }
 
   @Public()
+  @UseGuards(AuthThrottlerGuard)
   @Post('cambiar-password/paso-3')
   @HttpCode(HttpStatus.OK)
   async useRecoveryCode(@Body() data: StepThreeDto) {
