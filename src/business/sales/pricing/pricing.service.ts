@@ -37,27 +37,27 @@ export class PricingService {
     }
 
     //time for await of: 16.098s
-    // for await (const product of products) {
-    //   await this.commandBus.execute(
-    //     new IncreasePriceCommand({
-    //       code: product.code,
-    //       percentage,
-    //     }),
-    //   )
-    // }
+    for await (const product of products) {
+      await this.commandBus.execute(
+        new IncreasePriceCommand({
+          code: product.code,
+          percentage,
+        }),
+      )
+    }
 
-    //time promise.all: 4.779s
+    //time promise.all: 4.779s: Solución no viable por la cantidad de slots que consume
     // console.time('price')
-    await Promise.all(
-      products.map((product) =>
-        this.commandBus.execute(
-          new IncreasePriceCommand({
-            code: product.code,
-            percentage,
-          }),
-        ),
-      ),
-    )
+    // await Promise.all(
+    //   products.map((product) =>
+    //     this.commandBus.execute(
+    //       new IncreasePriceCommand({
+    //         code: product.code,
+    //         percentage,
+    //       }),
+    //     ),
+    //   ),
+    // )
     // console.timeEnd('price')
 
     return {
