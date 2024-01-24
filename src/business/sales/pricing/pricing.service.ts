@@ -30,10 +30,13 @@ export class PricingService {
 
     if (!products.length) {
       throw new NotFoundException(
-        `No se han encontrado productos del tipo ${type}`,
+        type
+          ? `No se han encontrado productos del tipo ${type}`
+          : 'Todavía no se ha registrado ningún producto',
       )
     }
 
+    //time for await of: 16.098s
     for await (const product of products) {
       await this.commandBus.execute(
         new IncreasePriceCommand({
@@ -43,15 +46,26 @@ export class PricingService {
       )
     }
 
-    const isOneProduct = products.length === 1
+    // TODO => probar cuando haya más cantidad de productos
+    //time promise.all: 4.779s
+    // console.time('price')
+    // await Promise.all(
+    //   products.map((product) =>
+    //     this.commandBus.execute(
+    //       new IncreasePriceCommand({
+    //         code: product.code,
+    //         percentage,
+    //       }),
+    //     ),
+    //   ),
+    // )
+    // console.timeEnd('price')
 
     return {
       success: true,
       status: 200,
-      message: `${isOneProduct ? 'El producto' : 'Los productos'} ${products
-        .map((product) => product.code)
-        .join(', ')} ${
-        isOneProduct ? 'ha' : 'han'
+      message: `${products.length} ${
+        products.length === 1 ? 'producto ha' : 'productos han'
       } aumentado un ${percentage}% su precio`,
     }
   }

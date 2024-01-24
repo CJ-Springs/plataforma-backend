@@ -29,7 +29,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService)
   writeFileSync(
     path.join(process.cwd(), 'prisma/ca-certificate.cer'),
-    configService.get('SSL_CERTIFICATE'),
+    configService.get('SSL_CERTIFICATE') ?? '',
   )
 
   await app.listen(PORT)

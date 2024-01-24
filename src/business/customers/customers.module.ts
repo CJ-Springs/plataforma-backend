@@ -9,6 +9,7 @@ import { RolesModule } from '@/auth/authorization/roles/roles.module'
 import { WarrantiesModule } from './warranties/warranties.module'
 import { CreditNotesModule } from './credit-notes/credit-notes.module'
 import { DepositsModule } from './deposits/deposits.module'
+import { CustomersService } from './customers.service'
 
 @Module({
   imports: [
@@ -19,6 +20,11 @@ import { DepositsModule } from './deposits/deposits.module'
     DepositsModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomerRepository, ...CommandHandlers, ...EventHandlers],
+  providers: [
+    CustomerRepository,
+    ...CommandHandlers,
+    ...EventHandlers,
+    CustomersService,
+  ],
 })
 export class CustomersModule {}

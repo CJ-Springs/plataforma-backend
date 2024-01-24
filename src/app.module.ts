@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
+import { ThrottlerModule } from '@nestjs/throttler'
 
 import { LoggerModule } from './.shared/helpers/logger/logger.module'
 import { PrismaModule } from './.shared/infra/prisma.module'
@@ -39,6 +40,7 @@ import { BillingModule } from './business/billing/billing.module'
     IncomeOrdersModule,
     SalesModule,
     BillingModule,
+    ThrottlerModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [
