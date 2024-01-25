@@ -36,29 +36,41 @@ export class PricingService {
       )
     }
 
-    //time for await of: 16.098s
-    for await (const product of products) {
-      await this.commandBus.execute(
-        new IncreasePriceCommand({
-          code: product.code,
-          percentage,
-        }),
-      )
-    }
+    //Tiempo usando for await para 186 productos: 3:08:468 (m:s:ms)
+    // console.time('for await')
+    // for await (const product of products) {
+    //   await this.commandBus.execute(
+    //     new IncreasePriceCommand({
+    //       code: product.code,
+    //       percentage,
+    //     }),
+    //   )
+    // }
+    // console.timeEnd('for await')
 
-    //time promise.all: 4.779s: Solución no viable por la cantidad de slots que consume
-    // console.time('price')
-    // await Promise.all(
-    //   products.map((product) =>
-    //     this.commandBus.execute(
-    //       new IncreasePriceCommand({
-    //         code: product.code,
-    //         percentage,
-    //       }),
-    //     ),
-    //   ),
-    // )
-    // console.timeEnd('price')
+    //Tiempo usando control de concurrencia para 186 productos: 22.339s
+    // console.time('concurrency')
+    const concurrency = 25
+    let queue = []
+
+    for (const product of products) {
+      const operation = async () => {
+        await this.commandBus.execute(
+          new IncreasePriceCommand({
+            code: product.code,
+            percentage,
+          }),
+        )
+      }
+
+      queue.push(operation)
+
+      if (queue.length >= concurrency) {
+        await Promise.all(queue.map((op) => op()))
+        queue = []
+      }
+    }
+    // console.timeEnd('concurrency')
 
     return {
       success: true,
