@@ -46,8 +46,7 @@ export class PricingService {
       )
     }
 
-    // TODO => probar cuando haya más cantidad de productos
-    //time promise.all: 4.779s
+    //time promise.all: 4.779s: Solución no viable por la cantidad de slots que consume
     // console.time('price')
     // await Promise.all(
     //   products.map((product) =>
