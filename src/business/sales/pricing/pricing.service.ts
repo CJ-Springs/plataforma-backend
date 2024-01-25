@@ -50,7 +50,7 @@ export class PricingService {
 
     //Tiempo usando control de concurrencia para 186 productos: 22.339s
     // console.time('concurrency')
-    const concurrency = 25
+    const concurrency = 15
     let queue = []
 
     for (const product of products) {
