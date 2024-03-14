@@ -23,12 +23,12 @@ export class AddressDto {
   })
   city: string
 
-  @IsNotEmpty({ message: "Debe enviar el campo 'locality'" })
+  @IsOptional()
   @IsString({ message: "El campo 'locality' debe ser un string" })
   @MaxLength(255, {
     message: "El campo 'locality' no debe exceder los 255 caracteres",
   })
-  locality: string
+  locality?: string
 
   @IsNotEmpty({ message: "Debe enviar el campo 'address'" })
   @IsString({ message: "El campo 'address' debe ser un string" })
@@ -41,9 +41,6 @@ export class AddressDto {
 export class PartialAddressDto extends PartialType(AddressDto) {
   @IsOptional()
   province?: string
-
-  @IsOptional()
-  locality?: string
 
   @IsOptional()
   city?: string
