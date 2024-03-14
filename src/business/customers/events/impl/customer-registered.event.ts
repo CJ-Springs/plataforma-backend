@@ -13,7 +13,7 @@ type CustomerRegisteredEventProps = {
     country: string
     province: string
     city: string
-    locality: string
+    locality?: string
     address: string
   }
 }

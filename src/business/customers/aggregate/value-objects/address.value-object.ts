@@ -6,7 +6,7 @@ type AddressProps = {
   country: CountryCode
   province: string
   city: string
-  locality: string
+  locality?: string
   address: string
 }
 
@@ -15,7 +15,7 @@ export type AddressPropsDTO = {
   country: string
   province: string
   city: string
-  locality: string
+  locality?: string
   address: string
 }
 
@@ -28,7 +28,6 @@ export class Address extends ValueObject<AddressProps> {
     const guardResult = Validate.againstNullOrUndefinedBulk([
       { argument: props.province, argumentName: 'province' },
       { argument: props.city, argumentName: 'city' },
-      { argument: props.locality, argumentName: 'locality' },
       { argument: props.address, argumentName: 'address' },
     ])
     if (guardResult.isFailure) {
