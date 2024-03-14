@@ -26,7 +26,7 @@ model User {
   incomeOrders IncomeOrder[]
   roles        Role[]        @relation("roles_users")
 
-  @@index([email, id], map: "users_id_email")
+  @@index([email], map: "users_email")
   @@map("users")
 }
 
@@ -34,7 +34,7 @@ model Password {
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @id @unique @map("user_id")
 
   @@map("passwords")
@@ -48,7 +48,7 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @id @unique @map("user_id")
 
   @@map("profiles")
@@ -62,7 +62,7 @@ model Code {
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @map("user_id")
 
   @@map("recovery_codes")
@@ -114,9 +114,9 @@ model IncomeOrderItem {
   entered   Int
   createdAt DateTime @default(now()) @map("created_at")
 
-  order       IncomeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order       IncomeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String      @map("order_id")
-  product     Product     @relation(fields: [productCode], references: [code])
+  product     Product     @relation(fields: [productCode], references: [code], onUpdate: Cascade)
   productCode String      @map("product_code")
 
   @@map("income_order_items")
@@ -184,7 +184,7 @@ model Stock {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade)
   springId String @id @unique @map("spring_id")
 
   @@map("stocks")
@@ -199,7 +199,7 @@ model Movement {
   updatedStock Int          @map("updated_stock")
   createdAt    DateTime     @default(now()) @map("created_at")
 
-  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade)
   springId String @map("spring_id")
 
   @@map("movements")
@@ -229,7 +229,7 @@ model TechnicalSheet {
   // ONLY OJAL_OJAL
   innerBasesTwo Float? @map("inner_bases_two")
 
-  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  spring   Spring @relation(fields: [springId], references: [id], onDelete: Cascade)
   springId String @id @unique @map("spring_id")
 
   @@map("technical_sheets")
@@ -264,12 +264,12 @@ model Address {
   countryCode String   @default("ARG") @map("country_code")
   province    String
   city        String
-  locality    String
+  locality    String?
   address     String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId String   @id @unique @map("customer_id")
 
   @@map("addresses")
@@ -284,7 +284,7 @@ model WarrantyOrder {
 
   items WarrantyOrderItem[]
 
-  customer     Customer @relation(fields: [customerCode], references: [code])
+  customer     Customer @relation(fields: [customerCode], references: [code], onUpdate: Cascade)
   customerCode Int      @map("customer_code")
 
   @@map("warranty_orders")
@@ -296,9 +296,9 @@ model WarrantyOrderItem {
   requested Int
   createdAt DateTime @default(now()) @map("created_at")
 
-  order       WarrantyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order       WarrantyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String        @map("order_id")
-  product     Product       @relation(fields: [productCode], references: [code])
+  product     Product       @relation(fields: [productCode], references: [code], onUpdate: Cascade)
   productCode String        @map("product_code")
 
   @@map("warranty_order_items")
@@ -313,7 +313,7 @@ model CreditNote {
 
   items CreditNoteItem[]
 
-  customer     Customer @relation(fields: [customerCode], references: [code])
+  customer     Customer @relation(fields: [customerCode], references: [code], onUpdate: Cascade)
   customerCode Int      @map("customer_code")
 
   @@map("credit_notes")
@@ -326,9 +326,9 @@ model CreditNoteItem {
   price     Float
   createdAt DateTime @default(now()) @map("created_at")
 
-  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
   creditNoteId String     @map("credit_note_id")
-  product      Product    @relation(fields: [productCode], references: [code])
+  product      Product    @relation(fields: [productCode], references: [code], onUpdate: Cascade)
   productCode  String     @map("product_code")
 
   @@map("credit_note_items")
@@ -343,7 +343,7 @@ model SaleOrder {
   items   SaleOrderItem[]
   invoice Invoice?
 
-  customer     Customer @relation(fields: [customerCode], references: [code])
+  customer     Customer @relation(fields: [customerCode], references: [code], onUpdate: Cascade)
   customerCode Int      @map("customer_code")
 
   @@map("sale_orders")
@@ -358,9 +358,9 @@ model SaleOrderItem {
   salePrice Float    @map("sale_price")
   createdAt DateTime @default(now()) @map("created_at")
 
-  order       SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order       SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String    @map("order_id")
-  product     Product   @relation(fields: [productCode], references: [code])
+  product     Product   @relation(fields: [productCode], references: [code], onUpdate: Cascade)
   productCode String    @map("product_code")
 
   @@map("sale_order_items")
@@ -379,7 +379,7 @@ model Deposit {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  customer     Customer @relation(fields: [customerCode], references: [code])
+  customer     Customer @relation(fields: [customerCode], references: [code], onUpdate: Cascade)
   customerCode Int      @map("customer_code")
 
   @@map("deposits")
@@ -401,7 +401,7 @@ model Invoice {
   order   SaleOrder @relation(fields: [orderId], references: [id])
   orderId String    @unique @map("order_id")
 
-  @@index([id], map: "invoices_id")
+  @@index([orderId], map: "invoice_order")
   @@map("invoices")
 }
 
@@ -420,7 +420,7 @@ model Payment {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   invoiceId String  @map("invoice_id")
 
   @@map("payments")
